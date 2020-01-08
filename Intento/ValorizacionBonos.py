@@ -461,18 +461,23 @@ def total(bonos):
 
     curvas = seleccionar_curva_NS()
     curvas = curvas
-    print(curvas)
     largo = curvas.shape[0]
     uwu = []
+    indices = []
+    b = 0
     
     for i in range(largo):
 
         fecha_curvas = curvas.loc[i].Fecha
-        curva = curvas.loc[i]
-        a = valor_actual(bonos, fecha_curvas, curva)
-        uwu.append(a)
+        diferencia = bonos["FechaEmision"][0] - fecha_curvas
+        
+        if(diferencia.days < 0):
+            curva = curvas.loc[i]
+            a = valor_actual(bonos, fecha_curvas, curva)
+            uwu.append(a)
+            indices.append(fecha_curvas)
     
-    return uwu[::-1]
+    return [uwu[::-1], indices[::-1]]
 
 
 bono_1 = total(bono1)
@@ -482,12 +487,14 @@ bono_4 = total(bono4)
 bono_5 = total(bono5)
 bono_6 = total(bono6)
 
-plt.plot(bono_1)
-plt.plot(bono_2)
-plt.plot(bono_3)
-plt.plot(bono_4)
-plt.plot(bono_5)
-plt.plot(bono_6)
+
+plt.plot(bono_1[1], bono_1[0])
+plt.plot(bono_2[1], bono_2[0])
+plt.plot(bono_3[1], bono_3[0])
+plt.plot(bono_4[1], bono_4[0])
+plt.plot(bono_5[1], bono_5[0])
+plt.plot(bono_6[1], bono_6[0])
+
 
 plt.show()
 
