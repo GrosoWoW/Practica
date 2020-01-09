@@ -507,13 +507,41 @@ def plot_bonos(arregloBonos):
         plt.plot(bonos[1], bonos[0])
 
     tiempo_final = time() - tiempo_inicial
-    print(tiempo_final)
+    print("Retornos: {}".format(tiempo_final))
 
     plt.show()
 #-------------------------Calculos-Historico-------------------------
 tiempo_inicial = time()
 arreglo_bonos = ["BSTDU10618", "BSTDU21118", "BSTDU30618", "BSTDU40117", "BSTDU70518" , "BENTE-L"]
 #plot_bonos(arreglo_bonos)
+
+
+def tiempos(bonos):
+
+    """
+    Calcula el tiempo que demora una matriz de bonos en calcular
+    el retorno del bono, recibe bonos que corresponde a una matriz
+    con todos los bonos que se desea medir el tiempo de ejecucion
+
+    """
+    print(len(bonos))
+    tiempos = []
+    tiempo_i = time()
+    for i in range(len(bonos)):
+        print(bonos[i])
+        auto_bono(bonos[i])
+        tiempo = time() - tiempo_i
+        tiempos.append(tiempo)
+    plt.plot(tiempos, "*")
+    plt.show()
+
+bonobon = ["BSTDU10618", "BSTDU21118", "BSTDU30618", "BSTDU40117", "BSTDU70518" , "BENTE-L", "BCORCB0914"\
+    ,"BCORCC0914","BCORCD0914","BCORCE0914","BCORCF0914","BCORCG0914","BCORCH0914","BCORCI0914","BCORCJ0914","BCORCK0914", \
+        "BCORCL0914","BCORCM0914","BCORCN0914","BCORCO0914","BCCA-C0912","BCCA-D1113","BCCA-E0115","BCCAR-A",\
+        "BCCAR-B","BSECX10118","BPLZA-L","BBBVP20714","BFALA-Q","BCOPV-B","BEMCA-Q","BQUIN-T","BRPLC-E","BFORU-BA","BECOP-H",\
+        "BESVA-R","BBCI-E1117","BESTW10417","BESTW20717","BESTW30218","BESTW40218","BESTW61117"]
+
+#tiempos(bonobon)
 
 bono_6 = auto_bono("BENTE-L")
 
@@ -531,6 +559,12 @@ valor_bono_derivados(bono_derivados, curva_derivados)
 #-----------------Calculo de retorno-------------------------
 
 def retorno_bonos(tablaHistorico, fecha):
+
+    """
+    Calcula el retorno de los bonos para una tabla de bonos,
+    recibe la tabla de bonos y la matriz de fechas
+
+    """ 
 
     retornos = []
 
@@ -551,6 +585,12 @@ def retorno_bonos(tablaHistorico, fecha):
 
 def dataframe_datetime(tabla):
 
+    """
+    Cambia la columna fecha de la tabla de excel a un
+    datetime, originalmente se encuentra en string
+
+    """
+
     Fecha = tabla["Date"]
     nueva_fecha = []
     for i in range(len(Fecha)):
@@ -563,8 +603,13 @@ def dataframe_datetime(tabla):
     tabla["Date"] = nueva_fecha
     return tabla
 
+def tabla_excel_yahoo_retorno(nombreArchivo):
 
-def tabla_excel_yahoo(nombreArchivo):
+    """
+    Extrae un archivo excel a un dataframe, calculando su valor de retorno
+    con la funcion retorno_bonos
+    
+    """
 
     archivo = pd.read_csv('C:\\Users\\groso\\Desktop\\Practica\\Intento\\'+ nombreArchivo)
     Tabla = retorno_bonos(archivo["Adj Close"], archivo["Date"])
@@ -573,16 +618,27 @@ def tabla_excel_yahoo(nombreArchivo):
     Tabla = Tabla.rename(columns={'Retorno':nombre })
     return Tabla
 
-def tabla_bono(bono, nombre):
+def tabla_bono_retorno(bono, nombre):
+
+    """
+    Calcula la tabla de retorno de un bono, renombrando
+    la columna retorno con el nombre del bono para
+    mejor entendimiento
+
+    """
 
     Tabla = retorno_bonos(bono[0], bono[1])
     Tabla = Tabla.drop(columns="Valor")
     Tabla = Tabla.rename(columns={"Retorno":nombre})
     return Tabla
 
-
-
 def unir_dataframes(datas):
+
+    """
+    Recibe una lista de tablas y las une con un join
+    siendo la llave la fecha donde se calculo el retorno
+
+    """
 
     tabla = []
 
@@ -601,38 +657,54 @@ def unir_dataframes(datas):
             tabla = pd.merge(tabla, tabla_actual, on="Date")
     return tabla
 
+def graficar_retornos(tablas, nombres):
+
+    """
+    Grafica los retornos para una cierta cantidad de tablas,
+    recibe un vector de tablas que se quieren graficar
+    y los nombre de cada valor
+
+    """
+
+    largo = len(tablas)
+    for i in range(largo):
+
+        plt.plot(tablas[i]["Date"][:], tablas[i][nombres[i]][:])
+    plt.show()
+
+#------------------Correlacion--------------------------
+
+def formula(lam, r, N, j, k):
+    valor = 0
+    for i in range(0,N):
+        valor += (lam**i)*r[j][N-i-1]*r[k][N-i-1]
+
+    return valor
+
+def ewma_new_new(m_empresas, l, matriz_r):
+
+    cor = np.zeros([m_empresas, m_empresas])
+    ro = np.zeros([m_empresas, m_empresas])
+    for k in range(0,m_empresas):
+        for j in range(0,m_empresas):
+
+            tamanoRetorno = len(matriz_r[:][k])
+            ro[k][j] = formula(0.94, matriz_r, tamanoRetorno, j, k)
+
+    return ro
+
 #------------------Calculos-Retorno---------------------
 
 #Bonos
-BonoEntel = tabla_bono(bono_6, "BonoEntel")
+tiempo_inicial = time()
+BonoEntel = tabla_bono_retorno(bono_6, "BonoEntel")
 
 #Acciones
-Entel = tabla_excel_yahoo("ENTEL.SN.csv")
-Facebook = tabla_excel_yahoo("FB.csv")  
-Santander = tabla_excel_yahoo("BSANTANDER.SN.csv")
-Iansa = tabla_excel_yahoo("IANSA.SN.csv")
+Entel = tabla_excel_yahoo_retorno("ENTEL.SN.csv")
+Facebook = tabla_excel_yahoo_retorno("FB.csv")  
+Santander = tabla_excel_yahoo_retorno("BSANTANDER.SN.csv")
+Iansa = tabla_excel_yahoo_retorno("IANSA.SN.csv")
 matriz_correlacion = (unir_dataframes([Entel, Facebook, Santander, Iansa, BonoEntel])).corr()
-print(matriz_correlacion)
-
-"""
-plt.plot(Tabla3["Retorno"])
-
-nuevo = pd.DataFrame({"Fecha": Tabla2["Fecha"], "Retorno1": Tabla2["Retorno"]})
-nuevo = dataframe_datetime(nuevo)
-nuevo1 = pd.DataFrame({"Fecha": Tabla["Fecha"], "Retorno2": Tabla["Retorno"]})
-nuevo2 = pd.DataFrame({"Fecha": Tabla3["Fecha"], "Retorno3": Tabla3["Retorno"]})
-nuevo2 = dataframe_datetime(nuevo2)
-"""
-"""
-
-uwu = pd.merge(nuevo, nuevo1, on='Fecha')
-uwu = pd.merge(uwu, nuevo2, on='Fecha')
-uwu = uwu.drop(columns=["Fecha"])
-nuevo = uwu.corr()
-print(uwu)
-print(nuevo)
-
-tabla_fechas = pd.DataFrame({"Fecha": Tabla["Fecha"], "RetornoBono": Tabla["Retorno"], "RetornoAccion": Tabla2["Retorno"]})
-
-plt.show()
-"""
+tiempo_final = time()-tiempo_inicial
+print("Correlacion: {:.5f}".format(tiempo_final))
+graficar_retornos([Entel, Facebook, Santander],["ENTEL", "FB", "BSANTANDER", "IANSA", "BonoEntel"])
