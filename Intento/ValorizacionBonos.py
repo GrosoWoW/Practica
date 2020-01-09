@@ -7,6 +7,7 @@ import numpy as np
 from math import exp, log
 from dateutil.relativedelta import relativedelta
 import matplotlib.pyplot as plt
+from time import time
 
 def fecha_str(fecha):  # La funcion sirve como azucar sintactico
     """Entrega la fecha en formato string para consultas SQL
@@ -333,7 +334,6 @@ def TIR_n(n, ancla, y0, y1, y2):
     valor = coef[1] + (coef[0] - coef[1]) * (1 - np.exp(-n / coef[2])) * (coef[2] / n) + coef[3] * (
         (1 - np.exp(-n / coef[2])) * (coef[2] / n) - np.exp(-n / coef[2]))
 
-
     return valor
 
 server= "192.168.30.200"
@@ -354,9 +354,15 @@ def seleccionar_curva_NS():
     curvas = pd.read_sql(curvas, cnn)
     return curvas
 
+def seleccionar_bono(nemotecnico):
+
+    bono = ("SELECT TOP (10) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Nemotecnico = " + "'"+nemotecnico+"'")
+    bono = pd.read_sql(bono, cnn)
+    return bono
+
 def seleccionar_bonos_moneda(moneda, nemotecnico):
 
-    bonos = ("SELECT TOP (10) [FechaEmision], [TablaDesarrollo] FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = " + "'" + moneda +"'" " AND Nemotecnico = " + "'"+nemotecnico+"'")
+    bonos = ("SELECT TOP (10) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = " + "'" + moneda +"'" " AND Nemotecnico = " + "'"+nemotecnico+"'")
     bonos = pd.read_sql(bonos, cnn)
     return bonos
     
@@ -440,21 +446,21 @@ def valor_bono(bono, curva):
     
     """
 
-    tabla = StrTabla2ArrTabla(bono.values[0][1], str(bono.values[0][0]).split(" ")[0]) #Se crea la tabla de desarrollo del bono
+    tabla = StrTabla2ArrTabla(bono["TablaDesarrollo"][0], str(bono["FechaEmision"][0]).split(" ")[0]) #Se crea la tabla de desarrollo del bono
     dfTabla_bono = pd.DataFrame(tabla, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
     cantidad_pagos = dfTabla_bono["Cupon"].shape[0]
-    convencion = "ACT360"
+    convencion = parsear_convenciones(bono)
     suma = 0
 
     for i in range(cantidad_pagos):
 
         #Diferencia entre la curva y el pago del bono
-        diferencia_dias = diferencia_dias_convencion(convencion, curva.Fecha, dfTabla_bono["Fecha"][i]) 
+        diferencia_dias = diferencia_dias_convencion(convencion[0], curva.Fecha, dfTabla_bono["Fecha"][i]) 
 
         if (diferencia_dias > 0):
 
             tir = TIR_n(diferencia_dias, curva.ancla, curva.y0, curva.y1, curva.y2)
-            factor = factor_descuento(tir, curva.Fecha, dfTabla_bono["Fecha"][i], "ACT360", 0)
+            factor = factor_descuento(tir, curva.Fecha, dfTabla_bono["Fecha"][i], convencion[0], 0)
             suma += factor * dfTabla_bono["Cupon"][i]
 
     return suma
@@ -485,35 +491,31 @@ def total_historico(bonos):
     
     return [valorBono[::-1], indices[::-1]]
 
-#-------------------------Calculos-------------------------
 
-#Bonos a extraer de la base de datos
-bono1 = seleccionar_bonos_moneda("CLP", "BSTDU10618")
-bono2 = seleccionar_bonos_moneda("CLP", "BSTDU21118")
-bono3 = seleccionar_bonos_moneda("CLP", "BSTDU30618")
-bono4 = seleccionar_bonos_moneda("CLP", "BSTDU40117")
-bono5 = seleccionar_bonos_moneda("CLP", "BSTDU70518")
-bono6 = seleccionar_bonos_moneda("CLP", "BENTE-L")
+def auto_bono(Nemotecnico):
 
+    bono = seleccionar_bono(Nemotecnico)
+    bono = total_historico(bono)
+    return bono
 
-#Calculo del historico de cada bono
-bono_1 = total_historico(bono1)
-bono_2 = total_historico(bono2)
-bono_3 = total_historico(bono3)
-bono_4 = total_historico(bono4)
-bono_5 = total_historico(bono5)
-bono_6 = total_historico(bono6)
+def plot_bonos(arregloBonos):
 
-#Graficos para cada bono
-plt.plot(bono_1[1], bono_1[0])
-plt.plot(bono_2[1], bono_2[0])
-plt.plot(bono_3[1], bono_3[0])
-plt.plot(bono_4[1], bono_4[0])
-plt.plot(bono_5[1], bono_5[0])
-plt.plot(bono_6[1], bono_6[0])
+    largo = len(arregloBonos)
+    for i in range(largo):
 
+        bonos = auto_bono(arregloBonos[i])
+        plt.plot(bonos[1], bonos[0])
 
-plt.show()
+    tiempo_final = time() - tiempo_inicial
+    print(tiempo_final)
+
+    plt.show()
+#-------------------------Calculos-Historico-------------------------
+tiempo_inicial = time()
+arreglo_bonos = ["BSTDU10618", "BSTDU21118", "BSTDU30618", "BSTDU40117", "BSTDU70518" , "BENTE-L"]
+#plot_bonos(arreglo_bonos)
+
+bono_6 = auto_bono("BENTE-L")
 
 #Bono que se utilizara para el calculo
 bono_derivados =("SELECT TOP (10) [FechaEmision], [TablaDesarrollo] FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Nemotecnico = 'BSTDU10618'")
@@ -523,8 +525,114 @@ curva_derivados = seleccionar_curva_derivados(str(bono_derivados["FechaEmision"]
 curva_derivados = parsear_curva(curva_derivados["Curva"][0], datetime.datetime.today)
 
 #Calculo del valor de un bono con curva derivados
-print(valor_bono_derivados(bono_derivados, curva_derivados))
+valor_bono_derivados(bono_derivados, curva_derivados)
+
+
+#-----------------Calculo de retorno-------------------------
+
+def retorno_bonos(tablaHistorico, fecha):
+
+    retornos = []
+
+    for i in range(len(tablaHistorico)):
+
+        if i != 0:
+
+            diferencia_valor = np.log(tablaHistorico[i] / tablaHistorico[i-1])
+            retornos.append(diferencia_valor)
+        else:
+
+            retornos.append(0)
+
+    tabla = pd.DataFrame({"Date": fecha, "Valor": tablaHistorico, "Retorno": retornos})
+    return tabla
+
+#----------------Funciones para trabajar en excel---------------------
+
+def dataframe_datetime(tabla):
+
+    Fecha = tabla["Date"]
+    nueva_fecha = []
+    for i in range(len(Fecha)):
+
+        fecha_drop = Fecha[i].split("-")
+        fecha_string = datetime.datetime(int(fecha_drop[0]), int(fecha_drop[1]), int(fecha_drop[2]))
+        nueva_fecha.append(fecha_string)
+    
+    tabla.drop(columns = ["Date"])
+    tabla["Date"] = nueva_fecha
+    return tabla
+
+
+def tabla_excel_yahoo(nombreArchivo):
+
+    archivo = pd.read_csv('C:\\Users\\groso\\Desktop\\Practica\\Intento\\'+ nombreArchivo)
+    Tabla = retorno_bonos(archivo["Adj Close"], archivo["Date"])
+    Tabla = Tabla.drop(columns="Valor")
+    nombre = nombreArchivo.split(".")[0]
+    Tabla = Tabla.rename(columns={'Retorno':nombre })
+    return Tabla
+
+def tabla_bono(bono, nombre):
+
+    Tabla = retorno_bonos(bono[0], bono[1])
+    Tabla = Tabla.drop(columns="Valor")
+    Tabla = Tabla.rename(columns={"Retorno":nombre})
+    return Tabla
 
 
 
+def unir_dataframes(datas):
 
+    tabla = []
+
+    for i in range(len(datas)):
+
+        tabla_actual = datas[i]
+        if isinstance(tabla_actual["Date"][0], str):
+
+            tabla_actual = dataframe_datetime(tabla_actual)
+
+        if len(tabla) == 0:
+
+            tabla = tabla_actual
+        else:
+
+            tabla = pd.merge(tabla, tabla_actual, on="Date")
+    return tabla
+
+#------------------Calculos-Retorno---------------------
+
+#Bonos
+BonoEntel = tabla_bono(bono_6, "BonoEntel")
+
+#Acciones
+Entel = tabla_excel_yahoo("ENTEL.SN.csv")
+Facebook = tabla_excel_yahoo("FB.csv")  
+Santander = tabla_excel_yahoo("BSANTANDER.SN.csv")
+Iansa = tabla_excel_yahoo("IANSA.SN.csv")
+matriz_correlacion = (unir_dataframes([Entel, Facebook, Santander, Iansa, BonoEntel])).corr()
+print(matriz_correlacion)
+
+"""
+plt.plot(Tabla3["Retorno"])
+
+nuevo = pd.DataFrame({"Fecha": Tabla2["Fecha"], "Retorno1": Tabla2["Retorno"]})
+nuevo = dataframe_datetime(nuevo)
+nuevo1 = pd.DataFrame({"Fecha": Tabla["Fecha"], "Retorno2": Tabla["Retorno"]})
+nuevo2 = pd.DataFrame({"Fecha": Tabla3["Fecha"], "Retorno3": Tabla3["Retorno"]})
+nuevo2 = dataframe_datetime(nuevo2)
+"""
+"""
+
+uwu = pd.merge(nuevo, nuevo1, on='Fecha')
+uwu = pd.merge(uwu, nuevo2, on='Fecha')
+uwu = uwu.drop(columns=["Fecha"])
+nuevo = uwu.corr()
+print(uwu)
+print(nuevo)
+
+tabla_fechas = pd.DataFrame({"Fecha": Tabla["Fecha"], "RetornoBono": Tabla["Retorno"], "RetornoAccion": Tabla2["Retorno"]})
+
+plt.show()
+"""
