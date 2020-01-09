@@ -296,6 +296,12 @@ def interpolacion_log_escalar(x, XY, n=0, m=0, siExt=True, first=True):
 # Calcula la suma total del tir
 def TIR(s, ancla, y0, y1, y2):
 
+    """
+    Calculo de los valores del TIR con todos los periodos
+    de pago (entregados por el parametro s)
+
+    """
+
     coef = np.zeros(4)
     coef[0] = ancla
     coef[1] = y0
@@ -311,6 +317,12 @@ def TIR(s, ancla, y0, y1, y2):
 
 #Calcula un factor del tir dependiendo la curva y n
 def TIR_n(n, ancla, y0, y1, y2):
+
+    """
+    Caluclo del TIR para un pago en especifico, el cual
+    corresponde al valor de n
+
+    """
 
     coef = np.zeros(4)
     coef[0] = ancla
@@ -348,13 +360,6 @@ def seleccionar_bonos_moneda(moneda, nemotecnico):
     bonos = pd.read_sql(bonos, cnn)
     return bonos
     
-desarrollo =("SELECT TOP (10) [FechaEmision], [TablaDesarrollo] FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Nemotecnico = 'BSTDU10618'")
-desarrollo = pd.read_sql(desarrollo, cnn)
-
-curva_derivados = seleccionar_curva_derivados(str(desarrollo["FechaEmision"][0]))
-curva_derivados = parsear_curva(curva_derivados["Curva"][0], datetime.datetime.today)
-
-
 def curva_desarrollo(curvita):
 
     tasa = []
@@ -378,51 +383,40 @@ def curva_bonita(curva):
     
     return [finalX, finalY]
 
-#Variables a utilizar
-tabla_desarrollo = StrTabla2ArrTabla(desarrollo.values[0][1], str(desarrollo.values[0][0]).split(" ")[0])
-dfTabla = pd.DataFrame(tabla_desarrollo, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
-fecha_inicial = datetime.datetime.now()
-largo = dfTabla[["Numero"]].shape[0]
-convencion = "ACT360"
-
 
 # Calculo de valor del bono
-suma = 0
-historico = []
 
-for i in range(largo):
+def valor_bono_derivados(bono, curva_derivados):
 
-    diferencia = diferencia_dias_convencion(convencion, fecha_inicial, dfTabla["Fecha"][i])
-    if (diferencia > 0):
+    """
+    Calculo de un valor del bono con el tipo de curva
+    de derivados, con la utilizacion de la interpolacion
+    logaritmica
 
-        tir = interpolacion_log_escalar(diferencia, curva_derivados)
-        valor = (dfTabla["Cupon"][i])*(factor_descuento(tir, fecha_inicial, dfTabla["Fecha"][i], convencion, 0))
-        historico.append(valor)
-        suma += valor
+    """
+
+    tabla_desarrollo = StrTabla2ArrTabla(bono.values[0][1], str(bono.values[0][0]).split(" ")[0])
+    dfTabla = pd.DataFrame(tabla_desarrollo, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
+    fecha_inicial = datetime.datetime.now()
+    largo = dfTabla[["Numero"]].shape[0]
+    convencion = "ACT360"
+
+    suma = 0
+    historico = []
+
+    for i in range(largo):
+
+        diferencia = diferencia_dias_convencion(convencion, fecha_inicial, dfTabla["Fecha"][i])
+        if (diferencia > 0):
+
+            tir = interpolacion_log_escalar(diferencia, curva_derivados)
+            valor = (dfTabla["Cupon"][i])*(factor_descuento(tir, fecha_inicial, dfTabla["Fecha"][i], convencion, 0))
+            historico.append(valor)
+            suma += valor
+
+    return suma
             
-
-#-----------------------Cosas random_-----------------------
-
-#Ploteo de curva a utilizar
-"""
-curva_desarrollo = curva_bonita(curva)
-plt.plot(curva_desarrollo[0], curva_desarrollo[1], "*")
-plt.show()
-
-rango = np.arange(1, 500)
-TIR(np.arange(1, 500))
-"""
-
 #--------------------Historico de precio---------------------
-
-
-bono1 = seleccionar_bonos_moneda("CLP", "BSTDU10618")
-bono2 = seleccionar_bonos_moneda("CLP", "BSTDU21118")
-bono3 = seleccionar_bonos_moneda("CLP", "BSTDU30618")
-bono4 = seleccionar_bonos_moneda("CLP", "BSTDU40117")
-bono5 = seleccionar_bonos_moneda("CLP", "BSTDU70518")
-bono6 = seleccionar_bonos_moneda("CLP", "BENTE-L")
-
 
 def parsear_convenciones(df_tabla):
     convenciones = []
@@ -437,17 +431,25 @@ def parsear_convenciones(df_tabla):
 curva_ns_1 = seleccionar_curva_NS()
 
 
-def valor_actual(bono, fecha, curva):
+def valor_bono(bono, curva):
 
-    tabla = StrTabla2ArrTabla(bono.values[0][1], str(bono.values[0][0]).split(" ")[0])
+    """
+    Calcula el valor del bono con todos sus cupones
+    Recibe el bono a calcular el valor, y la curva 
+    que se utilizara para el calculo
+    
+    """
+
+    tabla = StrTabla2ArrTabla(bono.values[0][1], str(bono.values[0][0]).split(" ")[0]) #Se crea la tabla de desarrollo del bono
     dfTabla_bono = pd.DataFrame(tabla, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
     cantidad_pagos = dfTabla_bono["Cupon"].shape[0]
+    convencion = "ACT360"
     suma = 0
 
     for i in range(cantidad_pagos):
 
-
-        diferencia_dias = diferencia_dias_convencion(convencion, curva.Fecha, dfTabla_bono["Fecha"][i])
+        #Diferencia entre la curva y el pago del bono
+        diferencia_dias = diferencia_dias_convencion(convencion, curva.Fecha, dfTabla_bono["Fecha"][i]) 
 
         if (diferencia_dias > 0):
 
@@ -457,14 +459,18 @@ def valor_actual(bono, fecha, curva):
 
     return suma
 
-def total(bonos):
+def total_historico(bonos):
+
+    """
+    Calcula el valor de un bono con todas las curvas que se encuentran
+    en la base de datos, entrega una matriz con el eje x e y correspondiente
+
+    """
 
     curvas = seleccionar_curva_NS()
-    curvas = curvas
     largo = curvas.shape[0]
-    uwu = []
+    valorBono = []
     indices = []
-    b = 0
     
     for i in range(largo):
 
@@ -473,21 +479,32 @@ def total(bonos):
         
         if(diferencia.days < 0):
             curva = curvas.loc[i]
-            a = valor_actual(bonos, fecha_curvas, curva)
-            uwu.append(a)
+            calculo_bono = valor_bono(bonos, curva)
+            valorBono.append(calculo_bono)
             indices.append(fecha_curvas)
     
-    return [uwu[::-1], indices[::-1]]
+    return [valorBono[::-1], indices[::-1]]
+
+#-------------------------Calculos-------------------------
+
+#Bonos a extraer de la base de datos
+bono1 = seleccionar_bonos_moneda("CLP", "BSTDU10618")
+bono2 = seleccionar_bonos_moneda("CLP", "BSTDU21118")
+bono3 = seleccionar_bonos_moneda("CLP", "BSTDU30618")
+bono4 = seleccionar_bonos_moneda("CLP", "BSTDU40117")
+bono5 = seleccionar_bonos_moneda("CLP", "BSTDU70518")
+bono6 = seleccionar_bonos_moneda("CLP", "BENTE-L")
 
 
-bono_1 = total(bono1)
-bono_2 = total(bono2)
-bono_3 = total(bono3)
-bono_4 = total(bono4)
-bono_5 = total(bono5)
-bono_6 = total(bono6)
+#Calculo del historico de cada bono
+bono_1 = total_historico(bono1)
+bono_2 = total_historico(bono2)
+bono_3 = total_historico(bono3)
+bono_4 = total_historico(bono4)
+bono_5 = total_historico(bono5)
+bono_6 = total_historico(bono6)
 
-
+#Graficos para cada bono
 plt.plot(bono_1[1], bono_1[0])
 plt.plot(bono_2[1], bono_2[0])
 plt.plot(bono_3[1], bono_3[0])
@@ -497,6 +514,16 @@ plt.plot(bono_6[1], bono_6[0])
 
 
 plt.show()
+
+#Bono que se utilizara para el calculo
+bono_derivados =("SELECT TOP (10) [FechaEmision], [TablaDesarrollo] FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Nemotecnico = 'BSTDU10618'")
+bono_derivados = pd.read_sql(bono_derivados, cnn)
+
+curva_derivados = seleccionar_curva_derivados(str(bono_derivados["FechaEmision"][0]))
+curva_derivados = parsear_curva(curva_derivados["Curva"][0], datetime.datetime.today)
+
+#Calculo del valor de un bono con curva derivados
+print(valor_bono_derivados(bono_derivados, curva_derivados))
 
 
 
