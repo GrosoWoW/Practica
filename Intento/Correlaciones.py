@@ -57,3 +57,19 @@ def ewma_new_new(m_empresas, matriz_r):
     
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
+
+
+# retornos: vector de retornos a los que se les busca calcular volatilidad, ordenados del más reciente al más antiguo
+# l: valor de lambda entre 0 y 1
+def ewma(retornos, l):
+    n=len(retornos)
+    factor = l**np.array(range(n))
+    
+    volSinAjuste = sum((1-l)*retornos*retornos*factor)
+    volConAjuste = volSinAjuste/(1-l**(n+1))
+    volSinAjuste = np.sqrt(volSinAjuste)
+    volConAjuste = np.sqrt(volConAjuste)
+    
+    data = [[volConAjuste, volSinAjuste, 1/(1-l**(n+1)), n ]]
+    df = pd.DataFrame(data, columns = ['Vol c/ajuste', "Vol s/ajuste","Ajuste", " cantidad de retornos"])
+    return df

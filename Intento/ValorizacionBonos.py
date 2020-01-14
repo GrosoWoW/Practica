@@ -1,16 +1,23 @@
-import pyodbc
-import pandas as pd
-from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion, factor_descuento, parsear_curva
-from Matematica import interpolacion_log_escalar
 import datetime
-import numpy as np
 from math import exp, log
-from dateutil.relativedelta import relativedelta
+from time import time                                   
+
 import matplotlib.pyplot as plt
-from time import time
-from FuncionesExcel import tabla_excel_yahoo_retorno, tabla_bono_retorno, unir_dataframes, graficar_retornos
-from Curvas import seleccionar_bonos_moneda, seleccionar_curva_NS, seleccionar_bono, get_cnn, seleccionar_curva_derivados
+import numpy as np
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
+import pyodbc
 from Correlaciones import ewma_new_new
+from Curvas import (get_cnn, seleccionar_bono, seleccionar_bonos_moneda,
+                    seleccionar_curva_derivados, seleccionar_curva_NS)
+from FuncionesExcel import (graficar_retornos, tabla_bono_retorno,
+                            tabla_excel_yahoo_retorno, unir_dataframes)
+from Matematica import interpolacion_log_escalar
+from UtilesValorizacion import (StrTabla2ArrTabla, add_days,
+                                diferencia_dias_convencion, factor_descuento,
+                                parsear_curva)
+
 
 """
 Funciones principales para calcular datos de un bono
@@ -54,14 +61,13 @@ def TIR_n(n, ancla, y0, y1, y2):
     coef[1] = y0
     coef[2] = y1
     coef[3] = y2
-    valor = 0
     valor = coef[1] + (coef[0] - coef[1]) * (1 - np.exp(-n / coef[2])) * (coef[2] / n) + coef[3] * (
         (1 - np.exp(-n / coef[2])) * (coef[2] / n) - np.exp(-n / coef[2]))
 
     return valor
 
 # Calculo de valor del bono
-
+ 
 def valor_bono_derivados(bono, curva_derivados):
 
     """
@@ -186,3 +192,45 @@ def plot_bonos(arregloBonos):
         plt.plot(bonos[1], bonos[0])
         
     plt.show()
+
+#-------------------Valorizacion con Pivotes----------------
+
+def evaluacion_curva(dia, convencion):
+
+    curvans = seleccionar_curva_NS("IF#CLP")
+    factor = []
+
+    for i in range(len(curvans["ancla"][:])):
+
+
+        dia_inicial = curvans["Fecha"][i]
+
+        tir = TIR_n(dia, curvans["ancla"][i], curvans["y0"][i], curvans["y1"][i], curvans["y2"][i])
+        difinal = add_days(dia_inicial, dia)
+        factor.append(factor_descuento(tir, curvans["Fecha"][i], difinal, convencion, 0 ))
+    
+    return factor
+       
+
+"""
+f, ax = plt.subplots()
+ax.plot(evaluacion_curva(30, "ACT360"), label="30 dias")
+ax.plot(evaluacion_curva(60, "ACT360"), label="60 dias")
+ax.plot(evaluacion_curva(90, "ACT360"), label="90 dias")
+ax.plot(evaluacion_curva(365, "ACT360"), label="365 dias")
+ax.plot(evaluacion_curva(365*2, "ACT360"), label = "365*2 dias")
+ax.plot(evaluacion_curva(365*3, "ACT360"), label = "365*3 dias")
+ax.plot(evaluacion_curva(365*4, "ACT360"), label = "365*4 dias")
+ax.plot(evaluacion_curva(365*5, "ACT360"), label = "365*5 dias")
+ax.plot(evaluacion_curva(365*10, "ACT360"), label = "365*10 dias")
+ax.plot(evaluacion_curva(365*15, "ACT360"), label = "365*15 dias")
+ax.plot(evaluacion_curva(365*20, "ACT360"), label = "365*20 dias")
+ax.plot(evaluacion_curva(365*40, "ACT360"), label = "365*40 dias")
+ax.plot(evaluacion_curva(365*80, "ACT360"), label = "365*80 dias")
+ax.set_title("oowoo")
+ax.set_xlabel("awa")
+ax.set_ylabel("ewe")
+ax.legend()
+
+plt.show()
+"""

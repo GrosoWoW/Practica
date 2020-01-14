@@ -1,17 +1,22 @@
-import pyodbc
-import pandas as pd
-from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion, factor_descuento, parsear_curva
-from Matematica import interpolacion_log_escalar
 import datetime
-import numpy as np
 from math import exp, log
-from dateutil.relativedelta import relativedelta
-import matplotlib.pyplot as plt
 from time import time
-from FuncionesExcel import tabla_excel_yahoo_retorno, tabla_bono_retorno, unir_dataframes, graficar_retornos
-from Curvas import seleccionar_bonos_moneda, seleccionar_curva_NS, seleccionar_bono, get_cnn, seleccionar_curva_derivados
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from dateutil.relativedelta import relativedelta
+
+import pyodbc
 from Correlaciones import ewma_new_new
-from ValorizacionBonos import plot_bonos, auto_bono, valor_bono_derivados
+from Curvas import (get_cnn, seleccionar_bono, seleccionar_bonos_moneda,
+                    seleccionar_curva_derivados, seleccionar_curva_NS)
+from FuncionesExcel import (graficar_retornos, tabla_bono_retorno,
+                            tabla_excel_yahoo_retorno, unir_dataframes)
+from Matematica import interpolacion_log_escalar
+from UtilesValorizacion import (StrTabla2ArrTabla, diferencia_dias_convencion,
+                                factor_descuento, parsear_curva)
+from ValorizacionBonos import auto_bono, plot_bonos, valor_bono_derivados
 
 #-------------------------Calculos-Historico-------------------------
 tiempo_inicial = time()
@@ -26,7 +31,6 @@ def tiempos(bonos):
     con todos los bonos que se desea medir el tiempo de ejecucion
 
     """
-    print(len(bonos))
     tiempos = []
     tiempo_i = time()
     for i in range(len(bonos)):
@@ -46,6 +50,7 @@ bonobon = ["BSTDU10618", "BSTDU21118", "BSTDU30618", "BSTDU40117", "BSTDU70518" 
 #tiempos(bonobon)
 
 bono_6 = auto_bono("BENTE-L")
+print(bono_6)
 
 #Bono que se utilizara para el calculo
 bono_derivados =("SELECT TOP (10) [FechaEmision], [TablaDesarrollo] FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Nemotecnico = 'BSTDU10618'")
@@ -61,7 +66,7 @@ valor_bono_derivados(bono_derivados, curva_derivados)
 
 #Bonos
 tiempo_inicial = time()
-BonoEntel = tabla_bono_retorno(bono_6, "BonoEntel")
+BonoEntel = tabla_bono_retorno(bono_6, "BonoEntel", False, 20)
 
 #Acciones
 Entel = tabla_excel_yahoo_retorno("ENTEL.SN.csv")

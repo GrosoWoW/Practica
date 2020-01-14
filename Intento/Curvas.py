@@ -1,5 +1,6 @@
 import pandas as pd
 import pyodbc
+from Matematica import interpolacion_log_escalar
 
 """
 Funciones principales para extraer datos de una base de datos
@@ -41,6 +42,19 @@ def seleccionar_curva_NS(tipo):
     curvas = pd.read_sql(curvas, cnn)
     return curvas
 
+def seleccionar_NS_fecha(fecha):
+
+    """
+    Selecciona una curva NS de la base de datos dbAlgebra.dbor.TdCurvaNS
+    Para una fecha especifica, si no existe toma la del dia anterior
+    hasta que lo encuentre
+
+    """
+
+    curvas = ("SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Fecha = '" + fecha +"' AND Tipo = 'IF#CLP'")
+    curvas = pd.read_sql(curvas, cnn)
+    return curvas
+
 def seleccionar_bono(nemotecnico):
 
     """
@@ -61,10 +75,35 @@ def seleccionar_bonos_moneda(moneda, nemotecnico):
 
     """
 
-    bonos = ("SELECT TOP (10) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = " + "'" + moneda +"'" " AND Nemotecnico = " + "'"+nemotecnico+"'")
+    bonos = ("SELECT TOP (1000) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = " + "'" + moneda +"'" " AND Nemotecnico = " + "'"+nemotecnico+"'")
     bonos = pd.read_sql(bonos, cnn)
     return bonos
-    
+
+def seleccionar_todos_bonos(moneda):
+
+    """
+    Selecciona todos los bonos disponibles de la base de datos 
+    dbAlgebra.dbo.TdNemoRF que pertenezcan al tipo de moneda
+    (Primeros 1000 por defecto)
+
+    """
+
+    bonos = ("SELECT TOP(10) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP' AND FechaEmision >= '2009-01-02 00:00:00'")
+    bonos = pd.read_sql(bonos, cnn)
+    return bonos
+
+def seleccionar_bono_fecha(fecha):
+
+    """
+    Selecciona los bonos disponibles en la base de datos
+    dbAlgebra.dbo.TdRemoRF que corresponden a la fecha
+
+    """
+
+    bonos = ("SELECT TOP (1) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP' AND FechaEmision = '"+fecha+"' AND FechaEmision >= '2009-01-02 00:00:00'")
+    bonos = pd.read_sql(bonos, cnn)
+    return bonos
+
 def curva_desarrollo(curvita):
 
     """
