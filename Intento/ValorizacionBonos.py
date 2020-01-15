@@ -211,7 +211,6 @@ def evaluacion_curva(dia, convencion):
     
     return factor
        
-
 """
 f, ax = plt.subplots()
 ax.plot(evaluacion_curva(30, "ACT360"), label="30 dias")

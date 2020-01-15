@@ -22,15 +22,16 @@ def retorno_bonos(tablaHistorico, fecha, pivotes, num):
     valor = []
     largo = len(tablaHistorico)
 
-    for i in range(largo):
+    for i in range(largo-1):
 
         if i != 0 and tablaHistorico[i] != 0:
 
-            diferencia_valor = np.log(tablaHistorico[i] / tablaHistorico[i-1])
+            diferencia_valor = np.log(tablaHistorico[i+1] / tablaHistorico[i])
             retornos.append(diferencia_valor)
             fechas.append(fecha[i])
             valor.append(tablaHistorico[i])
 
+        """
         elif i == 0:
 
             retornos.append(0)
@@ -41,6 +42,7 @@ def retorno_bonos(tablaHistorico, fecha, pivotes, num):
             retornos.append(0)
             fechas.append(fecha[i])
             valor.append(tablaHistorico[i])
+        """
 
     tabla = pd.DataFrame({"Date": fechas, "Valor": valor, "Retorno": retornos})
     return tabla

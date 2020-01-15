@@ -38,7 +38,7 @@ def seleccionar_curva_NS(tipo):
 
     """
 
-    curvas = ("SELECT * FROM dbAlgebra.dbo.TdCurvaNS WHERE Tipo = '"+ tipo + "' ORDER BY Fecha  DESC")
+    curvas = ("SELECT * FROM dbAlgebra.dbo.TdCurvaNS WHERE Tipo = '"+ tipo + "' ORDER BY Fecha ASC")
     curvas = pd.read_sql(curvas, cnn)
     return curvas
 
@@ -88,7 +88,7 @@ def seleccionar_todos_bonos(moneda):
 
     """
 
-    bonos = ("SELECT TOP(10) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP' AND FechaEmision >= '2009-01-02 00:00:00'")
+    bonos = ("SELECT TOP(1000000) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP' AND FechaEmision >= '2009-01-02 00:00:00'")
     bonos = pd.read_sql(bonos, cnn)
     return bonos
 

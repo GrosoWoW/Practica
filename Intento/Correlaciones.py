@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd 
+import math
 
 #------------------Correlacion--------------------------
 
@@ -17,7 +18,7 @@ def factor(lam, n):
     y n que corresponde al tamaño de cantidad de retornos
 
     """
-    return (1-lam)/(1-lam**(n-1))
+    return (1-lam)
 
 def formula(lam, r, N, j, k):
 
@@ -31,11 +32,11 @@ def formula(lam, r, N, j, k):
     """
     valor = 0
     for i in range(0,N):
-        valor += (lam**i)*r[j][N-i-1]*r[k][N-i-1]
+        valor += (lam**i)*r[N-i-1][j]*r[N-i-1][k]
 
     return valor
 
-def ewma_new_new(m_empresas, matriz_r):
+def ewma_new_new(m_empresas, matriz_r, volatilidades):
 
     """
     Calculo de ewma para la matriz_r
@@ -43,8 +44,6 @@ def ewma_new_new(m_empresas, matriz_r):
     y la matriz_r con la cantidad de datos
 
     """
-
-    matriz_r = matriz_r.drop(columns=("Date"))
     nombre = matriz_r.columns.tolist()
     matriz_r = matriz_r.values
         
@@ -52,8 +51,10 @@ def ewma_new_new(m_empresas, matriz_r):
     for k in range(0,m_empresas):
         for j in range(0,m_empresas):
 
-            tamanoRetorno = len(matriz_r[:][k])
-            ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k)
+            tamanoRetorno = len(matriz_r[:,k])
+
+            ro[k][j] = (factor(0.94, tamanoRetorno) * \
+                formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k]*volatilidades.values[j])
     
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
