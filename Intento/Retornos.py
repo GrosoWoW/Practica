@@ -4,6 +4,12 @@ from Util import add_days
 
 #-----------------Calculo de retorno-------------------------
 
+"""
+Aqui se presentan las funciones para calcular los retornos de ciertos
+tipos de datos (Retornos de valores de bonos, factores de descuento, etc)
+
+"""
+
 def retorno_bonos(tablaHistorico, fecha, pivotes, num):
 
     """
@@ -14,25 +20,12 @@ def retorno_bonos(tablaHistorico, fecha, pivotes, num):
     retornos = []
     fechas = []
     valor = []
-    if(pivotes):
-        largo = len(tablaHistorico)
-    else:
-        largo =num 
+    largo = len(tablaHistorico)
 
-    fechauwu = fecha[0]
     for i in range(largo):
-        #print(i)
 
-        if i >= len(tablaHistorico):
+        if i != 0 and tablaHistorico[i] != 0:
 
-            fechauwu = add_days(fechauwu, 1)
-            retornos.append(0)
-            fechas.append(fechauwu)
-            valor.append(0)
-
-        elif i != 0 and tablaHistorico[i] != 0:
-
-            fechauwu = fecha[i]
             diferencia_valor = np.log(tablaHistorico[i] / tablaHistorico[i-1])
             retornos.append(diferencia_valor)
             fechas.append(fecha[i])
@@ -40,14 +33,11 @@ def retorno_bonos(tablaHistorico, fecha, pivotes, num):
 
         elif i == 0:
 
-            fechauwu = fecha[i]
             retornos.append(0)
             fechas.append(fecha[i])
             valor.append(tablaHistorico[i])
 
         else:
-
-            fechauwu = fecha[i]
             retornos.append(0)
             fechas.append(fecha[i])
             valor.append(tablaHistorico[i])
@@ -56,6 +46,13 @@ def retorno_bonos(tablaHistorico, fecha, pivotes, num):
     return tabla
 
 def retorno_factor(factorDescuento):
+
+    """
+    Calcula los retornos para una tabla de historicos
+    de factores de descuento
+    :param factorDescuento: Pandas de historicos de factor de descuento
+
+    """
 
     historico = factorDescuento["Historico"]
     retornos = []
