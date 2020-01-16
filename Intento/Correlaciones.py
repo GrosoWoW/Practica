@@ -1,6 +1,7 @@
-import numpy as np
-import pandas as pd 
 import math
+
+import numpy as np
+import pandas as pd
 
 #------------------Correlacion--------------------------
 
@@ -36,7 +37,29 @@ def formula(lam, r, N, j, k):
 
     return valor
 
-def ewma_new_new(m_empresas, matriz_r, volatilidades):
+def ewma_new_new(m_empresas, matriz_r):
+
+    """
+    Calculo de ewma para la matriz_r
+    Recibe m_empresas que corresponde a la cantidad de empresas
+    y la matriz_r con la cantidad de datos
+    """
+
+    matriz_r = matriz_r.drop(columns=("Date"))
+    nombre = matriz_r.columns.tolist()
+    matriz_r = matriz_r.values
+
+    ro = np.zeros([m_empresas, m_empresas])
+    for k in range(0,m_empresas):
+        for j in range(0,m_empresas):
+
+            tamanoRetorno = len(matriz_r[:][k])
+            ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k)
+
+    df = pd.DataFrame(ro, columns=nombre, index=nombre)
+    return df 
+
+def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
 
     """
     Calculo de ewma para la matriz_r
@@ -51,10 +74,13 @@ def ewma_new_new(m_empresas, matriz_r, volatilidades):
     for k in range(0,m_empresas):
         for j in range(0,m_empresas):
 
-            tamanoRetorno = len(matriz_r[:,k])
-
-            ro[k][j] = (factor(0.94, tamanoRetorno) * \
-                formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k]*volatilidades.values[j])
+            if k == j:
+                ro[k][j] = volatilidades[k]
+            else:
+                tamanoRetorno = len(matriz_r[:,k])
+ 
+                ro[k][j] = (factor(0.94, tamanoRetorno) * \
+                    formula(0.94, matriz_r, tamanoRetorno, j, k))/((volatilidades.values[k]*volatilidades.values[j]))
     
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
@@ -66,7 +92,7 @@ def ewma(retornos, l):
     n=len(retornos)
     factor = l**np.array(range(n))
     
-    volSinAjuste = sum((1-l)*retornos*retornos*factor)
+    volSinAjuste = sum((1-l)*retornos*retornos*factor[::-1])
     volConAjuste = volSinAjuste/(1-l**(n+1))
     volSinAjuste = np.sqrt(volSinAjuste)
     volConAjuste = np.sqrt(volConAjuste)

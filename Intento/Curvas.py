@@ -88,7 +88,7 @@ def seleccionar_todos_bonos(moneda):
 
     """
 
-    bonos = ("SELECT TOP(1000000) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP' AND FechaEmision >= '2009-01-02 00:00:00'")
+    bonos = ("SELECT TOP(1) * FROM [dbAlgebra].[dbo].[TdNemoRF] WHERE Moneda = 'CLP'")
     bonos = pd.read_sql(bonos, cnn)
     return bonos
 

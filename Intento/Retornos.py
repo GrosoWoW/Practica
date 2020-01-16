@@ -10,7 +10,7 @@ tipos de datos (Retornos de valores de bonos, factores de descuento, etc)
 
 """
 
-def retorno_bonos(tablaHistorico, fecha, pivotes, num):
+def retorno_bonos(tablaHistorico, fecha):
 
     """
     Calcula el retorno de los bonos para una tabla de bonos,

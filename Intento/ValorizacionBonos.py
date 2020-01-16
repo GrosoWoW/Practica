@@ -195,7 +195,7 @@ def plot_bonos(arregloBonos):
 
 #-------------------Valorizacion con Pivotes----------------
 
-def evaluacion_curva(dia, convencion):
+def historico_factor_descuento(dia, convencion):
 
     curvans = seleccionar_curva_NS("IF#CLP")
     factor = []
@@ -213,19 +213,19 @@ def evaluacion_curva(dia, convencion):
        
 """
 f, ax = plt.subplots()
-ax.plot(evaluacion_curva(30, "ACT360"), label="30 dias")
-ax.plot(evaluacion_curva(60, "ACT360"), label="60 dias")
-ax.plot(evaluacion_curva(90, "ACT360"), label="90 dias")
-ax.plot(evaluacion_curva(365, "ACT360"), label="365 dias")
-ax.plot(evaluacion_curva(365*2, "ACT360"), label = "365*2 dias")
-ax.plot(evaluacion_curva(365*3, "ACT360"), label = "365*3 dias")
-ax.plot(evaluacion_curva(365*4, "ACT360"), label = "365*4 dias")
-ax.plot(evaluacion_curva(365*5, "ACT360"), label = "365*5 dias")
-ax.plot(evaluacion_curva(365*10, "ACT360"), label = "365*10 dias")
-ax.plot(evaluacion_curva(365*15, "ACT360"), label = "365*15 dias")
-ax.plot(evaluacion_curva(365*20, "ACT360"), label = "365*20 dias")
-ax.plot(evaluacion_curva(365*40, "ACT360"), label = "365*40 dias")
-ax.plot(evaluacion_curva(365*80, "ACT360"), label = "365*80 dias")
+ax.plot(historico_factor_descuento(30, "ACT360"), label="30 dias")
+ax.plot(historico_factor_descuento(60, "ACT360"), label="60 dias")
+ax.plot(historico_factor_descuento(90, "ACT360"), label="90 dias")
+ax.plot(historico_factor_descuento(365, "ACT360"), label="365 dias")
+ax.plot(historico_factor_descuento(365*2, "ACT360"), label = "365*2 dias")
+ax.plot(historico_factor_descuento(365*3, "ACT360"), label = "365*3 dias")
+ax.plot(historico_factor_descuento(365*4, "ACT360"), label = "365*4 dias")
+ax.plot(historico_factor_descuento(365*5, "ACT360"), label = "365*5 dias")
+ax.plot(historico_factor_descuento(365*10, "ACT360"), label = "365*10 dias")
+ax.plot(historico_factor_descuento(365*15, "ACT360"), label = "365*15 dias")
+ax.plot(historico_factor_descuento(365*20, "ACT360"), label = "365*20 dias")
+ax.plot(historico_factor_descuento(365*40, "ACT360"), label = "365*40 dias")
+ax.plot(historico_factor_descuento(365*80, "ACT360"), label = "365*80 dias")
 ax.set_title("oowoo")
 ax.set_xlabel("awa")
 ax.set_ylabel("ewe")

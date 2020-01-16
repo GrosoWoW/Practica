@@ -66,7 +66,7 @@ valor_bono_derivados(bono_derivados, curva_derivados)
 
 #Bonos
 tiempo_inicial = time()
-BonoEntel = tabla_bono_retorno(bono_6, "BonoEntel", False, 20)
+BonoEntel = tabla_bono_retorno(bono_6, "BonoEntel")
 
 #Acciones
 Entel = tabla_excel_yahoo_retorno("ENTEL.SN.csv")
