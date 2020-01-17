@@ -22,7 +22,7 @@ def factor(lam, n):
     return (1-lam)
 
 def formula(lam, r, N, j, k):
-
+   
     """
     Calculo de la sumatoria correspondiente a la formula
     recibe lam que corresponda a 0.94
@@ -43,6 +43,7 @@ def ewma_new_new(m_empresas, matriz_r):
     Calculo de ewma para la matriz_r
     Recibe m_empresas que corresponde a la cantidad de empresas
     y la matriz_r con la cantidad de datos
+    
     """
 
     matriz_r = matriz_r.drop(columns=("Date"))

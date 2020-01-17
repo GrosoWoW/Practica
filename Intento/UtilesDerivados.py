@@ -424,8 +424,7 @@ def proyectar_flujos_tabla(fecha, fecha_curva, devengo, hora, fecha_efectiva, fe
 
         if fecha_tasa_final == False:
             print("ERROR")
-            print(paises)
-            print(fecha_aux)
+
 
         flujos_f[i][2] = fecha_tasa_final  # Ajuste día hábil siguiente para la fechaPago
 

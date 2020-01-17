@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import pandas as pd
+from openpyxl.workbook import Workbook
 
 from Correlaciones import ewma, ewma_new_new, ewma_new_new_pivotes
 from Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
@@ -83,7 +84,9 @@ def tir_vector(primeraFecha):
 
     vector_dias = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
     tir_vector = []
-    curva_ns = seleccionar_NS_fecha(str(primeraFecha))
+    fecha_tentativa = ultimo_habil_pais(primeraFecha.date(), "CL", get_cnn())
+    fecha_tentativa = datetime.datetime(fecha_tentativa.year, fecha_tentativa.month, fecha_tentativa.day)
+    curva_ns = seleccionar_NS_fecha(str(fecha_tentativa))
     for i in range(len(vector_dias)):
 
         tir =  TIR_n(vector_dias[i], curva_ns["ancla"][0], curva_ns["y0"][0], curva_ns["y1"][0], curva_ns["y2"][0])
@@ -116,6 +119,12 @@ def calculo_volatilidades(bonos):
     return dataFrame
 
 def seleccionar_volatilidades(volatilidades):
+
+    """
+    Funcion de seleccion de volatilidades
+    Su uso se emplea para mayor comodidad
+
+    """
 
     volatilidad = volatilidades["Volatilidad"]
     return volatilidad
@@ -228,6 +237,14 @@ def volatilidad_flujo(alfa, volatilidad_pivote1, volatilidad_pivote2):
 
 def correlacion_pivotes(pivotes):
 
+    """
+    Funcion de calculo para la matriz de correlacion de 
+    todos los pivotes
+    :param pivotes: Pivoste que se les calculara la matriz de 
+    correlacion
+
+    """
+
     vector_dias = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
 
     df = pd.DataFrame()
@@ -265,59 +282,88 @@ def solucion_ecuacion(sigma_flujo, sigma_pivote1, sigma_pivote2, ro):
 
 def calculo(bono):
 
+    """
+    Funcion de calculo de la distribucion para los pivotes
+    de todos los bonos
+    :param bono: Pandas con todos los bonos que se les calculara
+    la distribucion
+
+    """
+
     piv = pivotes(bono)
+    fecha_primero_pivote = add_days(piv["Fecha"][0], -30)
     correlacion = correlacion_pivotes(piv)
-    cupon = np.zeros(len(piv["Fecha"]))
 
     for i in range(len(np.array(bono["Fecha"]))):
 
         tabla = StrTabla2ArrTabla(bono["TablaDesarrollo"][i], str(bono["FechaEmision"][i]).split(" ")[0]) #Se crea la tabla de desarrollo del bono
         dfTabla_bono = pd.DataFrame(tabla, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
         fecha_emision = bono["FechaEmision"][i]
+        calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, dfTabla_bono)
 
-        for j in range(len(np.array(dfTabla_bono["Numero"]))):
+       
 
-            fecha_inicial = dfTabla_bono["Fecha"][j]
-            fecha = dfTabla_bono["Fecha"][j]
+def calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, tabla_bono):
 
-            pivote = entre_pivotes(fecha, piv)
-            pivote1 = np.array(pivote)[0]
-            pivote2 = np.array(pivote)[1]
+    """
+    Funcion que calcula la distribucion de valores para cada pivote
+    en el calculo de un solo bono
+    :param correlacion: Matriz de correlacion de los pivotes
+    :param fecha_primero_pivote: Fecha correspondiente al dia 0
+    :param fecha_emision: Fecha emision de el bono
+    :param piv: Pivotes que se utilizaran en el calculo
+    :param tabla_bono: Pandas con los datos de el bono
 
-            TIR_pivote1 = pivote1[1]
-            TIR_pivote2 = pivote2[1]
+    """
 
-            volatilidad_pivote1 = pivote1[2]
-            volatilidad_pivote2 = pivote2[2]
+    cupon = np.zeros(len(piv["Fecha"]))
 
-            diferencia_dia1 = (pivote1[0] - fecha_emision).days
-            diferencia_dia2 = (pivote2[0] - fecha_emision).days
+    for j in range(len(np.array(tabla_bono["Numero"]))):
 
-            flujo_bono = dfTabla_bono["Cupon"][j]
-            indice = vector_dias.index(diferencia_dia1)
+        fecha_inicial = tabla_bono["Fecha"][j]
+        fecha = tabla_bono["Fecha"][j]
 
-            D_cupon = plazo_anual_convencion("ACT360", fecha_emision, fecha)
+        pivote = entre_pivotes(fecha, piv)
+        pivote1 = np.array(pivote)[0]
+        pivote2 = np.array(pivote)[1]
+
+        TIR_pivote1 = pivote1[1]
+        TIR_pivote2 = pivote2[1]
+
+        volatilidad_pivote1 = pivote1[2]
+        volatilidad_pivote2 = pivote2[2]
+
+        diferencia_dia_indices1 = (pivote1[0] - fecha_primero_pivote).days
+        diferencia_dia_indices2 = (pivote2[0] - fecha_primero_pivote).days
 
 
-            if pivote[0]["Fecha"] != pivote[1]["Fecha"]:
+        flujo_bono = tabla_bono["Cupon"][j]
+        indice = vector_dias.index(diferencia_dia_indices1)
+        D_cupon = plazo_anual_convencion("ACT360", fecha_emision, fecha)
 
-                alfa = alfa_0(fecha_inicial, pivote[0]["Fecha"], pivote[1]["Fecha"], fecha)
-                TIR_fluj = TIR_flujo(alfa, TIR_pivote1, TIR_pivote2)
-                volatilidad_fluj = volatilidad_flujo(alfa, volatilidad_pivote1, volatilidad_pivote2)
-                
-                solucion = min(solucion_ecuacion(volatilidad_fluj, volatilidad_pivote1, volatilidad_pivote2, correlacion[str(diferencia_dia1)][str(diferencia_dia2)]))
-                valorPresente = valor_presente(flujo_bono, TIR_fluj, D_cupon)
 
-                indice = vector_dias.index(diferencia_dia1)
-                cupon[indice] += valorPresente * solucion
-                cupon[indice + 1] += valorPresente * (1 - solucion)
+    if pivote[0]["Fecha"] != pivote[1]["Fecha"]:
 
-            else:
+        alfa = alfa_0(fecha_inicial, pivote[0]["Fecha"], pivote[1]["Fecha"], fecha)
+        TIR_fluj = TIR_flujo(alfa, TIR_pivote1, TIR_pivote2)
+        volatilidad_fluj = volatilidad_flujo(alfa, volatilidad_pivote1, volatilidad_pivote2)
+        
+        solucion = min(solucion_ecuacion(volatilidad_fluj, volatilidad_pivote1, volatilidad_pivote2,\
+                correlacion[str(diferencia_dia_indices1)][str(diferencia_dia_indices2)]))
 
-                valorPresente = valor_presente(flujo_bono, TIR_pivote1, D_cupon)
-                cupon[indice] += valorPresente  
+        valorPresente = valor_presente(flujo_bono, TIR_fluj, D_cupon)
 
-        print(cupon)
+        cupon[indice] += valorPresente * solucion
+        cupon[indice + 1] += valorPresente * (1 - solucion)
+
+    else:
+
+        valorPresente = valor_presente(flujo_bono, TIR_pivote1, D_cupon)
+        cupon[indice] += valorPresente  
+
+    df = pd.DataFrame({"Fecha":piv["Fecha"], "Valor": cupon})
+    return df
+    #df.to_csv("hol.csv", mode= "a", header=False)
 
 #-----------------------Calculo------------------------------
 
