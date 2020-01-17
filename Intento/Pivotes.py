@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from openpyxl.workbook import Workbook
 
-from Correlaciones import ewma, ewma_new_new, ewma_new_new_pivotes
+from Correlaciones import (covarianza_pivotes, ewma, ewma_new_new,
+                           ewma_new_new_pivotes)
 from Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
                     seleccionar_todos_bonos)
 from Retornos import retorno_bonos, retorno_factor
@@ -27,7 +28,7 @@ la utilizacion de pivotes
 
 vector_dias = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
 
-def intervalo_pivotes(bonos):
+def intervalo_pivotes():
 
     """
     Calcula el intervalo de los bonos, es decir la fecha inicial
@@ -36,9 +37,9 @@ def intervalo_pivotes(bonos):
 
     """
 
-    maximo = min(bonos["FechaEmision"])
-    minimo = max(bonos["FechaVenc"])
-    return [minimo, maximo]
+    curvas = ("SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#CLP' ORDER BY 'Fecha' DESC")
+    curvas = pd.read_sql(curvas, get_cnn())
+    return curvas["Fecha"][0]
 
 def primer_dia(bonos):
 
@@ -49,7 +50,7 @@ def primer_dia(bonos):
 
     """
 
-    fecha_actual = intervalo_pivotes(bonos)[1]
+    fecha_actual = intervalo_pivotes()
     fecha_actual = ultimo_habil_pais(fecha_actual, "CL", get_cnn())
     fecha_actual = datetime.datetime(fecha_actual.year, fecha_actual.month, fecha_actual.day)
     return fecha_actual
@@ -86,7 +87,7 @@ def tir_vector(primeraFecha):
     tir_vector = []
     fecha_tentativa = ultimo_habil_pais(primeraFecha.date(), "CL", get_cnn())
     fecha_tentativa = datetime.datetime(fecha_tentativa.year, fecha_tentativa.month, fecha_tentativa.day)
-    curva_ns = seleccionar_NS_fecha(str(fecha_tentativa))
+    curva_ns = seleccionar_NS_fecha(str("2018-12-28 00:00:00"))
     for i in range(len(vector_dias)):
 
         tir =  TIR_n(vector_dias[i], curva_ns["ancla"][0], curva_ns["y0"][0], curva_ns["y1"][0], curva_ns["y2"][0])
@@ -168,7 +169,6 @@ def entre_pivotes(fecha, pivotes):
 
         fecha_probable = pivotes["Fecha"][i]
         if i == 0 and fecha_probable >= fecha:
-
             return [pivotes.iloc[i], pivotes.iloc[i]]
 
         elif i == largo - 1 :
@@ -256,7 +256,10 @@ def correlacion_pivotes(pivotes):
         df[str(vector_dias[i])] = retorno
 
     correlacion = ewma_new_new_pivotes(len(vector_dias), df, pivotes["volatilidad"])
-    return correlacion
+    covarianza = covarianza_pivotes(len(vector_dias), df, pivotes["volatilidad"])
+    return [correlacion, covarianza]
+
+
 
 
 def solucion_ecuacion(sigma_flujo, sigma_pivote1, sigma_pivote2, ro):
@@ -289,20 +292,23 @@ def calculo(bono):
     la distribucion
 
     """
-
+    vector_valor = []
     piv = pivotes(bono)
     fecha_primero_pivote = add_days(piv["Fecha"][0], -30)
-    correlacion = correlacion_pivotes(piv)
+    correlacion = correlacion_pivotes(piv)[0]
+    covarianza = correlacion_pivotes(piv)[1]
+    print(covarianza)
 
     for i in range(len(np.array(bono["Fecha"]))):
 
         tabla = StrTabla2ArrTabla(bono["TablaDesarrollo"][i], str(bono["FechaEmision"][i]).split(" ")[0]) #Se crea la tabla de desarrollo del bono
         dfTabla_bono = pd.DataFrame(tabla, columns=['Numero', 'Fecha', 'Fecha str', 'Interes', 'Amortizacion', 'Remanente', 'Cupon'])
         fecha_emision = bono["FechaEmision"][i]
-        calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, dfTabla_bono)
-
-       
-
+        resultado = calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, dfTabla_bono)
+        vector_valor.append((resultado["Valor"].values))
+    
+    return vector_valor
+   
 def calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, tabla_bono):
 
     """
@@ -341,36 +347,77 @@ def calculo_por_bono(correlacion, fecha_primero_pivote, fecha_emision, piv, tabl
         indice = vector_dias.index(diferencia_dia_indices1)
         D_cupon = plazo_anual_convencion("ACT360", fecha_emision, fecha)
 
+        if pivote[0]["Fecha"] != pivote[1]["Fecha"]:
 
-    if pivote[0]["Fecha"] != pivote[1]["Fecha"]:
+            alfa = alfa_0(fecha_inicial, pivote[0]["Fecha"], pivote[1]["Fecha"], fecha)
+            TIR_fluj = TIR_flujo(alfa, TIR_pivote1, TIR_pivote2)
+            volatilidad_fluj = volatilidad_flujo(alfa, volatilidad_pivote1, volatilidad_pivote2)
+            
+            solucion = min(solucion_ecuacion(volatilidad_fluj, volatilidad_pivote1, volatilidad_pivote2,\
+                    correlacion[str(diferencia_dia_indices1)][str(diferencia_dia_indices2)]))
 
-        alfa = alfa_0(fecha_inicial, pivote[0]["Fecha"], pivote[1]["Fecha"], fecha)
-        TIR_fluj = TIR_flujo(alfa, TIR_pivote1, TIR_pivote2)
-        volatilidad_fluj = volatilidad_flujo(alfa, volatilidad_pivote1, volatilidad_pivote2)
-        
-        solucion = min(solucion_ecuacion(volatilidad_fluj, volatilidad_pivote1, volatilidad_pivote2,\
-                correlacion[str(diferencia_dia_indices1)][str(diferencia_dia_indices2)]))
+            valorPresente = valor_presente(flujo_bono, TIR_fluj, D_cupon)
 
-        valorPresente = valor_presente(flujo_bono, TIR_fluj, D_cupon)
+            cupon[indice] += valorPresente * solucion
+            cupon[indice + 1] += valorPresente * (1 - solucion)
 
-        cupon[indice] += valorPresente * solucion
-        cupon[indice + 1] += valorPresente * (1 - solucion)
+        else:
 
-    else:
-
-        valorPresente = valor_presente(flujo_bono, TIR_pivote1, D_cupon)
-        cupon[indice] += valorPresente  
+            valorPresente = valor_presente(flujo_bono, TIR_pivote1, D_cupon)
+            cupon[indice] += valorPresente  
 
     df = pd.DataFrame({"Fecha":piv["Fecha"], "Valor": cupon})
     return df
     #df.to_csv("hol.csv", mode= "a", header=False)
 
+
+def vector_pivotes(pivotes_valores):
+
+    """
+    Calcula el vector B (super bono) con todos
+    los pivotes calculados en la funcion calculo
+    :param pivotes_valores: Corresponde a los valores de 
+    los pivotes (Valor presente)
+
+    """
+
+    largo = len(pivotes_valores)
+    valor = 0
+    vector = []
+    for  i in range(len(pivotes_valores[0])):
+
+        for j in range(largo):
+            
+            pivote = pivotes_valores[j]
+            valor += pivote[i]
+
+        vector.append(valor)
+        valor = 0
+
+    return vector
+    
+
+def multiplicacion(covarianza, vector_grande):
+
+    valor = np.dot(np.dot(vector_grande, covarianza), vector_grande)
+    return valor
+
+
+
+
 #-----------------------Calculo------------------------------
 
+"""
 bonos = seleccionar_todos_bonos("CLP")
+print(bonos["FechaEmision"])
 bono = seleccionar_bono_fecha(str(primer_dia(bonos)))
 piv = pivotes(bonos)
-correlacion_pivotes(piv)
+#correlacion_pivotes(piv)
 
-fecha_new = datetime.datetime(2014, 6, 2)
-calculo(bonos)
+
+
+a = calculo(bonos)
+b = vector_pivotes(a)
+c = correlacion_pivotes(piv)[1]
+print(multiplicacion(c, b))
+"""

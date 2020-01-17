@@ -76,7 +76,7 @@ def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
         for j in range(0,m_empresas):
 
             if k == j:
-                ro[k][j] = volatilidades[k]
+                ro[k][j] = volatilidades.values[k]
             else:
                 tamanoRetorno = len(matriz_r[:,k])
  
@@ -100,4 +100,32 @@ def ewma(retornos, l):
     
     data = [[volConAjuste, volSinAjuste, 1/(1-l**(n+1)), n ]]
     df = pd.DataFrame(data, columns = ['Vol c/ajuste', "Vol s/ajuste","Ajuste", " cantidad de retornos"])
+    return df
+
+#-----------------------Covarianza---------------------------------------------
+
+def covarianza_pivotes(m_empresas, matriz_r, volatilidades):
+
+    """
+    Calculo de la matriz de covarianza de la matriz_r
+    Recibe m_empresas que corresponde a la cantidad de empresas
+    y la matriz_r con la cantidad de datos
+
+    """
+    nombre = matriz_r.columns.tolist()
+    matriz_r = matriz_r.values
+        
+    ro = np.zeros([m_empresas, m_empresas])
+    for k in range(0,m_empresas):
+        for j in range(0,m_empresas):
+
+            if k == j:
+                ro[k][j] = (volatilidades.values[k])**2
+            else:
+                tamanoRetorno = len(matriz_r[:,k])
+ 
+                ro[k][j] = (factor(0.94, tamanoRetorno) * \
+                    formula(0.94, matriz_r, tamanoRetorno, j, k))
+    
+    df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
