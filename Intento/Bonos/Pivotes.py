@@ -10,9 +10,9 @@ from Correlaciones import (covarianza_pivotes, ewma, ewma_new_new,
 from Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
                     seleccionar_todos_bonos)
 from Retornos import retorno_bonos, retorno_factor
-from Util import add_days
-from UtilesDerivados import siguiente_habil_pais, ultimo_habil_pais
-from UtilesValorizacion import (StrTabla2ArrTabla, diferencia_dias_convencion,
+from LibreriasUtiles.Util import add_days
+from LibreriasUtiles.UtilesDerivados import siguiente_habil_pais, ultimo_habil_pais
+from LibreriasUtiles.UtilesValorizacion import (StrTabla2ArrTabla, diferencia_dias_convencion,
                                 plazo_anual_convencion)
 from ValorizacionBonos import (TIR_n, historico_factor_descuento,
                                total_historico)

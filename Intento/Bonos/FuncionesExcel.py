@@ -8,8 +8,8 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 
 import pyodbc
-import Util
-import UtilesValorizacion
+import LibreriasUtiles.Util
+import LibreriasUtiles.UtilesValorizacion
 from Retornos import retorno_bonos
 
 #----------------Funciones para trabajar en excel---------------------

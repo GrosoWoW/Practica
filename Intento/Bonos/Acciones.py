@@ -1,12 +1,17 @@
-import pandas as pd
 import numpy as np
-from Curvas import seleccionar_todos_bonos, seleccionar_bono_fecha
-from Pivotes import *
+import pandas as pd
+
 from Correlaciones import ewma
+from Curvas import seleccionar_bono_fecha, seleccionar_todos_bonos
+from Pivotes import *
 
 
-def retornos_acciones(tabla_datos):
+def retornos_acciones(nombreAccion):
 
+    print(nombreAccion)
+    archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\ArchivosExcel\\'+ nombreAccion)
+    columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    tabla_datos = archivo[columnas]
     arreglo = []
     arreglo.append(0)
     tabla_adj = tabla_datos["Adj Close"]
@@ -31,9 +36,7 @@ def volatilidades_acciones(retornos_acciones):
         calculo = ewma(retornos_acciones[i]["Retornos"], 0.94)
         final.append(calculo["Vol c/ajuste"][0])
 
-    print(final)
     df = pd.DataFrame({"Volatilidad": final})
-    print(df)
 
     return df
 
@@ -44,13 +47,9 @@ def unir_dataframes(data1, data2):
 
 def calculo_para_acciones(acciones):
 
-    largo = len(acciones)
     retornos = []
-    for i in range(largo):
-
-        calculo_retorno = retornos_acciones(acciones[i])
-        retornos.append(calculo_retorno)
-    
+    calculo_retorno = retornos_acciones(acciones)
+    retornos.append(calculo_retorno)
     volatilidad = volatilidades_acciones(retornos)
 
     return [retornos, volatilidad]
@@ -101,6 +100,34 @@ def multiplicacion_acciones(covarianza, vector_grande):
     valor = np.dot(np.dot(vector_grande, covarianza), vector_grande)
     return valor
 
+def varias_acciones(lista_acciones):
+
+    largo = len(lista_acciones)
+    df = pd.DataFrame()
+    for i in range(largo):
+
+        retorno = tabla_excel_yahoo_retorno(lista_acciones[i])
+        calculo_acciones = calculo_para_acciones(lista_acciones[i])
+        df = pd.concat([df, calculo_acciones[1]], axis=1)
+
+    return df
+
+        
+def retorno_varias_acciones(lista_acciones):
+
+    large = len(lista_acciones)
+    df = pd.DataFrame()
+
+    for i in range(large):
+
+        retorno = retornos_acciones(lista_acciones[i])
+        df["Retornos"] = retorno["Retornos"]
+    
+    return df
+
+
+
+
 #--------------------------------Calculo-----------------------
 
 bonos = seleccionar_todos_bonos("CLP")
@@ -110,17 +137,17 @@ corr_piv = correlacion_pivotes(piv)
 vol_bonos = calculo_volatilidades(bonos)
 
 
-retorno = tabla_excel_yahoo_retorno("BSANTANDER.SN.xlsx")
-calculo_acciones = calculo_para_acciones([retorno])
-union = unir_dataframes(vol_bonos, calculo_acciones[1])
+acciones = ["BSANTANDER.SN.xlsx"]
+volatilidad_accion = varias_acciones(acciones)
+volatilidad_total = unir_dataframes(vol_bonos, volatilidad_accion)
 
-print(union)
+retorno_acciones = retorno_varias_acciones(acciones)
+print(retorno_acciones)
+
 
 a = calculo(bonos)
 b = vector_pivotes(a)
 c = correlacion_pivotes(piv)[1]
-a = correlacion_pivotes_Acciones(b, calculo_acciones[0][0], union)
-print(multiplicacion(c, b))
-print(a[1])
-print(multiplicacion_acciones(a[1], union["Volatilidad"]))
+a = correlacion_pivotes_Acciones(b, retorno_acciones, volatilidad_total)
+print(a)
 

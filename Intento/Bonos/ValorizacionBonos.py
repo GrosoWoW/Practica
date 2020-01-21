@@ -13,8 +13,8 @@ from Curvas import (get_cnn, seleccionar_bono, seleccionar_bonos_moneda,
                     seleccionar_curva_derivados, seleccionar_curva_NS)
 from FuncionesExcel import (graficar_retornos, tabla_bono_retorno,
                             tabla_excel_yahoo_retorno, unir_dataframes)
-from Matematica import interpolacion_log_escalar
-from UtilesValorizacion import (StrTabla2ArrTabla, add_days,
+from LibreriasUtiles.Matematica import interpolacion_log_escalar
+from LibreriasUtiles.UtilesValorizacion import (StrTabla2ArrTabla, add_days,
                                 diferencia_dias_convencion, factor_descuento,
                                 parsear_curva)
 

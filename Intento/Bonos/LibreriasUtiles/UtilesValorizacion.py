@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import datetime
 import pandas as pd
-from Util import add_days, add_months, add_years, es_bisiesto, fecha_str, send_msg
+from LibreriasUtiles.Util import add_days, add_months, add_years, es_bisiesto, fecha_str, send_msg
 import numpy as np
 
 

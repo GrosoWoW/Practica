@@ -1,6 +1,6 @@
 import pandas as pd
 import pyodbc
-from Matematica import interpolacion_log_escalar
+from LibreriasUtiles.Matematica import interpolacion_log_escalar
 
 """
 Funciones principales para extraer datos de una base de datos
