@@ -4,9 +4,9 @@
 import datetime
 import pandas as pd
 import numpy as np
-from UtilesValorizacion import tipo_cambio, cast_convencion, factor_descuento
-from Util import remove_col, fecha_str, add_days, add_months, add_years, send_msg, sub_arr
-from Matematica import interpolacion_log_escalar
+from LibreriasUtiles.UtilesValorizacion import tipo_cambio, cast_convencion, factor_descuento
+from LibreriasUtiles.Util import remove_col, fecha_str, add_days, add_months, add_years, send_msg, sub_arr
+from LibreriasUtiles.Matematica import interpolacion_log_escalar
 
 
 def siguiente_habil_pais(fecha, pais, cn):

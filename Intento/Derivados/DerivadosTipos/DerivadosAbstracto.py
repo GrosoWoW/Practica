@@ -2,13 +2,15 @@
 """Clase para el cálculo de derivados
 Este módulo contiene una clase abstracta
 """
+import sys
+sys.path.append("..")
 
 from abc import ABC, abstractmethod
 import pandas as pd
-from UtilesDerivados import genera_flujos, ultimo_habil_pais
-from UtilesValorizacion import parsear_curva, valor_moneda
-from Util import fecha_str, add_months, add_days, send_msg
-from Matematica import interpolacion_log_escalar
+from Derivados.LibreriasUtiles.UtilesDerivados import genera_flujos, ultimo_habil_pais
+from Derivados.LibreriasUtiles.UtilesValorizacion import parsear_curva, valor_moneda
+from Derivados.LibreriasUtiles.Util import fecha_str, add_months, add_days, send_msg
+from Derivados.LibreriasUtiles.Matematica import interpolacion_log_escalar
 import math
 import datetime
 
