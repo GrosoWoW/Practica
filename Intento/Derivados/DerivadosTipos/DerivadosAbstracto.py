@@ -257,6 +257,7 @@ class DerivadosAbstracto(ABC):
             curvas_monedas[moneda] = ""
             monedas_str += "'" + moneda + "',"
         monedas_str = monedas_str[0:-1]
+        
 
         # Se obtienen las curvas
         curvas = ("SELECT Curva, FechaMax, C.Hora, C.Moneda "

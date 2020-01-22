@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-from Derivados.DerivadosAbstracto import *
-from Util import fecha_str, add_days
+import sys
+sys.path.append("..")
+from Derivados.LibreriasUtiles.Util import fecha_str, add_days
+
+from Derivados.LibreriasUtiles.UtilesDerivados import ultimo_habil_paises, siguiente_habil_paises, ultimo_habil_pais, genera_flujos, proyectar_flujos_tabla
+from Derivados.LibreriasUtiles.UtilesDerivados import cast_frecuencia, delta_frecuencia
+
+from Derivados.DerivadosTipos.DerivadosAbstracto import *
+from Derivados.LibreriasUtiles.Util import fecha_str, add_days
 import datetime
-from UtilesDerivados import siguiente_habil_paises, ultimo_habil_pais, genera_flujos, proyectar_flujos_tabla
-from UtilesDerivados import delta_frecuencia, cast_frecuencia
-import numpy as np
+
 
 class DerivadosSUC(DerivadosAbstracto):
     
