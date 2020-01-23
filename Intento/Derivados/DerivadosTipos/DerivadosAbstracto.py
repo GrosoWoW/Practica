@@ -4,6 +4,8 @@ Este módulo contiene una clase abstracta
 """
 import sys
 sys.path.append("..")
+import numpy as np
+
 
 from abc import ABC, abstractmethod
 import pandas as pd

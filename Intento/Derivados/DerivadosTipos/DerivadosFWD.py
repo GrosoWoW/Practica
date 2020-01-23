@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 sys.path.append("..")
+import numpy as np
+
 
 from Derivados.DerivadosTipos.DerivadosAbstracto import *
 from Derivados.LibreriasUtiles.Util import fecha_str, add_days
@@ -9,7 +11,6 @@ from Derivados.LibreriasUtiles.UtilesDerivados import cast_frecuencia, delta_fre
 from Derivados.LibreriasUtiles.UtilesDerivados import ultimo_habil_paises, siguiente_habil_paises
 from Derivados.LibreriasUtiles.Util import add_days, send_msg
 import datetime
-import numpy as np
 
 
 class DerivadosFWD(DerivadosAbstracto):
