@@ -22,7 +22,7 @@ from ValorizacionBonos import (TIR_n, historico_factor_descuento,
 """
 A continuacion se presentan las funciones principales para realizar 
 calculos de valorizaciones de bonos con el metodo Risk metrics, con
-la utilizacion de pivotes
+la utilizacion de pivotes. 
 
 """
 
@@ -403,11 +403,9 @@ def multiplicacion(covarianza, vector_grande):
     return valor
 
 
-
-
 #-----------------------Calculo------------------------------
 
-"""
+
 bonos = seleccionar_todos_bonos("CLP")
 print(bonos["FechaEmision"])
 bono = seleccionar_bono_fecha(str(primer_dia(bonos)))
@@ -420,4 +418,3 @@ a = calculo(bonos)
 b = vector_pivotes(a)
 c = correlacion_pivotes(piv)[1]
 print(multiplicacion(c, b))
-"""
