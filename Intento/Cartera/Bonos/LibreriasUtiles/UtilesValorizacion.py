@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import datetime
 import pandas as pd
-from LibreriasUtiles.Util import add_days, add_months, add_years, es_bisiesto, fecha_str, send_msg
+from Bonos.LibreriasUtiles.Util import add_days, add_months, add_years, es_bisiesto, fecha_str, send_msg
+import numpy as np
 
 
 def cast_convencion(conv):
@@ -21,9 +22,7 @@ def cast_convencion(conv):
         "ISMA-30/360": "30/360",
         "ISMA-30/360 NONEOM": "30/360",
         "30/360 NON-EOM": "30/360",
-        
-        "L30/360":"L30/360",
-        
+
         "ACT/365": "ACT365",
         "ACT365": "ACT365",
         "NL365": "ACT365",
@@ -66,7 +65,7 @@ def diferencia_dias_convencion(convencion, fechaini, fechafin):
 
     conv = cast_convencion(convencion)
 
-    if conv in ["30/360","L30/360"]:
+    if conv == "30/360":
         if add_days(fechaini, 1).day == 1 and m1 == 2:
             d1 = 30
             if add_days(fechafin, 1).day == 1 and m2 == 2:
@@ -133,7 +132,6 @@ def plazo_anual_convencion(convencion, fechaini, fechafin):
     dif = diferencia_dias_convencion(convencion, fechaini, fechafin)
     res = {
         "30/360": dif/360,
-        "L30/360": dif/360,
         "ACT360": dif/360,
         "LACT360": dif/360,
         "LACT30": dif/30,
@@ -149,7 +147,6 @@ def plazo_anual_convencion(convencion, fechaini, fechafin):
 
 def base_convencion(conv):
     res = {"30/360": 360,
-           "L30/360":360,
            "ACT360":360,
            "LACT360":360,
 
@@ -164,7 +161,7 @@ def base_convencion(conv):
 def factor_descuento(tir, fechaini, fechafin, convencion, orden):
     plazo = plazo_anual_convencion(convencion, fechaini, fechafin)
 
-    if convencion in ["LACT360","LACT30","L30/360"]:
+    if convencion == "LACT360" or convencion == "LACT30":
         res = {
             0: 1/(1 + tir*plazo),
             1: -plazo / (1 + tir*plazo)**2,
@@ -242,7 +239,7 @@ def tipo_cambio(moneda1, moneda2, fecha, hora, cn):
     return valor_moneda(moneda1, moneda2, camino, arr)
 
 
-def valor_moneda(moneda_inicio, moneda_fin, camino_monedas, valores, filename="placeholder"):
+def valor_moneda(moneda_inicio, moneda_fin, camino_monedas, valores):
     """
 
     :param moneda_inicio:
@@ -259,7 +256,7 @@ def valor_moneda(moneda_inicio, moneda_fin, camino_monedas, valores, filename="p
     df_camino = df_camino.loc[df_camino['MonedaPasiva'] == moneda_fin]
 
     if len(df_camino) == 0 or len(df_camino) != df_camino.Total.iloc[0]:
-        send_msg("ERROR: valor_moneda: No se encontró camino para" + " " + moneda_inicio + " " + moneda_fin, filename)
+        send_msg("ERROR: valor_moneda: No se encontró camino para", moneda_inicio, moneda_fin)
         return
 
     cambios = df_camino[['MonedaActivaPuente', 'MonedaPasivaPuente']]
@@ -273,8 +270,7 @@ def valor_moneda(moneda_inicio, moneda_fin, camino_monedas, valores, filename="p
 
 
 def factor_descuento_inv_arr(fecha, arr, convencion):
-    import copy
-    arr = copy.deepcopy(arr)
+
     for i in range(len(arr)):
         plazo = plazo_anual_convencion(convencion, fecha, add_days(fecha, int(float(arr[i][0]))))
 
@@ -282,7 +278,7 @@ def factor_descuento_inv_arr(fecha, arr, convencion):
             arr[i][1] = -1000
 
         else:
-            if convencion in ["LACT360","LACT30","L30/360"]:
+            if convencion == "LACT360" or convencion == "LACT30":
                 arr[i][1] = 100 * ((1 / float(arr[i][1])) - 1) / plazo
 
             else:
@@ -294,3 +290,38 @@ def factor_descuento_inv_arr(fecha, arr, convencion):
     if len(arr) > 0 and int(float(arr[0][0])) == 0:
         arr[0][1] = arr[1][1]
     return arr
+
+def StrTabla2ArrTabla(strTabla, fechaEmision):
+    tabla = "0#"+fechaEmision+"#0#0#100#0|"+strTabla
+    arreglo = tabla.split("|")
+    Flujos = pd.DataFrame(columns=['flujos'])
+    row = Flujos
+    row = pd.DataFrame({'flujos':arreglo})
+    Flujos = Flujos.append(row)
+    Flujos = Flujos["flujos"].str.split("#")
+    for i in range(1, len(Flujos)):
+        Flujos[i][3] = float(Flujos[i][3].replace(',','.'))
+        Flujos[i][4] = float(Flujos[i][4].replace(',','.'))
+        Flujos[i][2] = float(Flujos[i][2].replace(',','.'))
+        Flujos[i][5] = float(Flujos[i][5].replace(',','.'))
+        Flujos[i][1] = datetime.datetime.strptime(Flujos[i][1], '%d-%m-%Y').strftime('%Y-%m-%d')
+        Flujos[i][1] = datetime.datetime.strptime(Flujos[i][1], '%Y-%m-%d')
+    Flujos[0][3] = float(Flujos[0][3].replace(',','.'))
+    Flujos[0][4] = float(Flujos[0][4].replace(',','.'))
+    Flujos[0][2] = float(Flujos[0][2].replace(',','.'))
+    Flujos[0][5] = float(Flujos[0][5].replace(',','.'))
+    Flujos[0][1] = datetime.datetime.strptime(Flujos[0][1], '%Y-%m-%d')
+    array = np.insert(Flujos.values[0], 2, fechaEmision)
+    for i in range(1,len(Flujos.values)):
+        array = np.vstack((array, np.insert(Flujos.values[i], 2, fechaEmision)))
+
+    return array
+
+
+def SumaDelta(Tasa, delta):
+    if type(Tasa) == int or type(Tasa) == float:
+        return Tasa+delta
+    else:
+        for i in range(0, len(Tasa)):
+            Tasa[i] = Tasa[i] +delta
+        return Tasa

@@ -5,16 +5,16 @@ import numpy as np
 import pandas as pd
 from openpyxl.workbook import Workbook
 
-from Correlaciones import (covarianza_pivotes, ewma, ewma_new_new,
+from Bonos.Correlaciones import (covarianza_pivotes, ewma, ewma_new_new,
                            ewma_new_new_pivotes)
-from Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
+from Bonos.Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
                     seleccionar_todos_bonos)
-from Retornos import retorno_bonos, retorno_factor
-from LibreriasUtiles.Util import add_days
-from LibreriasUtiles.UtilesDerivados import siguiente_habil_pais, ultimo_habil_pais
-from LibreriasUtiles.UtilesValorizacion import (StrTabla2ArrTabla, diferencia_dias_convencion,
+from Bonos.Retornos import retorno_bonos, retorno_factor
+from Bonos.LibreriasUtiles.Util import add_days
+from Bonos.LibreriasUtiles.UtilesDerivados import siguiente_habil_pais, ultimo_habil_pais
+from Bonos.LibreriasUtiles.UtilesValorizacion import (StrTabla2ArrTabla, diferencia_dias_convencion,
                                 plazo_anual_convencion)
-from ValorizacionBonos import (TIR_n, historico_factor_descuento,
+from Bonos.ValorizacionBonos import (TIR_n, historico_factor_descuento,
                                total_historico)
 
 #----------------------Pivotes---------------------------------------

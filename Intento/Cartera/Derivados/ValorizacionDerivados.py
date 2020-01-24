@@ -5,9 +5,13 @@ import sys
 sys.path.append("..")
 import numpy as np
 import pyodbc
+import time
 from Derivados.DerivadosTipos.DerivadosSCC import *
 from Derivados.DerivadosTipos.DerivadosFWD import *
 from Derivados.DerivadosTipos.DerivadosSUC import *
+from Derivados.MiDerivados import *
+from Derivados.valorizacionBD_0708_01 import valorizar_bono_NS, TIR_DB, parsear_convenciones
+
 
 import datetime
 import pandas as pd
@@ -77,6 +81,7 @@ def creacion_derivado(FechaEfectiva, FechaVenc, AjusteFeriados, NocionalActivo, 
     elif str(Tipo.values[0]) == "SUC":
         derivado = DerivadosSUC(fecha, hora, info1, cnn)
 
+
     return derivado
 
 
@@ -129,10 +134,6 @@ def extraer_crear_derivado(ID_Key):
 
     return dev
 
-C = extraer_crear_derivado("146183")
-C.genera_flujos()
-C.valoriza_flujos()
-C.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
 
 
 # %%
@@ -261,6 +262,7 @@ def volatilidades_derivados(dfRetornos):
     """
 
     numero_filas = len(vector_dias)
+    numero_columnas = len(dfRetornos[str(vector_dias[0])])
     df = pd.DataFrame()
     df["Pivotes"] = vector_dias
     valores = []
@@ -320,6 +322,7 @@ def calcular_diccionario_correlaciones(diccionario_pivotes):
 
     """
 
+    lenght = len(diccionario_pivotes)
     diccionario = dict()
     for key in diccionario_pivotes:
         correlacion = calcular_correlacion_moneda(key, diccionario_pivotes[key])
@@ -586,7 +589,7 @@ def discrimador_sol(soluciones):
         if 0 <= soluciones[i] and soluciones[i] <= 1:
 
             return soluciones[i]
-
+    print("Javier, nos fallaste")
     return exit(1) 
 
 def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado, distribuciones, derivado, tabla_total):
@@ -624,7 +627,7 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         dia_pivote1 = vector_dias[indices_pivotes[0]]
         dia_pivote2 = vector_dias[indices_pivotes[1]]
 
-        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]],             volatilidades_pivotes[indices_pivotes[1]],     correlacion_utilizada[str(dia_pivote1)][str(dia_pivote2)] )
+        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_utilizada[str(dia_pivote1)][str(dia_pivote2)] )
 
         factor = discrimador_sol(a)
         flujo1 = tabla_derivado["Flujo"][i]
@@ -632,8 +635,8 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         factor_descuento = interpolacion_log_escalar(diferencia_dias, curva_parseada)
         VP = factor_descuento*flujo1
     
-        distribucion[indices_pivotes[0]] += factor*factor_descuento*flujo1
-        distribucion[indices_pivotes[1]] += (1 - factor)*factor_descuento*flujo1
+        distribucion[indices_pivotes[0]] += factor*VP
+        distribucion[indices_pivotes[1]] += (1 - factor)*VP
 
     
    
@@ -660,21 +663,41 @@ def calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion,
 
 
 
-def calculo(derivado_IDKEY, fecha_valorizacion):
+def calculo_derivado(derivado_IDKEY, fecha_valorizacion):
 
     """
     Funcion principal de calculo
 
     """
 
-    monedas_utilizadas = ["USD", "CLP", "UF"]
+    monedas_utilizadas = ["USD", "CLP", "UF", "EUR"]
     tabla_total = generar_diccionario_table(vector_dias, fecha_valorizacion, monedas_utilizadas)
     correlacion_total = calcular_diccionario_correlaciones(tabla_total)
     distribuciones = crear_distrubucion_pivotes(monedas_utilizadas)
     calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion, distribuciones)
     return distribuciones
 
+
+# %%
+"""
 fecha = datetime.date(2018, 4, 18)
-uwu = calculo(["146183"], fecha)
-uwu
+derivado =  ("SELECT Top(10) [ID_Key] FROM [dbDerivados].[dbo].[TdCarteraDerivados_V2] WHERE Tipo != 'XCCY'")
+derivado = pd.read_sql(derivado, cnn)
+derivados = []
+for i in range(len(derivado["ID_Key"])):
+    oa = derivado["ID_Key"][i]
+    derivados.append(str(oa))
+
+print("Calculando un total de "+str(len(derivados))+" Derivados")
+print("Calculando.....")
+ahora = time.time()
+uwu = calculo(derivados, fecha)
+despues = time.time()
+
+print("El calculo demoro un total de "+str((despues - ahora))+" segundos")
+
+"""
+
+# %%
+
 
