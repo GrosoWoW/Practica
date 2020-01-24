@@ -405,16 +405,3 @@ def multiplicacion(covarianza, vector_grande):
 
 #-----------------------Calculo------------------------------
 
-
-bonos = seleccionar_todos_bonos("CLP")
-print(bonos["FechaEmision"])
-bono = seleccionar_bono_fecha(str(primer_dia(bonos)))
-piv = pivotes(bonos)
-#correlacion_pivotes(piv)
-
-
-
-a = calculo(bonos)
-b = vector_pivotes(a)
-c = correlacion_pivotes(piv)[1]
-print(multiplicacion(c, b))

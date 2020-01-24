@@ -1,1 +1,0 @@
-ERROR: No viene la columna 'MonedaPasivo'
