@@ -18,10 +18,10 @@ from Derivados.DerivadosTipos.DerivadosSUC import *
 
 # Conexion al servidor de base de datos
 
-server = "192.168.30.200"
-driver = '{SQL Server}'  # Driver you need to connect to the database
-username = 'practicantes'
-password = 'PBEOh0mEpt'
+server = '172.16.1.38'
+username = 'sa'
+password = 'qwerty123'
+driver = '{ODBC Driver 17 for SQL Server}'
 cnn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 def creacion_derivado(FechaEfectiva, FechaVenc, AjusteFeriados, NocionalActivo, MonedaActivo,                                                     MonedaBase, TipoTasaActivo, TipoTasaPasivo, TasaActivo,                                                                        TasaPasivo, FrecuenciaActivo, FrecuenciaPasivo,                                                                         ID, Tipo,NocionalPasivo, MonedaPasivo ,ID_Key=None): 
@@ -127,7 +127,7 @@ def extraer_crear_derivado(ID_Key):
 
     return dev
 
-def seleccionar_curva_derivados(moneda, n):
+def seleccionar_curva_derivados(moneda, n, fecha=datetime.date(2018, 1, 22)):
 
     """
     Funcion encargada de seleccionar todas las curva de TdCurvasDerivados
@@ -142,7 +142,7 @@ def seleccionar_curva_derivados(moneda, n):
     if moneda == "UF": #Funciona para el error de CLF
         monedas = "CLF"
 
-    curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1700' ORDER BY Fecha ASC")
+    curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1500' AND Fecha > '" + str(fecha) + "'")
     curva = pd.read_sql(curva, cnn)
     return curva
 

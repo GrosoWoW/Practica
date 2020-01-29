@@ -14,11 +14,12 @@ from Derivados.DerivadosTipos.DerivadosFWD import *
 from Derivados.DerivadosTipos.DerivadosSCC import *
 from Derivados.DerivadosTipos.DerivadosSUC import *
 from Derivados.ValorizacionDerivados import *
+from Bonos.UtilesBonos import *
 
-server = "192.168.30.200"
-driver = '{SQL Server}'  # Driver you need to connect to the database
-username = 'practicantes'
-password = 'PBEOh0mEpt'
+server = '172.16.1.38'
+username = 'sa'
+password = 'qwerty123'
+driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 
@@ -36,12 +37,16 @@ class Cartera:
         """
         # Fecha valorización.
         self.fecha_val = fecha_val
+        
         # Arreglo con nemotecnicos.
         self.bonos = bonos
+        
         # Arreglo con ID_Keys.
         self.derivados = derivados
+        
         # Arreglo con nombre de archivos acciones.
         self.acciones = acciones
+        
         # Inicializar DataFrame con derivados.
         self.dfDerivados = pd.DataFrame(columns=['ID_Key', 'Fecha', 'Administradora', 'Fondo', 'Contraparte', 'Tipo',
                                                  'ID', 'FechaTransaccion', 'FechaFixing', 'TenorFixing',
@@ -61,12 +66,18 @@ class Cartera:
                                              'MontoColocado'])
         # Conexión a base de datos.
         self.cn = cn
+        
         # Dictionario con derivados como objetos. Llaves son los ID_Key. El orden calza con el arreglo derivados.
-        self.ObjDerivados = {key: None for key in derivados}
+        self.objDerivados = {key: None for key in derivados}
+
         # Monedas.
-        self.Monedas = ["CLP", "USD", "UF"]
+        self.monedas = ["CLP", "USD", "UF"]
+        
+        #Riesgos.
+        self.riesgos = ["AAA", "AA", "A"]#,"AA+" "AA-", "A+", "A", "A-", "BBB+", "BBB"]
+        
         # Pivotes.
-        self.Pivotes = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
+        self.pivotes = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
 
     def creaDfBonos(self):
         """
@@ -88,7 +99,7 @@ class Cartera:
         """
         derivados = self.derivados
         cn = self.cn
-        # df = self.dfDerivados
+
         for der in derivados:
             fila = ("SELECT TOP (1) * FROM [dbDerivados].[dbo].[TdCarteraDerivados_V2] WHERE ID_Key = '" + der + "'")
             fila = pd.read_sql(fila, cn)
@@ -100,7 +111,7 @@ class Cartera:
         :return:
         """
         for id_key in self.derivados:
-            self.ObjDerivados[id_key] = extraer_crear_derivado(id_key)
+            self.objDerivados[id_key] = extraer_crear_derivado(id_key)
     
  
     def get_retAcciones(self):
@@ -108,7 +119,6 @@ class Cartera:
         Calcula y retorna el retorno.
         :return: pd.DataFrame con los retornos de las acciones en la cartera.
         """
-        print(self.acciones)
         acciones = self.acciones
         return retorno_varias_acciones(acciones)
 
@@ -120,42 +130,120 @@ class Cartera:
         """
         return calculo_volatilidades_acciones(df_retornos)
     
+    #def get_volCurvas()
     
-    def get_retBonDer(self, n):
+    def get_retCurvas(self, n):
         """
         Calcula y retorna el retorno de curvas de bonos y derivados.
         :param n: Cantidad de curvas.
-        :return: pd.DataFrame con los retornos de las curvas de bonos y derivados.
+        :return: pd.DataFrame con los retornos de las curvas de bonos y derivados. Orden: derivados-bonos.
         """
         arr = []
-        for moneda in self.Monedas:
+        # Retornos derivados.
+        for moneda in self.monedas:
             dfHistorico = calculo_historico(vector_dias, moneda, n)
             aux = calcular_retornos(dfHistorico)
             arr.append(aux)
-        # FALTA HACER LO MISMO CON CURVAS DE BONO.
+
+        # Retornos Bonos
+        for mon in self.monedas:
+            for riesgo in self.riesgos:
+                col = nombre_columna(mon, riesgo, self.pivotes)
+                hist = historicoPlazos(riesgo, mon, np.array(self.pivotes)/360, np.arange(len(self.pivotes)), n)
+                hist = pd.DataFrame(hist, columns=col)#uwu
+                arr.append(calcular_retornos(hist))
+
         return pd.concat(arr, 1)
+
+
+    def get_volCurvas(self, retornoCurvas):
+        """
+        param retornoCurvas: DataFrame. Retorno no todas
+        Retorna volatilidades de los instrumentos que se valorizan con curvas.
+
+        """
+        # Agregar calculo de volatilidades de bonos.
+        return volatilidades_derivados(retornoCurvas)
+
+    def get_retornosTotales(self, retAcciones, retCurvas):
+        """
+        param retAcciones: DataFrame. Retornos de las acciones en la cartera.
+        param retCurvas: DataFrame. Retornos de instrumentos de curvas. Orden: derivados-bonos.
+        Retorna DataFrame con los retornos de todos los instrumentos en la cartera. Orden: acciones-der-bon.
+
+        """
+
+        return pd.concat([retAcciones, retCurvas])
+
+    #def get_volTotales(self):
+
+
     def getDfBonos(self):
+
+        """
+        Retorna un DataFrame con los bonos
+
+        """
         return self.dfBonos
 
     def getDfDerivados(self):
+
+        """
+        Retorna un DataFrame con los derivados
+        
+        """
         return self.dfDerivados
 
     def getObjDerivados(self):
-        return self.ObjDerivados
 
-    def calculoPivote_derivados(self):
+        """
+        Retorna un diccionario con los derivados, la key es su id_key
 
-        self.pivotes_derivados = calculo_derivado(self.ObjDerivados, self.fecha_val)
+        """
+        return self.objDerivados
 
     def get_pivotes_derivados(self):
 
+        """
+        Retorna un diccionario con los pivotes y su distribucion
+
+        """
         return self.pivotes_derivados
 
+    def calculoPivote_derivados(self):
+        
+        """
+        Funcion encargada de calcular la distribucion de los pivotes
 
-miCartera = Cartera(datetime.date(2018, 4, 18), ["BENTE-M"], ["146854"], ["BSANTANDER.SN.xlsx"], cn)
+        """
+
+        self.pivotes_derivados = calculo_derivado(self.objDerivados, self.fecha_val)
+    def get_pivotes_bonos(self):
+        """
+        Retorna un diccionario con los pivotes y su distribucion
+
+        """
+        fecha_val_str = self.fecha_val.strftime("%Y-%m-%d")
+        print(fecha_val_str)
+        return proyeccionBonos(self.bonos, np.array(self.pivotes)/360, fecha_val_str, self.getDfBonos())
+
+
+miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618", "BENTE-M"], ["146854"], ["BSANTANDER.SN.xlsx", "ENTEL.SN.xlsx"], cn)
 miCartera.crearObjDerivados()
-print(miCartera.getObjDerivados())
-miCartera.calculoPivote_derivados()
-print(miCartera.get_pivotes_derivados())
+miCartera.creaDfBonos()
+# print(miCartera.getObjDerivados())
+tiempo = time()
+#miCartera.calculoPivote_derivados()
+tiempo1 = time()
+print("Tiempo de calculo pivotes: "+str(tiempo1-tiempo))
+"""print(miCartera.get_pivotes_derivados())
 print(miCartera.get_retAcciones())
-print(miCartera.get_retBonDer(1000))
+print(miCartera.get_retAcciones())"""
+print("-----------------------------------------")
+#print(miCartera.get_volCurvas(1000))
+tiempo2 = time()
+print("Tiempo de calculo volatilidad: "+str(tiempo2-tiempo1))
+#print(miCartera.get_retCurvas(1000))
+tiempo3 = time()
+print("Tiempo de retornos de todo: "+str(tiempo3-tiempo2))
+print(miCartera.get_pivotes_bonos())
