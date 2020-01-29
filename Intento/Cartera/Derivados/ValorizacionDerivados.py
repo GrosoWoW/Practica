@@ -1,34 +1,29 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
-import sys
-sys.path.append("..")
-import numpy as np
-import pyodbc
-import time
-from Derivados.DerivadosTipos.DerivadosSCC import *
-from Derivados.DerivadosTipos.DerivadosFWD import *
-from Derivados.DerivadosTipos.DerivadosSUC import *
-from Derivados.MiDerivados import *
-from Derivados.valorizacionBD_0708_01 import valorizar_bono_NS, TIR_DB, parsear_convenciones
-
-
 import datetime
+import sys
+import time
+sys.path.append("..")
+
+
+import numpy as np
 import pandas as pd
-from Bonos.Correlaciones import ewma, ewma_new_new_pivotes, covarianza_pivotes
+
+import pyodbc
+from Bonos.Correlaciones import covarianza_pivotes, ewma, ewma_new_new_pivotes
 from Bonos.LibreriasUtiles.UtilesValorizacion import diferencia_dias_convencion
+from Derivados.DerivadosTipos.DerivadosFWD import *
+from Derivados.DerivadosTipos.DerivadosSCC import *
+from Derivados.DerivadosTipos.DerivadosSUC import *
 
 
-# %%
-server = '172.16.1.38'
-username = 'sa'
-password = 'qwerty123'
-driver = '{ODBC Driver 17 for SQL Server}'
 
+# Conexion al servidor de base de datos
+
+server = "192.168.30.200"
+driver = '{SQL Server}'  # Driver you need to connect to the database
+username = 'practicantes'
+password = 'PBEOh0mEpt'
 cnn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
-
-# %%
 def creacion_derivado(FechaEfectiva, FechaVenc, AjusteFeriados, NocionalActivo, MonedaActivo,                                                     MonedaBase, TipoTasaActivo, TipoTasaPasivo, TasaActivo,                                                                        TasaPasivo, FrecuenciaActivo, FrecuenciaPasivo,                                                                         ID, Tipo,NocionalPasivo, MonedaPasivo ,ID_Key=None): 
 
     """
@@ -84,8 +79,6 @@ def creacion_derivado(FechaEfectiva, FechaVenc, AjusteFeriados, NocionalActivo, 
 
     return derivado
 
-
-# %%
 def extraer_crear_derivado(ID_Key):
 
     """
@@ -134,15 +127,13 @@ def extraer_crear_derivado(ID_Key):
 
     return dev
 
-
-
-# %%
-def seleccionar_curva_derivados(moneda):
+def seleccionar_curva_derivados(moneda, n):
 
     """
     Funcion encargada de seleccionar todas las curva de TdCurvasDerivados
     dada su respectiva moneda (La hora sera 1700)
     :param moneda: El tipo de moneda utilizada para seleccionar la curva
+    :param n: Cantidad de curvas a pedir.
     :return Pandas con todas las curvas obtenidas
 
     """
@@ -151,7 +142,7 @@ def seleccionar_curva_derivados(moneda):
     if moneda == "UF": #Funciona para el error de CLF
         monedas = "CLF"
 
-    curva = ("SELECT * FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"'                                                                                                 AND Hora = '1700' ORDER BY Fecha ASC")
+    curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1700' ORDER BY Fecha ASC")
     curva = pd.read_sql(curva, cnn)
     return curva
 
@@ -175,26 +166,27 @@ def seleccionar_curva_fecha(moneda, fecha):
     return curva
 
 
-# %%
+ 
 vector_dias = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30] #Vector para crear los pivotes
 
 
-def calculo_historico(pivotes, moneda):
+def calculo_historico(pivotes, moneda, n):
 
     """
     Funcion encargada de calcular el historico de factores
     de descuento con todas las curvas de TdCurvasDerivados
     :param pivotes: Vector con todos los dias que se necesitan los historicos
     :param moneda: Moneda necesaria para extraer las curvas de la base de datos
+    :param n: Cantidad de curvas.
     :return DataFrame con el calculo de los historicos
 
     """
     largo = len(pivotes)
-    curvas = seleccionar_curva_derivados(moneda)
+    curvas = seleccionar_curva_derivados(moneda, n)
     valores = []
 
     df = pd.DataFrame()
-    df["Fechas"] = curvas["Fecha"]
+    #df["Fechas"] = curvas["Fecha"]
 
     for i in range(largo):
 
@@ -207,14 +199,10 @@ def calculo_historico(pivotes, moneda):
             valor = interpolacion_log_escalar(valor_dia, curva_parseada)
             valores.append(valor)
         
-        df[str(vector_dias[i])] = valores
+        df[str(vector_dias[i]) + moneda] = valores
         valores = []
 
     return df
-
-
-# %%
-
 
 def calcular_retornos(dfHistorico):
 
@@ -225,13 +213,15 @@ def calcular_retornos(dfHistorico):
 
     """
     numero_filas = len(vector_dias)
-    numero_columnas = len(dfHistorico["30"])
+    nom_columnas = dfHistorico.columns
+
+    numero_columnas = len(dfHistorico[nom_columnas[0]])
     valores = []
     df = pd.DataFrame()
 
     for i in range(numero_filas):
 
-        columna = dfHistorico[str(vector_dias[i])]
+        columna = dfHistorico[nom_columnas[i]]
 
         for j in range(numero_columnas):
 
@@ -244,13 +234,11 @@ def calcular_retornos(dfHistorico):
                 valor = np.log(columna[j] / columna[j-1])
                 valores.append(valor)
 
-        df[str(vector_dias[i])] = valores
+        df[nom_columnas[i]] = valores
         valores = []
 
     return df
 
-
-# %%
 def volatilidades_derivados(dfRetornos):
 
     """
@@ -260,24 +248,20 @@ def volatilidades_derivados(dfRetornos):
     :return DataFrame con las volatilidades de cada pivote
 
     """
-
+    nom_columnas = dfRetornos.columns
     numero_filas = len(vector_dias)
-    numero_columnas = len(dfRetornos[str(vector_dias[0])])
+    numero_columnas = len(dfRetornos[nom_columnas[0]])
     df = pd.DataFrame()
-    df["Pivotes"] = vector_dias
     valores = []
 
     for i in range(numero_filas):
 
-        retornos = dfRetornos[str(vector_dias[i])]
+        retornos = dfRetornos[nom_columnas[i]]
         valor = ewma(retornos, 0.94)
         valores.append(valor["Vol c/ajuste"].values[0])
     
     df["Volatilidades"] = valores
     return df
-
-
-# %%
 
 def correlaciones_derivador(dfRetornos, dfVolatilidades):
 
@@ -306,7 +290,7 @@ def calcular_correlacion_moneda(moneda, tabla_total):
 
     """
 
-    historico = calculo_historico(vector_dias, moneda)
+    historico = calculo_historico(vector_dias, moneda, 1000)
     retornos = calcular_retornos(historico)
     correlacion = correlaciones_derivador(retornos, tabla_total)
     return correlacion
@@ -330,8 +314,6 @@ def calcular_diccionario_correlaciones(diccionario_pivotes):
 
     return diccionario
 
-
-# %%
 def covarianzas_derivador(dfRetornos, dfVolatilidades):
 
     """
@@ -348,8 +330,6 @@ def covarianzas_derivador(dfRetornos, dfVolatilidades):
     corr = covarianza_pivotes(lenght, dfRetornos, volatilidad)
     return corr 
 
-
-# %%
 def crear_pivotes(fecha_inicial, pivotes):
 
     """
@@ -450,7 +430,7 @@ def crear_distrubucion_pivotes(monedas):
     return diccionario
 
 
-# %%
+ 
 def valor_alfa(fecha_valorizacion, fecha_pivote1, fecha_pivote2, fecha_pago):
 
     """
@@ -508,7 +488,7 @@ def interpolar_volatilidad(alfa_0, dfPivotes, fecha_pago):
     return alfa_0*volatilidad_pivote1 + (1 - alfa_0)*volatilidad_pivote2
 
 
-# %%
+ 
 def generar_tabla_completa(pivotes, fecha_valorizacion, moneda):
 
     """
@@ -523,7 +503,7 @@ def generar_tabla_completa(pivotes, fecha_valorizacion, moneda):
 
     fecha_pivotes = crear_pivotes(fecha_valorizacion, pivotes)
     factores_desct = factor_desct_pivotes(pivotes, fecha_pivotes, moneda)
-    historico = calculo_historico(pivotes, moneda)
+    historico = calculo_historico(pivotes, moneda, 1000)
     retorno = calcular_retornos(historico)
     volatilidades = volatilidades_derivados(retorno)
     factores_desct["Volatilidades"] = volatilidades["Volatilidades"]
@@ -551,7 +531,7 @@ def generar_diccionario_table(pivotes, fecha_valorizacion, monedas):
     return diccionario
 
 
-# %%
+ 
 def solucion_ecuacion(sigma_flujo, sigma_pivote1, sigma_pivote2, ro):
 
     """
@@ -574,7 +554,7 @@ def solucion_ecuacion(sigma_flujo, sigma_pivote1, sigma_pivote2, ro):
     return[x1, x2]
 
 
-# %%
+ 
 def discrimador_sol(soluciones):
 
     """
@@ -627,7 +607,7 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         dia_pivote1 = vector_dias[indices_pivotes[0]]
         dia_pivote2 = vector_dias[indices_pivotes[1]]
 
-        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_utilizada[str(dia_pivote1)][str(dia_pivote2)] )
+        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_utilizada[str(dia_pivote1)+str(moneda_derivado)][str(dia_pivote2)+str(moneda_derivado)] )
 
         factor = discrimador_sol(a)
         flujo1 = tabla_derivado["Flujo"][i]
@@ -641,7 +621,7 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
     
    
 
-def calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion, distribuciones):
+def calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, distribuciones):
 
     """
     Funcion que extiende a calculo, se encarga de iterar por todos
@@ -650,12 +630,12 @@ def calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion,
     """
 
     resultado = []
-    largo_derivados = len(derivado_IDKEY)
+    largo_derivados = len(derivados)
 
-    for j in range(largo_derivados):
+    for key in derivados.keys():
 
-        derivado = extraer_crear_derivado(derivado_IDKEY[j])
-        tabla_derivado = derivado.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing",                         "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
+        derivado = derivados[key]
+        tabla_derivado = derivado.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing","FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
 
         fechas_pago = tabla_derivado["FechaFixing"]
         calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado, distribuciones, derivado, tabla_total)
@@ -663,7 +643,7 @@ def calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion,
 
 
 
-def calculo_derivado(derivado_IDKEY, fecha_valorizacion):
+def calculo_derivado(derivados, fecha_valorizacion):
 
     """
     Funcion principal de calculo
@@ -674,30 +654,7 @@ def calculo_derivado(derivado_IDKEY, fecha_valorizacion):
     tabla_total = generar_diccionario_table(vector_dias, fecha_valorizacion, monedas_utilizadas)
     correlacion_total = calcular_diccionario_correlaciones(tabla_total)
     distribuciones = crear_distrubucion_pivotes(monedas_utilizadas)
-    calculo1(derivado_IDKEY, tabla_total, correlacion_total, fecha_valorizacion, distribuciones)
+    calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, distribuciones)
     return distribuciones
-
-
-# %%
-"""
-fecha = datetime.date(2018, 4, 18)
-derivado =  ("SELECT Top(10) [ID_Key] FROM [dbDerivados].[dbo].[TdCarteraDerivados_V2] WHERE Tipo != 'XCCY'")
-derivado = pd.read_sql(derivado, cnn)
-derivados = []
-for i in range(len(derivado["ID_Key"])):
-    oa = derivado["ID_Key"][i]
-    derivados.append(str(oa))
-
-print("Calculando un total de "+str(len(derivados))+" Derivados")
-print("Calculando.....")
-ahora = time.time()
-uwu = calculo(derivados, fecha)
-despues = time.time()
-
-print("El calculo demoro un total de "+str((despues - ahora))+" segundos")
-
-"""
-
-# %%
 
 
