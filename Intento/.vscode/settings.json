@@ -1,3 +1,7 @@
 {
-    "python.pythonPath": "C:\\Python37\\python.exe"
+    "python.pythonPath": "C:\\Python37\\python.exe",
+    "liveshare.showInStatusBar": "never",
+    "liveshare.openSharedServers": false,
+    "liveshare.featureSet": "insiders",
+    "liveshare.showReadOnlyUsersInEditor": "always"
 }

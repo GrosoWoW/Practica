@@ -53,8 +53,7 @@ def ewma_new_new(m_empresas, matriz_r):
     ro = np.zeros([m_empresas, m_empresas])
     for k in range(0,m_empresas):
         for j in range(0,m_empresas):
-
-            tamanoRetorno = len(matriz_r[:][k])
+            tamanoRetorno = np.size(matriz_r, 0)
             ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k)
 
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
