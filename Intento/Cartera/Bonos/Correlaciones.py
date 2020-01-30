@@ -46,7 +46,7 @@ def ewma_new_new(m_empresas, matriz_r):
     
     """
 
-    matriz_r = matriz_r.drop(columns=("Date"))
+    #matriz_r = matriz_r.drop(columns=("Date"))
     nombre = matriz_r.columns.tolist()
     matriz_r = matriz_r.values
 

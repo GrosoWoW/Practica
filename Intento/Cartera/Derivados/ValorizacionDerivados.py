@@ -589,25 +589,24 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         pivote_usado = tabla_total[moneda_derivado]
         fechas_pivotes = pivote_usado["Fecha"]
 
-        volatilidades_pivotes = pivote_usado["Volatilidades"]
-        correlacion_utilizada = correlacion_total[moneda_derivado]
-
-        curva = seleccionar_curva_fecha(moneda_derivado, str(fecha_valorizacion))
-        curva_parseada = parsear_curva(curva["Curva"][0], fecha_valorizacion)
-
         fecha_pago_actual = fechas_pago[i]
 
         indices_pivotes = buscar_pivotes(fechas_pivotes, fecha_pago_actual)
+        dia_pivote1 = vector_dias[indices_pivotes[0]]
+        dia_pivote2 = vector_dias[indices_pivotes[1]]
+
+
+        volatilidades_pivotes = pivote_usado["Volatilidades"]
+
+        curva = seleccionar_curva_fecha(moneda_derivado, str(fecha_valorizacion))
+        curva_parseada = parsear_curva(curva["Curva"][0], fecha_valorizacion)
 
         alfa = valor_alfa(fecha_valorizacion, fechas_pivotes[indices_pivotes[0]], fechas_pivotes[indices_pivotes[1]], fecha_pago_actual)
 
         volatilidad = interpolar_volatilidad(alfa, pivote_usado, fecha_pago_actual)
         factor_desct = interpolar_factorDesct(alfa, pivote_usado, fecha_pago_actual)
 
-        dia_pivote1 = vector_dias[indices_pivotes[0]]
-        dia_pivote2 = vector_dias[indices_pivotes[1]]
-
-        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_utilizada[str(dia_pivote1)+str(moneda_derivado)][str(dia_pivote2)+str(moneda_derivado)] )
+        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_total[str(dia_pivote1)+str(moneda_derivado)][str(dia_pivote2)+str(moneda_derivado)] )
 
         factor = discrimador_sol(a)
         flujo1 = tabla_derivado["Flujo"][i]
@@ -643,7 +642,7 @@ def calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, dist
 
 
 
-def calculo_derivado(derivados, fecha_valorizacion):
+def calculo_derivado(derivados, fecha_valorizacion, correlacion_total):
 
     """
     Funcion principal de calculo
@@ -652,7 +651,7 @@ def calculo_derivado(derivados, fecha_valorizacion):
 
     monedas_utilizadas = ["USD", "CLP", "UF", "EUR"]
     tabla_total = generar_diccionario_table(vector_dias, fecha_valorizacion, monedas_utilizadas)
-    correlacion_total = calcular_diccionario_correlaciones(tabla_total)
+    #correlacion_total = calcular_diccionario_correlaciones(tabla_total)
     distribuciones = crear_distrubucion_pivotes(monedas_utilizadas)
     calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, distribuciones)
     return distribuciones

@@ -39,8 +39,11 @@ def curvaBono(riesgo, moneda, fecha):
     :param fecha: String de la fecha que se quiere la curva.
     :return: dataFrame con la informacion.
     '''
-    if (riesgo == 'AAA' and moneda == 'CLP'):
-         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#CLP' AND Fecha = '" + fecha + "'"
+    #NO HAY CURVAS PARA RIESGOS QUE NO SEA EN UF.
+    if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha = '" + fecha + "'"
+    elif(riesgo == 'AA' and moneda == 'CLP'):
+        cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#No Prepagables' AND Fecha = '" + fecha + "'"
     else:
         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha = '" + fecha + "'"
     cb = pd.read_sql(cb, cn)
@@ -54,8 +57,10 @@ def curvaBono2(riesgo, moneda, fecha, n = 1000):
     :param fecha: String de la primera fecha que se quieren las curvas.
     :return: dataFrame con la informacion.
     '''
-    if (riesgo == 'AAA' and moneda == 'CLP'):
-         cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#CLP' AND Fecha > '" + fecha + "'"
+    if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha > '" + fecha + "'"
+    elif(riesgo == 'AA' and moneda == 'CLP'):
+        cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#No Prepagables' AND Fecha > '" + fecha + "'"
     else:
         cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha > '" + fecha + "'"
     cb = pd.read_sql(cb, cn)
@@ -89,7 +94,7 @@ def tir_plazos(riesgo, moneda, plazos, p, fecha):
     '''
     curva = curvaBono(riesgo, moneda, fecha)
     tir = np.zeros(2)
-    if (riesgo == 'AAA' and moneda == 'CLP'):
+    if ((riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
         tir = TIR(curva, [plazos[p[0]], plazos[p[1]]])
     else:
         for i in range(2):
@@ -195,7 +200,7 @@ def historicoPlazos(riesgo, moneda, plazos, p, n=1000):
  
     curva = curvaBono2(riesgo,moneda,fecha_aux.strftime("%Y-%m-%d"), n)
     tir = np.zeros([len(curva['Fecha']),len(p)])
-    if (riesgo == 'AAA' and moneda == 'CLP'):
+    if ((riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
         # Por cada dia
         for i in range(len(curva['Fecha'])):
             # Por cada periodo
@@ -221,7 +226,6 @@ def retorno(historico):
 
 def retornoPlazos(plazos, historico):
     retornos = pd.DataFrame()
-    print(len(historico))
     for i in range(len(plazos)):
         retornos[str(plazos[i]*360)] = retorno(historico[i])
     return retornos
@@ -320,7 +324,6 @@ def proyeccionBonos(nemo, plazos, fecha, bonos):
     :return: proyeccion: Diccionario con las proyecciones segun moneda
     '''
     # bonos = bonosNemo(nemo)
-    print(bonos)
     proyeccion = np.zeros(len(plazos))
     flujo_plazos = np.zeros(len(plazos))
     dic = {'USDAAA': np.zeros(len(plazos)),\
@@ -345,28 +348,19 @@ def proyeccionBonos(nemo, plazos, fecha, bonos):
     
     # Bono con su informacion de riesgo 
     bonos["Riesgo"] = riesgos
-    print(bonos)
-    print(riesgos)
     br = bonos    
     # Por cada bono
     for i in range(len(br)):
-        print("Obtenemos el riesgo")
         r = br["Riesgo"][i]
         moneda = br["Moneda"][i]
         convencion = conv(br["Base1"][i], br["Base2"][i])
         cupones = StrTabla2ArrTabla(br["TablaDesarrollo"][i], br["FechaEmision"][i].to_pydatetime().date().strftime("%Y-%m-%d"))
         p = list(range(len(plazos)))
-        print("Generamos la matriz de correlacion")
-        print("Historico")
         hist_plazos = historicoPlazos(r, moneda, plazos, p)
-        print("Retornos")
         ret_plazos = retornoPlazos(plazos, hist_plazos)
-        print("Volatilidades")
         vol_plazos = volatilidadesPlazo(r, moneda, plazos, p, fecha, hist_plazos) # Se puede entregar volatilidades.
-        print("Matriz de Correlacion")
         matriz_corr = correlacion(ret_plazos, plazos, vol_plazos)
         corr = extraccion(matriz_corr, plazos) # Se puede entregar matriz_corr.
-        print("Entramos al pivoteo")
       # Por cada cupon
         for j in range(len(cupones)):
             d = plazo_anual_convencion(convencion, castDay(fecha), cupones[j][1].date())
@@ -388,7 +382,7 @@ def proyeccionBonos(nemo, plazos, fecha, bonos):
             tir_p = tir_plazos(r, moneda, plazos, p, fecha)
             tir = a_0 * tir_p[0] + (1 - a_0) * tir_p[1]
 
-            vol_p = volatilidadesPlazo(r, moneda, plazos, p, fecha)
+            vol_p = vol_plazos#volatilidadesPlazo(r, moneda, plazos, p, fecha)
             vol = a_0 * vol_p[0] + (1 - a_0) * vol_p[1]
 
             vp = flujo / (1 + tir)**d
@@ -401,14 +395,32 @@ def proyeccionBonos(nemo, plazos, fecha, bonos):
     return dic
 
 def nombre_columna(moneda, riesgo, pivotes):
-        """
-        Crea arreglo con nombres de columnas para usar en retornos.
-        param: moneda: Str. Moneda.
-        param: riesgo: Str. Riesgo.
-        param: pivotes: Arreglo 1-dim. Pivotes en días.
-        return: Arreglo 1-dim. Arreglo con str.
-        """
-        arr = []
-        for pivote in pivotes:
-            arr.append(str(pivote)+riesgo+moneda)
-        return arr
+    """
+    Crea arreglo con nombres de columnas para usar en retornos.
+    param: moneda: Str. Moneda.
+    param: riesgo: Str. Riesgo.
+    param: pivotes: Arreglo 1-dim. Pivotes en días.
+    return: Arreglo 1-dim. Arreglo con str.
+    """
+    arr = []
+    for pivote in pivotes:
+        arr.append(str(pivote)+riesgo+moneda)
+    return arr
+
+def extraccionBono(vec, matriz):
+    '''
+    Extrae la diagonal superior de la matriz de covarianza.
+    param: vec: Arreglo con los indices de la ubicación a extraer.
+    param: matriz: Matriz de covarianza.
+    return: Arreglo 1-dim con las correlaciones consecutivas entre los pivotes.
+    '''
+    a = vec[0]
+    b = vec[1]
+    corr = np.zeros(b-a)
+    k = 0
+    for i in range(a+1, b+1):
+        for j in range(a,b):
+            corr[k] = matriz[i][j]
+            k += 1
+    return corr
+
