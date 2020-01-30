@@ -1,6 +1,4 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
+
 import sys
 sys.path.append("..")
 import numpy as np
@@ -10,9 +8,7 @@ from Bonos.Correlaciones import ewma
 from Bonos.Curvas import seleccionar_bono_fecha, seleccionar_todos_bonos
 from Bonos.Pivotes import *
 
-
-# %%
-def leer_archivo(nombreArchivo):
+def leer_archivo(nombreArchivo, n = 100):
 
     """
     Extrae un archivo excel a un dataframe, calculando su valor de retorno
@@ -22,13 +18,12 @@ def leer_archivo(nombreArchivo):
 
     archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera\\ArchivosExcel\\'+ nombreArchivo)
     columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
-    archivo = archivo[columnas]
+    archivo = archivo[columnas][:n]
 
     return archivo
 
 
 
-# %%
 def retornos_acciones(nombreAccion):
 
     """
@@ -58,7 +53,7 @@ def retornos_acciones(nombreAccion):
 
 
 
-# %%
+
 def volatilidades_acciones(retornos_acciones):
 
     """
@@ -80,8 +75,6 @@ def volatilidades_acciones(retornos_acciones):
     return df
 
 
-
-# %%
 def retorno_varias_acciones(nombreAcciones):
 
     """
@@ -93,8 +86,6 @@ def retorno_varias_acciones(nombreAcciones):
     """
 
     lenght = len(nombreAcciones)
-    print(type(nombreAcciones))
-    print(lenght)
     df = pd.DataFrame()
     for i in range(lenght):
         
@@ -104,10 +95,6 @@ def retorno_varias_acciones(nombreAcciones):
 
     return df
 
-
-
-
-# %%
 def calculo_volatilidades_acciones(dfRetornos):
 
     """
@@ -135,7 +122,6 @@ def calculo_volatilidades_acciones(dfRetornos):
 
 
 
-# %%
 def correlacion_acciones(dfRetornos, dfVolatilidades):
 
     """
@@ -153,7 +139,6 @@ def correlacion_acciones(dfRetornos, dfVolatilidades):
 
 
 
-# %%
 def covarianza_acciones(dfRetornos, dfVolatilidades):
 
     """

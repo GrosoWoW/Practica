@@ -90,6 +90,9 @@ def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
 # retornos: vector de retornos a los que se les busca calcular volatilidad, ordenados del más reciente al más antiguo
 # l: valor de lambda entre 0 y 1
 def ewma(retornos, l):
+    """
+    Retorna DataFrame con la volatilidad del vector de retornos.
+    """
     n=len(retornos)
     factor = l**np.array(range(n))
     

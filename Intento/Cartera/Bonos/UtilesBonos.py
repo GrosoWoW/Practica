@@ -43,13 +43,13 @@ def curvaBono(riesgo, moneda, fecha):
     if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
          cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha = '" + fecha + "'"
     elif(riesgo == 'AA' and moneda == 'CLP'):
-        cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#No Prepagables' AND Fecha = '" + fecha + "'"
+        cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#Prepagables' AND Fecha = '" + fecha + "'"
     else:
         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha = '" + fecha + "'"
     cb = pd.read_sql(cb, cn)
     return cb
 
-def curvaBono2(riesgo, moneda, fecha, n = 1000):
+def curvaBono2(riesgo, moneda, fecha, n = 100):
     '''
     Funcion que entrega la curva para un bono en base a su riesgo, moneda, a partir de la fecha deseada.
     :param riesgo: Strign del Riesgo del bono.
@@ -58,9 +58,9 @@ def curvaBono2(riesgo, moneda, fecha, n = 1000):
     :return: dataFrame con la informacion.
     '''
     if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
-         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha > '" + fecha + "'"
+         cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha > '" + fecha + "'"
     elif(riesgo == 'AA' and moneda == 'CLP'):
-        cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#No Prepagables' AND Fecha > '" + fecha + "'"
+        cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#Prepagables' AND Fecha > '" + fecha + "'"
     else:
         cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha > '" + fecha + "'"
     cb = pd.read_sql(cb, cn)
@@ -407,20 +407,17 @@ def nombre_columna(moneda, riesgo, pivotes):
         arr.append(str(pivote)+riesgo+moneda)
     return arr
 
-def extraccionBono(vec, matriz):
+def extraccionBono(a, matriz):
     '''
     Extrae la diagonal superior de la matriz de covarianza.
     param: vec: Arreglo con los indices de la ubicación a extraer.
     param: matriz: Matriz de covarianza.
     return: Arreglo 1-dim con las correlaciones consecutivas entre los pivotes.
     '''
-    a = vec[0]
-    b = vec[1]
-    corr = np.zeros(b-a)
+    corr = np.zeros(13)
     k = 0
-    for i in range(a+1, b+1):
-        for j in range(a,b):
-            corr[k] = matriz[i][j]
-            k += 1
+    for i in range(a+1, a + 14):
+        corr[k] = matriz[i][i+1]
+        k += 1
     return corr
 
