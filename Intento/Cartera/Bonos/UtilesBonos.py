@@ -210,6 +210,7 @@ def historicoPlazos(riesgo, moneda, plazos, p, n=100):
 
     # Seleccionamos las curvas
     curva = curvaBono2(riesgo,moneda,fecha_aux.strftime("%Y-%m-%d"), n)
+    print(curva)
 
     # Se cambió de tir a factor de descuento.
     # tir = np.zeros([len(curva['Fecha']),len(p)])
@@ -413,6 +414,8 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
             elif (p[0] == -1): 
                 flujo_plazos[p[1]] += flujo / (1 + tir_p[p[1]])**d
                 continue
+
+
 
 #420 ( ͡° ͜ʖ ͡°) ( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)
             a_0 = (d - plazos[p[0]]) / (plazos[p[1]] - plazos[p[0]])

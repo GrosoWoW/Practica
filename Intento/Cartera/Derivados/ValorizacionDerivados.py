@@ -181,8 +181,9 @@ def calculo_historico(pivotes, moneda, n):
     :return DataFrame con el calculo de los historicos
 
     """
+    
     largo = len(pivotes)
-    curvas = seleccionar_curva_derivados(moneda, n)
+    curvas = seleccionar_curva_derivados(moneda, n)[::-1]
     valores = []
 
     df = pd.DataFrame()

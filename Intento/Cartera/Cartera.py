@@ -71,7 +71,7 @@ class Cartera:
         # Dictionario con derivados como objetos. Llaves son los ID_Key. El orden calza con el arreglo derivados.
         self.objDerivados = {key: None for key in derivados}
 
-        self.creaDfDerivados()
+        self.creaDfDerivados() # Creacion del DataFrame de los derivados
         self.crearObjDerivados()  # Creacion de los derivados
         self.creaDfBonos() # Creacion de los bonos
 
@@ -87,18 +87,15 @@ class Cartera:
         self.retornos = self.retornos_totales()
         self.retornos.to_excel("retornos.xlsx") 
 
+        # Volatilidades de cada instrumento en la cartera.
+        self.volatilidades = self.vol_totales()
+
         # Matriz de correlaciones.
         self.corr = self.correlaciones_totales()
         self.corr.to_excel("corr.xlsx") 
-        print(self.corr)
-
-        # Volatilidades de cada instrumento en la cartera.
-        self.volatilidades = self.vol_totales()
-        print(self.volatilidades)
 
         #Sentao de pana owo
         self.cov = self.get_covarianza(self.corr, self.volatilidades)
-        print(self.cov)
 
 
         # Diccionario para obtener indice según moneda y riesgo.
@@ -316,12 +313,16 @@ class Cartera:
 
         return self.corr
 
+    def get_retornos(self):
+
+        return self.retornos
+
     def volatilidades_cartera(self, dfRetornos):
         
         """
         Funcion encargada de calcular las volatilidades de ciertos retornos
         Estas volatilidades estan calculadas con la funcion ewma, lambda 0.94
-        :param dfRetornos: DataFrame con los retornos a los que se les calcularan las volatilidades
+        :param dfRetornos: DataFrame con los retornos a los que se les calcularan las volatilidades (pasado-->futuro)
         :return DataFrame con las volatilidades de cada pivote
 
         """
@@ -334,7 +335,7 @@ class Cartera:
         valores = []
 
         for i in range(M):
-
+            # Toma columna i.
             retornos = dfRetornos[nom_columnas[i]]
             valor = ewma(retornos, 0.94)
             valores.append(valor["Vol c/ajuste"].values[0])
@@ -379,7 +380,7 @@ class Cartera:
         Retorno de todos los derivados. Orden: acc-der-bon.
         :return pd.DataFrame. Retornos de todos los instrumentos en la cartera.
         """
-        ret_curvas = self.get_retCurvas(100)
+        ret_curvas = self.get_retCurvas(10000)
         ret_acciones = self.get_retAcciones()
 
         return pd.concat([ret_acciones, ret_curvas], 1)
@@ -394,15 +395,25 @@ class Cartera:
 
         retornos = self.retornos
         cantidad_columnas = len(retornos.iloc[1])
-        corr = ewma_new_new(cantidad_columnas, retornos)
+        corr = ewma_new_new_pivotes(cantidad_columnas, retornos, self.volatilidades)
         return corr
         
-miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618","BSTDU21118", "BENTE-M"], ["146854", "146883"], ["BSANTANDER.SN.xlsx", "ENTEL.SN.xlsx"], cn)
+
+#,"BSTDU21118", "BENTE-M"
+# , "146883", "146854"
+# , "ENTEL.SN.xlsx"
+miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618"], [], ["BSANTANDER.SN.xlsx"], cn)
+ret = miCartera.get_retornos()
+
+miCartera.correlaciones_totales().to_excel("corrTotal.xlsx")
+
+#print(miCartera.correlaciones_totales())
+"""
 miCartera.calculoPivote_bonos()
 miCartera.calculoPivote_derivados()
 print(miCartera.get_pivotes_bonos())
 print(miCartera.get_pivotes_derivados())
-
+"""
 
 
 

@@ -1,5 +1,5 @@
-import math
 
+import math
 import numpy as np
 import pandas as pd
 
@@ -35,7 +35,7 @@ def formula(lam, r, N, j, k):
     for i in range(0,N):
         valor += (lam**i)*r[N-i-1][j]*r[N-i-1][k]
 
-    return valor
+    return valor / (1 - lam**(N-1))
 
 def ewma_new_new(m_empresas, matriz_r):
 
@@ -54,7 +54,7 @@ def ewma_new_new(m_empresas, matriz_r):
     for k in range(0,m_empresas):
         for j in range(0,m_empresas):
             tamanoRetorno = np.size(matriz_r, 0)
-            ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k)
+            ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k) 
 
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df 
@@ -75,12 +75,15 @@ def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
         for j in range(0,m_empresas):
 
             if k == j:
-                ro[k][j] = volatilidades.values[k]
+                tamanoRetorno = len(matriz_r[:,k])
+
+                ro[k][j] = factor(0.94, tamanoRetorno) * \
+                    (formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k][1]*volatilidades.values[j][1])
             else:
                 tamanoRetorno = len(matriz_r[:,k])
  
-                ro[k][j] = (factor(0.94, tamanoRetorno) * \
-                    formula(0.94, matriz_r, tamanoRetorno, j, k))/((volatilidades.values[k]*volatilidades.values[j]))
+                ro[k][j] = factor(0.94, tamanoRetorno) * \
+                    (formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k][1]*volatilidades.values[j][1])
     
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
@@ -91,16 +94,21 @@ def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
 def ewma(retornos, l):
     """
     Retorna DataFrame con la volatilidad del vector de retornos.
+    :param: retornos: DataFrame de una columna con histórico de retornos. Orden: pasado-->futuro 
+    :param: l: lambda.
+    :return: 
     """
+    # Cantidad retornos.
     n=len(retornos)
+    # Pesos para el ewma.
     factor = l**np.array(range(n))
     
     volSinAjuste = sum((1-l)*retornos*retornos*factor[::-1])
-    volConAjuste = volSinAjuste/(1-l**(n+1))
+    volConAjuste = volSinAjuste/(1-l**(n-1))
     volSinAjuste = np.sqrt(volSinAjuste)
     volConAjuste = np.sqrt(volConAjuste)
     
-    data = [[volConAjuste, volSinAjuste, 1/(1-l**(n+1)), n ]]
+    data = [[volConAjuste, volSinAjuste, 1/(1-l**(n-1)), n ]]
     df = pd.DataFrame(data, columns = ['Vol c/ajuste', "Vol s/ajuste","Ajuste", " cantidad de retornos"])
     return df
 
