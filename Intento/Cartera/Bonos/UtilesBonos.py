@@ -39,8 +39,8 @@ def curvaBono(riesgo, moneda, fecha):
     :param fecha: String de la fecha que se quiere la curva.
     :return: dataFrame con la informacion.
     '''
-    #NO HAY CURVAS PARA RIESGOS QUE NO SEA EN UF.
-    if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+    # Se usan curvas por parametros para los casos USD de todo riesgo y CLP de riesgo AAA
+    if( ((riesgo == 'AAA' or riesgo == 'A') and moneda == 'CLP') or moneda == 'USD'):
          cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
     elif(riesgo == 'AA' and moneda == 'CLP'):
         cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#Prepagables' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
@@ -57,7 +57,7 @@ def curvaBono2(riesgo, moneda, fecha, n = 100):
     :param fecha: String de la primera fecha que se quieren las curvas.
     :return: dataFrame con la informacion.
     '''
-    if( (riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+    if( ((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD'):
          cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha > '" + fecha + "' ORDER BY Fecha ASC "
     elif(riesgo == 'AA' and moneda == 'CLP'):
         cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#Prepagables' AND Fecha > '" + fecha + "' ORDER BY Fecha ASC"
@@ -95,7 +95,7 @@ def tir_plazos(riesgo, moneda, plazos, p, fecha):
     curva = curvaBono(riesgo, moneda, fecha)
 
     tir = np.zeros(2)
-    if ((riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+    if (((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD'):
         tir = TIR(curva, [plazos[p[0]], plazos[p[1]]])
     else:
         for i in range(2):
@@ -109,7 +109,7 @@ def conversionSYP(riesgo):
     :param riesgo: Int que representa el riesgo de un bono en la base de datos.
     :return: Riesgo en la otra convencion.
     '''
-    return {1: 'AAA',2: 'AA',3: 'AA',4: 'AA',5: 'A',6: 'A',7: 'A',8: 'BBB',9: 'BBB',10: 'BBB',\
+    return {-1: 'AAA', 1: 'AAA',2: 'AA',3: 'AA',4: 'AA',5: 'A',6: 'A',7: 'A',8: 'BBB',9: 'BBB',10: 'BBB',\
             11: 'BB+',12: 'BB',13: 'BB-',14: 'B+',15: 'B',16: 'B-',17: 'CCC',18: 'CC+',19: 'CC',20: 'C+',\
             21: 'C',22: 'C-',23: 'D',24: 'E'}.get(riesgo)
 
@@ -121,7 +121,6 @@ def riesgoBono(nemotecnico, fecha):
     '''
     riesgo = "SELECT * FROM [dbAlgebra].[dbo].[VwRiesgoRF] WHERE Fecha = '" + fecha + "' AND Nemotecnico = '" + nemotecnico + "'"
     riesgo = pd.read_sql(riesgo, cn)
-    print(riesgo)
     return riesgo["Riesgo"].values[0]
 
 def conv(base1, base2):
@@ -215,17 +214,19 @@ def historicoPlazos(riesgo, moneda, plazos, p, n=100):
     # Se cambió de tir a factor de descuento.
     # tir = np.zeros([len(curva['Fecha']),len(p)])
     factorDesc = np.zeros([len(curva['Fecha']),len(p)])
-    if ((riesgo == 'AAA' and moneda == 'CLP') or moneda == 'USD'):
+
+    # Bonos cuyas curvas vienen en parametros.
+    if (((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD'):
         # Por cada dia
         for i in range(len(curva['Fecha'])):
             # Por cada periodo
             for j in range(len(p)):
                 fecha_ini = curva['Fecha'][i].date()
                 fecha_fin = add_days(fecha_ini, plazos[p[j]] * 360)
-                # tir[i][j] = TIR(curva.iloc[[i]], [plazos[p[j]]])
                 tir = TIR(curva.iloc[[i]], [plazos[p[j]]])
                 factorDesc[i][j] = factor_descuento(tir, fecha_ini, fecha_fin, convencion, 0)
 
+    # ESTAS CURVAS VIENEN PARA PARSEAR.
     else:
         # Por cada dia
         for i in range(len(curva['Fecha'])):
@@ -235,9 +236,8 @@ def historicoPlazos(riesgo, moneda, plazos, p, n=100):
                 fecha_ini = curva['Fecha'][i].date()
                 fecha_fin = add_days(fecha_ini, plazos[p[j]] * 360)
                 c = parsear_curva(curva["StrCurva"][i], fecha_aux)
-                # tir[i][j] = analisisCasoBorde(plazos[p[j]], c)
                 tir = analisisCasoBorde(plazos[p[j]], c)
-                factorDesc[i][j] = factor_descuento(tir, fecha_ini, fecha_fin, convencion, 0)
+                factorDesc[i][j] = factor_descuento(tir/100, fecha_ini, fecha_fin, convencion, 0)
             
     return factorDesc
 
@@ -270,7 +270,6 @@ def volatilidades(retornos, pivotes):
     return vol
 
 def volatilidadesPlazo(riesgo, moneda, plazos, p, fecha, hist_plazos):
-    # hist_plazos = historicoPlazos(riesgo, moneda, plazos, p)
     if (len(p) == 2):
         ret_plazos = retornoPlazos([plazos[p[0]], plazos[p[1]]], hist_plazos)
         vol_plazos = volatilidades(ret_plazos, [plazos[p[0]], plazos[p[1]]])
@@ -319,7 +318,8 @@ def resuelve(a,b,c):
     x_1 = (-b + delta**(1/2))/ 2*a
     x_2 = (-b - delta**(1/2))/ 2*a
     if (x_1 > 0 and 1 > x_1): return x_1
-    else : return x_2
+    elif (x_2 > 0 and 1 > x_2): return x_2
+    else: print("Javier nos fallaste")
 
 def extraccion(matriz, periodos):
     size = len(periodos)
@@ -338,7 +338,7 @@ def actualizar(alfa, vp, piv, flujo, p):
         flujo[piv[1]] += vp*(1-alfa)
     return flujo
 
-def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales):
+def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
     '''
     Proyecta los bonos en los plazos dependiendo de su moneda
     :param: nemo: Arreglo que contiene los nemotecnicos de los bonos
@@ -348,7 +348,7 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales):
     :para: corrTotales: DataFrame con la matriz de correlaciones. Se debe poder acceder con nombres.
     :return: proyeccion: Diccionario con las proyecciones segun moneda
     '''
-    # bonos = bonosNemo(nemo)
+    
     proyeccion = np.zeros(len(plazos))
     flujo_plazos = np.zeros(len(plazos))
     dic = {'USDAAA': np.zeros(len(plazos)),\
@@ -367,9 +367,8 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales):
     # riesgos = pd.DataFrame()
     riesgos = []
     for i in range(len(nemo)):
-        # riesgos = riesgos.append([conversionSYP(riesgoBono(nemo[i], fecha))])
+
         riesgos.append(conversionSYP(riesgoBono(nemo[i], fecha)))
-    # riesgos.rename(columns={0:'Riesgo'}, inplace=True)
     
     # Bono con su informacion de riesgo 
     bonos["Riesgo"] = riesgos
@@ -383,11 +382,14 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales):
         convencion = conv(br["Base1"][i], br["Base2"][i])
         cupones = StrTabla2ArrTabla(br["TablaDesarrollo"][i], br["FechaEmision"][i].to_pydatetime().date().strftime("%Y-%m-%d"))
         p = list(range(len(plazos)))
+        """
         hist_plazos = historicoPlazos(r, moneda, plazos, p)
         ret_plazos = retornoPlazos(plazos, hist_plazos)
-        vol_plazos = volatilidadesPlazo(r, moneda, plazos, p, fecha, hist_plazos) # Se puede entregar volatilidades.
+        vol_plazos = volatilidades["Nombres" = ]
+        #volatilidadesPlazo(r, moneda, plazos, p, fecha, hist_plazos) # Se puede entregar volatilidades.
         # matriz_corr = correlacion(ret_plazos, plazos, vol_plazos) # dimensiones: 14x14
         # corr = extraccion(matriz_corr, plazos) # Se puede entregar matriz_corr.
+        """
 
       # Por cada cupon
         for j in range(len(cupones)):
@@ -412,19 +414,17 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales):
                 flujo_plazos[p[1]] += flujo / (1 + tir_p[p[1]])**d
                 continue
 
+#420 ( ͡° ͜ʖ ͡°) ( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)( ͡° ͜ʖ ͡°)
             a_0 = (d - plazos[p[0]]) / (plazos[p[1]] - plazos[p[0]])
 
             tir_p = tir_plazos(r, moneda, plazos, p, fecha)
             tir = a_0 * tir_p[0] + (1 - a_0) * tir_p[1]
-
-            vol_p = vol_plazos#volatilidadesPlazo(r, moneda, plazos, p, fecha)
+            vol_p = [df_vol[df_vol['Nombres'] == (str(int(plazos[p[0]]*360)) + r + moneda)]['Volatilidades'].values, df_vol[df_vol['Nombres'] == (str(int(plazos[p[1]]*360)) + r + moneda)]['Volatilidades'].values]
+            
             vol = a_0 * vol_p[0] + (1 - a_0) * vol_p[1]
-
             vp = flujo / (1 + tir)**d
 
-            # m = p[1] - 2
             alfa = resuelve(vol_p[0]**2 + vol_p[1]**2 - 2 * corrTotales[fila][col] * vol_p[0] * vol_p[1], 2 * corrTotales[fila][col] *vol_p[0] * vol_p[1] - 2 * vol_p[1]**2, vol_p[1]**2 - vol**2 )
-
             flujo_plazos = actualizar(alfa, vp, p, flujo_plazos, plazos)
         dic[moneda + r] += flujo_plazos
     return dic
