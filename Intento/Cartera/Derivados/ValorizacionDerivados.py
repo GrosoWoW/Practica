@@ -183,7 +183,8 @@ def calculo_historico(pivotes, moneda, n):
     """
     
     largo = len(pivotes)
-    curvas = seleccionar_curva_derivados(moneda, n)[::-1]
+    moneda_curva = moneda.split("#")[0]
+    curvas = seleccionar_curva_derivados(moneda_curva, n)[::-1]
     valores = []
 
     df = pd.DataFrame()
@@ -200,7 +201,7 @@ def calculo_historico(pivotes, moneda, n):
             valor = interpolacion_log_escalar(valor_dia, curva_parseada)
             valores.append(valor)
         
-        df[str(vector_dias[i]) + moneda] = valores
+        df[str(vector_dias[i]) + "#" + moneda] = valores
         valores = []
 
     return df
@@ -607,7 +608,7 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         volatilidad = interpolar_volatilidad(alfa, pivote_usado, fecha_pago_actual)
         factor_desct = interpolar_factorDesct(alfa, pivote_usado, fecha_pago_actual)
 
-        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_total[str(dia_pivote1)+str(moneda_derivado)][str(dia_pivote2)+str(moneda_derivado)] )
+        a =solucion_ecuacion(volatilidad, volatilidades_pivotes[indices_pivotes[0]], volatilidades_pivotes[indices_pivotes[1]], correlacion_total[str(dia_pivote1)+ "#" +str(moneda_derivado)][str(dia_pivote2)+ "#" +str(moneda_derivado)] )
 
         factor = discrimador_sol(a)
         flujo1 = tabla_derivado["Flujo"][i]
@@ -643,14 +644,14 @@ def calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, dist
 
 
 
-def calculo_derivado(derivados, fecha_valorizacion, correlacion_total):
+def calculo_derivado(derivados, fecha_valorizacion, correlacion_total, monedas):
 
     """
     Funcion principal de calculo
 
     """
 
-    monedas_utilizadas = ["USD", "CLP", "UF", "EUR"]
+    monedas_utilizadas = monedas
     tabla_total = generar_diccionario_table(vector_dias, fecha_valorizacion, monedas_utilizadas)
     #correlacion_total = calcular_diccionario_correlaciones(tabla_total)
     distribuciones = crear_distrubucion_pivotes(monedas_utilizadas)

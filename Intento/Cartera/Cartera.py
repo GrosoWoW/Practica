@@ -28,7 +28,7 @@ cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + usernam
 
 
 class Cartera:
-    def __init__(self, fecha_val, bonos, derivados, acciones, cn):
+    def __init__(self, fecha_val, bonos, derivados, acciones, cn, n = 10000):
         """
         Constructor Cartera. Crea DataFrames de derivados y bonos.
         :param fehca_val: Fecha de valorización. Debe coincidir con los datos de instrumentos.
@@ -75,36 +75,42 @@ class Cartera:
         self.crearObjDerivados()  # Creacion de los derivados
         self.creaDfBonos() # Creacion de los bonos
 
+        # Cantidad de dias para analizar historico
+        self.n = n
+
         # Monedas.
-        self.monedas = self.optimizar_monedas()
+        total = self.optimizar_monedas()
+        self.monedas_bonos = total[0]
+        self.monedas_derivados = total[1]
         #Riesgos.
         self.riesgos = self.optimizar_riesgos()
         
         # Pivotes.
         self.pivotes = [30, 90, 180, 360, 360*2, 360*3, 360*4, 360*5, 360*7, 360*9, 360*10, 360*15, 360*20, 360*30]
 
+
         # Retornos de todos los instrumentos en la cartera.
         self.retornos = self.retornos_totales()
-        self.retornos.to_excel("retornos.xlsx") 
+        self.retornos.to_excel("retonos.xlsx") 
 
         # Volatilidades de cada instrumento en la cartera.
         self.volatilidades = self.vol_totales()
+        self.volatilidades.to_excel("vol.xlsx")
 
         # Matriz de correlaciones.
         self.corr = self.correlaciones_totales()
         self.corr.to_excel("corr.xlsx") 
 
-        #Sentao de pana owo
+        # Matriz de covarianza
         self.cov = self.get_covarianza(self.corr, self.volatilidades)
 
-
-        # Diccionario para obtener indice según moneda y riesgo.
-        self.indices_matriz = {(j, k) : len(self.acciones) + len(self.derivados) * len(self.monedas) * len(self.pivotes) + j * len(self.riesgos) * len(self.pivotes) 
-        + k * len(self.pivotes) for j in range(len(self.monedas)) for k in range(len(self.riesgos)) }
-
+        # Pivotes de derivados
         self.pivotes_derivados = dict()
 
+        # Pivotes de bonos
         self.pivotes_bonos = dict()
+
+
 
     def optimizar_monedas(self):
 
@@ -114,29 +120,38 @@ class Cartera:
 
         """
 
-        monedas = []
+        monedas_bonos = []
         moneda_bono = self.dfBonos["Moneda"]
+
         for i in range(len(moneda_bono)):
 
-            if moneda_bono[i] not in monedas:
+                nemotecnico_bono = self.dfBonos["Nemotecnico"][i]
+                fecha_bono = str(self.dfBonos["Fecha"][i])
+                riesgo_num = riesgoBono(nemotecnico_bono, fecha_bono)
+                riesgo_valor = conversionSYP(riesgo_num)
+                str_final = moneda_bono[i] + "#" + riesgo_valor
 
-                monedas.append(moneda_bono[i])
+                if str_final not in monedas_bonos:
+                    monedas_bonos.append(str_final)
 
         moneda_derivado = self.dfDerivados["MonedaActivo"]
+        monedas_derivados = []
         for i in range(len(moneda_derivado)):
 
-            if moneda_derivado[i] not in monedas:
+            if moneda_derivado[i] not in monedas_derivados:
 
-                monedas.append(moneda_derivado[i])
+                monedas_derivados.append(moneda_derivado[i])
 
         
         moneda_derivado = self.dfDerivados["MonedaPasivo"]
         for i in range(len(moneda_derivado)):
 
-            if moneda_derivado[i] not in monedas:
+            if moneda_derivado[i] not in monedas_derivados:
 
-                monedas.append(moneda_derivado[i])
-        return monedas
+                monedas_derivados.append(moneda_derivado[i])
+
+    
+        return [monedas_bonos, monedas_derivados]
 
     def optimizar_riesgos(self):
 
@@ -193,6 +208,28 @@ class Cartera:
         """
         for id_key in self.derivados:
             self.objDerivados[id_key] = extraer_crear_derivado(id_key)
+
+    def dict_to_vector(self):
+
+        diccionario_bonos = self.get_pivotes_bonos()
+        diccionario_derivados = self.get_pivotes_derivados()
+
+        vector_vectores = []
+        dic_pivote = []
+
+        for key in diccionario_bonos:
+    
+            dic_pivote.append(diccionario_bonos[key])
+
+        vector_vectores.append(dic_pivote)
+        dic_pivote = []
+
+        for key in diccionario_derivados:
+
+            dic_pivote.append(diccionario_derivados[key])
+
+        vector_vectores.append(dic_pivote)
+        return vector_vectores
     
     def get_retAcciones(self):
         """
@@ -220,20 +257,22 @@ class Cartera:
         arr = []
         arr1 = []
         # Retornos derivados.
-        for moneda in self.monedas:
+        for moneda in self.monedas_derivados:
             dfHistorico = calculo_historico(vector_dias, moneda, n)
             aux = calcular_retornos(dfHistorico)
             arr.append(aux)
 
         # Retornos Bonos. 
-        for mon in self.monedas:
+        for mon in self.monedas_bonos:
             if mon == "EUR": continue
-            for riesgo in self.riesgos:
-                col = nombre_columna(mon, riesgo, self.pivotes)
-                hist = historicoPlazos(riesgo, mon, np.array(self.pivotes)/360, np.arange(len(self.pivotes)), n)
-                hist = pd.DataFrame(hist, columns=col)#uwu
-                arr1.append(hist)
-                arr.append(calcular_retornos(hist))
+    
+            riesgo = mon.split("#")[1]
+            monedas = mon.split("#")[0]
+            col = nombre_columna(monedas, self.pivotes, riesgo)
+            hist = historicoPlazos(riesgo, monedas, np.array(self.pivotes)/360, np.arange(len(self.pivotes)), n)
+            hist = pd.DataFrame(hist, columns= col)#uwu
+            arr1.append(hist)
+            arr.append(calcular_retornos(hist))
 
         arreglo_lindo = arr[0]
         historicos = arr1[0]
@@ -365,7 +404,7 @@ class Cartera:
         pivotes_derivados es un diccionario que guarda los vectores con las proyecciones.
         """
 
-        self.pivotes_derivados = calculo_derivado(self.objDerivados, self.fecha_val, self.corr)
+        self.pivotes_derivados = calculo_derivado(self.objDerivados, self.fecha_val, self.corr, self.monedas_derivados)
 
     def calculoPivote_bonos(self):
         """
@@ -373,16 +412,20 @@ class Cartera:
         pivotes_derivados es un diccionario que guarda los vectores con las proyecciones.
         """
         fecha_val_str = self.fecha_val.strftime("%Y-%m-%d")
-        self.pivotes_bonos = proyeccionBonos(self.bonos, np.array(self.pivotes)/360, fecha_val_str, self.getDfBonos(), self.corr, self.volatilidades)
+        self.pivotes_bonos = proyeccionBonos(self.bonos, np.array(self.pivotes)/360, fecha_val_str, self.getDfBonos(), self.corr, self.volatilidades, self.monedas_bonos)
 
     def retornos_totales(self):
         """
         Retorno de todos los derivados. Orden: acc-der-bon.
         :return pd.DataFrame. Retornos de todos los instrumentos en la cartera.
         """
-        ret_curvas = self.get_retCurvas(10000)
+        
         ret_acciones = self.get_retAcciones()
+# MMh 420 ewe
+        self.n = min(self.n, np.size(ret_acciones, 0))
 
+        ret_curvas = self.get_retCurvas(self.n)
+        
         return pd.concat([ret_acciones, ret_curvas], 1)
 
     def correlaciones_totales(self):
@@ -398,37 +441,13 @@ class Cartera:
         corr = ewma_new_new_pivotes(cantidad_columnas, retornos, self.volatilidades)
         return corr
         
-
-#,"BSTDU21118", "BENTE-M"
-# , "146883", "146854"
-# , "ENTEL.SN.xlsx"
-miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618"], [], ["BSANTANDER.SN.xlsx"], cn)
+miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618"], ["147951", "147949"], ["BSANTANDER.SN.xlsx"], cn)
 ret = miCartera.get_retornos()
+pd.get_option("display.max_rows")
+pd.get_option("display.max_columns")
+print(ret)
 
-miCartera.correlaciones_totales().to_excel("corrTotal.xlsx")
-
-#print(miCartera.correlaciones_totales())
-"""
 miCartera.calculoPivote_bonos()
 miCartera.calculoPivote_derivados()
 print(miCartera.get_pivotes_bonos())
 print(miCartera.get_pivotes_derivados())
-"""
-
-
-
-# print(miCartera.get_covarianza(miCartera.get_correlaciones() ,miCartera.get_volatilidades()))
-"""
-cb = "SELECT TOP (1) * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + "UF" + "#" + "AA" + "#Corporativos#No Prepagables' AND Fecha = '2018-02-09'"
-cb = pd.read_sql(cb, cn)
-print(cb)
-parseo = parsear_curva(cb["StrCurva"][0], cb["Fecha"][0].date())
-x = []
-y = []
-for i in np.arange(len(parseo)):
-    x.append(parseo[i][0])
-    y.append(parseo[i][1])
-plt.plot(x,y, '*')
-plt.show()
-#print(parseo)
-"""

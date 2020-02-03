@@ -210,7 +210,6 @@ def historicoPlazos(riesgo, moneda, plazos, p, n=100):
 
     # Seleccionamos las curvas
     curva = curvaBono2(riesgo,moneda,fecha_aux.strftime("%Y-%m-%d"), n)
-    print(curva)
 
     # Se cambió de tir a factor de descuento.
     # tir = np.zeros([len(curva['Fecha']),len(p)])
@@ -339,7 +338,19 @@ def actualizar(alfa, vp, piv, flujo, p):
         flujo[piv[1]] += vp*(1-alfa)
     return flujo
 
-def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
+def crear_diccionario(monedas, plazos):
+
+    diccionario = dict()
+    for i in range(len(monedas)):
+
+        arreglo = np.zeros(len(plazos))
+        diccionario[monedas[i]] = arreglo
+
+    return diccionario
+
+
+
+def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol, monedas):
     '''
     Proyecta los bonos en los plazos dependiendo de su moneda
     :param: nemo: Arreglo que contiene los nemotecnicos de los bonos
@@ -352,18 +363,7 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
     
     proyeccion = np.zeros(len(plazos))
     flujo_plazos = np.zeros(len(plazos))
-    dic = {'USDAAA': np.zeros(len(plazos)),\
-           'CLPAAA': np.zeros(len(plazos)), \
-           'UFAAA' : np.zeros(len(plazos)),
-           'EURAAA' : np.zeros(len(plazos)),
-           'USDAA': np.zeros(len(plazos)),\
-           'CLPAA': np.zeros(len(plazos)), \
-           'UFAA' : np.zeros(len(plazos)),
-           'EURAA' : np.zeros(len(plazos)),
-           'USDA': np.zeros(len(plazos)),\
-           'CLPA': np.zeros(len(plazos)), \
-           'UFA' : np.zeros(len(plazos)),
-           'EURA' : np.zeros(len(plazos))}
+    dic = crear_diccionario(monedas, plazos)
 
     # riesgos = pd.DataFrame()
     riesgos = []
@@ -399,9 +399,9 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
             # Indices de pivotes adyacentes.
             p = pivNear(d, plazos)
             # Nombre columna. Pasamos pivotes a días.
-            col = str(int(plazos[p[0]] * 360)) + r + moneda
+            col = str(int(plazos[p[0]] * 360)) + "#" + moneda + "#" + r
             # Nombre fila. Pasamos pivotes a días.
-            fila = str(int(plazos[p[1]]* 360)) + r + moneda
+            fila = str(int(plazos[p[1]]* 360)) + "#" + moneda + "#" + r
             # Flujo.
             flujo = cupones[j][6]
             # Tir.
@@ -422,17 +422,16 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol):
 
             tir_p = tir_plazos(r, moneda, plazos, p, fecha)
             tir = a_0 * tir_p[0] + (1 - a_0) * tir_p[1]
-            vol_p = [df_vol[df_vol['Nombres'] == (str(int(plazos[p[0]]*360)) + r + moneda)]['Volatilidades'].values, df_vol[df_vol['Nombres'] == (str(int(plazos[p[1]]*360)) + r + moneda)]['Volatilidades'].values]
-            
+            vol_p = [df_vol[df_vol['Nombres'] == (str(int(plazos[p[0]]*360)) + "#" + moneda + "#" + r)]['Volatilidades'].values, df_vol[df_vol['Nombres'] == (str(int(plazos[p[1]]*360)) + "#" + moneda + "#" + r)]['Volatilidades'].values]
             vol = a_0 * vol_p[0] + (1 - a_0) * vol_p[1]
             vp = flujo / (1 + tir)**d
 
             alfa = resuelve(vol_p[0]**2 + vol_p[1]**2 - 2 * corrTotales[fila][col] * vol_p[0] * vol_p[1], 2 * corrTotales[fila][col] *vol_p[0] * vol_p[1] - 2 * vol_p[1]**2, vol_p[1]**2 - vol**2 )
             flujo_plazos = actualizar(alfa, vp, p, flujo_plazos, plazos)
-        dic[moneda + r] += flujo_plazos
+        dic[moneda + "#" + r] += flujo_plazos
     return dic
 
-def nombre_columna(moneda, riesgo, pivotes):
+def nombre_columna(moneda, pivotes, riesgo):
     """
     Crea arreglo con nombres de columnas para usar en retornos.
     param: moneda: Str. Moneda.
@@ -442,7 +441,7 @@ def nombre_columna(moneda, riesgo, pivotes):
     """
     arr = []
     for pivote in pivotes:
-        arr.append(str(pivote)+riesgo+moneda)
+        arr.append(str(pivote) + "#" + moneda + "#" + riesgo)
     return arr
 
 def extraccionBono(a, matriz):

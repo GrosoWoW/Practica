@@ -1,12 +1,15 @@
 
 import sys
-sys.path.append("..")
+
 import numpy as np
 import pandas as pd
 
 from Bonos.Correlaciones import ewma
 from Bonos.Curvas import seleccionar_bono_fecha, seleccionar_todos_bonos
 from Bonos.Pivotes import *
+
+sys.path.append("..")
+
 
 def leer_archivo(nombreArchivo, n = 100):
 
@@ -136,9 +139,6 @@ def correlacion_acciones(dfRetornos, dfVolatilidades):
     correlacion = ewma_new_new_pivotes(num_acciones, dfRetornos, dfVolatilidades)
     return correlacion
 
-
-
-
 def covarianza_acciones(dfRetornos, dfVolatilidades):
 
     """
@@ -152,5 +152,3 @@ def covarianza_acciones(dfRetornos, dfVolatilidades):
     num_acciones = len(dfVolatilidades)
     covarianza = covarianza_pivotes(num_acciones, dfRetornos, dfVolatilidades)
     return covarianza
-
-

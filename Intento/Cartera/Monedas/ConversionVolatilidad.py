@@ -16,31 +16,22 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Conversion de USD/UF/EUR a CLP
-def getConversionCLP(monedaBase, fecha):
+def getConversionCLP(monedaBase, n):
     """
     Entrega el valor de conversion en CLP/monedaBase
     """
     if (monedaBase == 'UF'):
-        conversion = "SELECT [Valor] FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Fecha = '" + fecha + "' AND Hora = '1700'"
+        conversion = "SELECT TOP(" + n + ")[Valor] FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
     else:
-        conversion = "SELECT [Valor] FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = 'CLP' AND Fecha = '" + fecha + "' AND Hora = 'CIERRE'"
+        conversion = "SELECT TOP(" + n + ") [Valor] FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = 'CLP' AND Hora = 'CIERRE' ORDER BY Fecha DESC"
     conversion = pd.read_sql(conversion, cn)
+    print("Sin dar vuelta: ", conversion)
+    conversion = conversion.values.reverse()
+    conversion = pd.DataFrame(conversion)
+    print("AL dar vuelta: ", conversion)
     return conversion
 
-"""
-USDaCLP = getConversionCLP('USD', '2020-01-30').values
-UFaCLP  = getConversionCLP('UF', '2020-01-30').values
-EURaCLP = getConversionCLP('EUR', '2020-01-30').values
-print(USDaCLP)
-print(UFaCLP)
-print(EURaCLP)
-"""
+getConversionCLP('USD', 10)
 
-def getHistorico(moneda, n = 100, fecha):
-    fecha = castDay(fecha)
-    historico = np.zeros(n)
-    for i in range(n):
-        historico[i] = getConversionCLP(moneda, fechaIni)
-        fechaIni = siguiente_habil_pais(fechaIni, 'CL', cn)
 
 
