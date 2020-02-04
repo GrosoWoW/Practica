@@ -37,29 +37,7 @@ def formula(lam, r, N, j, k):
 
     return valor / (1 - lam**(N-1))
 
-def ewma_new_new(m_empresas, matriz_r):
-
-    """
-    Calculo de ewma para la matriz_r
-    Recibe m_empresas que corresponde a la cantidad de empresas
-    y la matriz_r con la cantidad de datos
-    
-    """
-
-    #matriz_r = matriz_r.drop(columns=("Date"))
-    nombre = matriz_r.columns.tolist()
-    matriz_r = matriz_r.values
-
-    ro = np.zeros([m_empresas, m_empresas])
-    for k in range(0,m_empresas):
-        for j in range(0,m_empresas):
-            tamanoRetorno = np.size(matriz_r, 0)
-            ro[k][j] = factor(0.94, tamanoRetorno) * formula(0.94, matriz_r, tamanoRetorno, j, k) 
-
-    df = pd.DataFrame(ro, columns=nombre, index=nombre)
-    return df 
-
-def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
+def ewma_matriz(m_empresas, matriz_r, volatilidades):
 
     """
     Calculo de ewma para la matriz_r
@@ -74,20 +52,12 @@ def ewma_new_new_pivotes(m_empresas, matriz_r, volatilidades):
     for k in range(0,m_empresas):
         for j in range(0,m_empresas):
 
-            if k == j:
-                tamanoRetorno = len(matriz_r[:,k])
-
-                ro[k][j] = factor(0.94, tamanoRetorno) * \
-                    (formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k][1]*volatilidades.values[j][1])
-            else:
-                tamanoRetorno = len(matriz_r[:,k])
- 
-                ro[k][j] = factor(0.94, tamanoRetorno) * \
-                    (formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k][1]*volatilidades.values[j][1])
+            tamanoRetorno = len(matriz_r[:,k])
+            ro[k][j] = factor(0.94, tamanoRetorno) * \
+                (formula(0.94, matriz_r, tamanoRetorno, j, k))/(volatilidades.values[k][1]*volatilidades.values[j][1])
     
     df = pd.DataFrame(ro, columns=nombre, index=nombre)
     return df
-
 
 # retornos: vector de retornos a los que se les busca calcular volatilidad, ordenados del más reciente al más antiguo
 # l: valor de lambda entre 0 y 1

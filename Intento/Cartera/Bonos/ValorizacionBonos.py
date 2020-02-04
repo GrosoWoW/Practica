@@ -8,7 +8,7 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 
 import pyodbc
-from Bonos.Correlaciones import ewma_new_new
+from Bonos.Correlaciones import ewma_matriz
 from Bonos.Curvas import (get_cnn, seleccionar_bono, seleccionar_bonos_moneda,
                     seleccionar_curva_derivados, seleccionar_curva_NS)
 from Bonos.FuncionesExcel import (graficar_retornos, tabla_bono_retorno,

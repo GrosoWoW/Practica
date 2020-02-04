@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 import pyodbc
-from Bonos.Correlaciones import covarianza_pivotes, ewma, ewma_new_new_pivotes
+from Bonos.Correlaciones import covarianza_pivotes, ewma, ewma_matriz
 from Bonos.LibreriasUtiles.UtilesValorizacion import diferencia_dias_convencion
 from Derivados.DerivadosTipos.DerivadosFWD import *
 from Derivados.DerivadosTipos.DerivadosSCC import *
@@ -278,7 +278,7 @@ def correlaciones_derivador(dfRetornos, dfVolatilidades):
 
     lenght = len(vector_dias)
     volatilidad = dfVolatilidades["Volatilidades"]
-    corr = ewma_new_new_pivotes(lenght, dfRetornos, volatilidad)
+    corr = ewma_matriz(lenght, dfRetornos, volatilidad)
     return corr
 
 def calcular_correlacion_moneda(moneda, tabla_total):
@@ -620,8 +620,6 @@ def calculo2(fechas_pago, fecha_valorizacion, correlacion_total, tabla_derivado,
         distribucion[indices_pivotes[1]] += (1 - factor)*VP
 
     
-   
-
 def calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, distribuciones):
 
     """
@@ -657,5 +655,3 @@ def calculo_derivado(derivados, fecha_valorizacion, correlacion_total, monedas):
     distribuciones = crear_distrubucion_pivotes(monedas_utilizadas)
     calculo1(derivados, tabla_total, correlacion_total, fecha_valorizacion, distribuciones)
     return distribuciones
-
-

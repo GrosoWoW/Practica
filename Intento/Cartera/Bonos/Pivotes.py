@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 from openpyxl.workbook import Workbook
 
-from Bonos.Correlaciones import (covarianza_pivotes, ewma, ewma_new_new,
-                           ewma_new_new_pivotes)
+from Bonos.Correlaciones import (covarianza_pivotes, ewma, ewma_matriz,
+                           ewma_matriz)
 from Bonos.Curvas import (get_cnn, seleccionar_bono_fecha, seleccionar_NS_fecha,
                     seleccionar_todos_bonos)
 from Bonos.Retornos import retorno_bonos, retorno_factor
@@ -255,7 +255,7 @@ def correlacion_pivotes(pivotes):
         retorno = np.array(retorno_factor(df_s))
         df[str(vector_dias[i])] = retorno
 
-    correlacion = ewma_new_new_pivotes(len(vector_dias), df, pivotes["volatilidad"])
+    correlacion = ewma_matriz(len(vector_dias), df, pivotes["volatilidad"])
     covarianza = covarianza_pivotes(len(vector_dias), df, pivotes["volatilidad"])
     return [correlacion, covarianza]
 

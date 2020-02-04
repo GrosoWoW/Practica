@@ -66,6 +66,7 @@ def curvaBono2(riesgo, moneda, fecha, n = 100):
     cb = pd.read_sql(cb, cn)
     return cb
 
+# def le besuqueacioneamiento ewe 
 def TIR(param, p):
     '''
     Calcula el TIR para el periodo p, en base a los parametros entregados, usando la formula de interpolacion.
@@ -383,14 +384,6 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol, monedas):
         convencion = conv(br["Base1"][i], br["Base2"][i])
         cupones = StrTabla2ArrTabla(br["TablaDesarrollo"][i], br["FechaEmision"][i].to_pydatetime().date().strftime("%Y-%m-%d"))
         p = list(range(len(plazos)))
-        """
-        hist_plazos = historicoPlazos(r, moneda, plazos, p)
-        ret_plazos = retornoPlazos(plazos, hist_plazos)
-        vol_plazos = volatilidades["Nombres" = ]
-        #volatilidadesPlazo(r, moneda, plazos, p, fecha, hist_plazos) # Se puede entregar volatilidades.
-        # matriz_corr = correlacion(ret_plazos, plazos, vol_plazos) # dimensiones: 14x14
-        # corr = extraccion(matriz_corr, plazos) # Se puede entregar matriz_corr.
-        """
 
       # Por cada cupon
         for j in range(len(cupones)):
@@ -414,6 +407,13 @@ def proyeccionBonos(nemo, plazos, fecha, bonos, corrTotales, df_vol, monedas):
             elif (p[0] == -1): 
                 flujo_plazos[p[1]] += flujo / (1 + tir_p[p[1]])**d
                 continue
+
+
+
+
+
+
+
 
 
 
