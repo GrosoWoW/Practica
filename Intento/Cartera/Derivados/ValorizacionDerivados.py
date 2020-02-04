@@ -206,7 +206,7 @@ def calculo_historico(pivotes, moneda, n):
 
     return df
 
-def calcular_retornos(dfHistorico):
+def calcular_retornos(dfHistorico, retorno_moneda = 0):
 
     """
     Funcion encargada de calcular los retornos dado un historico para cada pivote
@@ -236,7 +236,7 @@ def calcular_retornos(dfHistorico):
                 valor = np.log(columna[j] / columna[j-1])
                 valores.append(valor)
 
-        df[nom_columnas[i]] = valores
+        df[nom_columnas[i]] = np.array(valores) + np.array(retorno_moneda)
         valores = []
 
     return df

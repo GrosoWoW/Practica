@@ -46,13 +46,14 @@ def retornosMoneda(monedaBase, n):
     retorno = np.zeros(n)
     retorno[0] = 0
 
+    if monedaBase == "CLP": return pd.DataFrame(np.zeros(n), columns=["Retorno"])
+
     for i in range(1,n):
 
         retorno[i] = np.log(historico['Cambio'][i]/historico['Cambio'][i-1])
 
     return pd.DataFrame(retorno, columns=['Retorno'])
 
-print(retornosMoneda('USD', 10))
 
 
 

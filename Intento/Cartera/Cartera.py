@@ -15,6 +15,7 @@ from Derivados.DerivadosTipos.DerivadosFWD import *
 from Derivados.DerivadosTipos.DerivadosSCC import *
 from Derivados.DerivadosTipos.DerivadosSUC import *
 from Derivados.ValorizacionDerivados import *
+from ConversionVolatilidad import retornosMoneda
 
 sys.path.append("..")
 
@@ -239,8 +240,12 @@ class Cartera:
         arr1 = []
         # Retornos derivados.
         for moneda in self.monedas_derivados:
+
             dfHistorico = calculo_historico(vector_dias, moneda, n)
-            aux = calcular_retornos(dfHistorico)
+            print(retornosMoneda(moneda, n))
+            retorno_moneda = retornosMoneda(moneda, n)["Retorno"].values
+            
+            aux = calcular_retornos(dfHistorico, retorno_moneda)
             arr.append(aux)
 
         # Retornos Bonos. 
@@ -248,22 +253,28 @@ class Cartera:
             if mon == "EUR": continue
     
             riesgo = mon.split("#")[1]
-            monedas = mon.split("#")[0]
-            col = nombre_columna(monedas, self.pivotes, riesgo)
-            hist = historicoPlazos(riesgo, monedas, np.array(self.pivotes)/360, np.arange(len(self.pivotes)), n)
-            hist = pd.DataFrame(hist, columns= col)#uwu
-            arr1.append(hist)
-            arr.append(calcular_retornos(hist))
+            moneda = mon.split("#")[0]
 
-        arreglo_lindo = arr[0]
+            col = nombre_columna(moneda, self.pivotes, riesgo)
+            dfHistorico = historicoPlazos(riesgo, moneda, np.array(self.pivotes)/360, np.arange(len(self.pivotes)), n)
+            dfHistorico = pd.DataFrame(dfHistorico, columns= col)#uwu
+
+            retorno_moneda = retornosMoneda(moneda, n)["Retorno"].values
+
+            aux = calcular_retornos(dfHistorico, retorno_moneda)
+ 
+            arr1.append(dfHistorico)
+            arr.append(aux)
+
+        arreglo_final = arr[0]
         historicos = arr1[0]
         for i in np.arange(1, len(arr)):
-            arreglo_lindo = pd.concat([arreglo_lindo, arr[i]], 1)
+            arreglo_final = pd.concat([arreglo_final, arr[i]], 1)
         
         for i in np.arange(1, len(arr1)):
             historicos = pd.concat([historicos, arr1[i]], 1)
         
-        return arreglo_lindo
+        return arreglo_final
         
     def get_volCurvas(self, retornoCurvas):
         """
@@ -271,7 +282,6 @@ class Cartera:
         Retorna volatilidades de los instrumentos que se valorizan con curvas.
 
         """
-        # Agregar calculo de volatilidades de bonos.
         return volatilidades_derivados(retornoCurvas)
 
     def get_volatilidades(self):
@@ -443,13 +453,6 @@ miCartera = Cartera(datetime.date(2018, 4, 18), ["BSTDU10618"], ["147951", "1479
 ret = miCartera.get_retornos()
 pd.get_option("display.max_rows")
 pd.get_option("display.max_columns")
-print(ret)
 
 miCartera.calculoPivote_bonos()
 miCartera.calculoPivote_derivados()
-print(miCartera.get_retornos())
-print(miCartera.get_volatilidades())
-print(miCartera.get_covarianza())
-print(miCartera.get_correlaciones())
-print(miCartera.get_pivotes_bonos())
-print(miCartera.get_pivotes_derivados())
