@@ -17,7 +17,7 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Conversion de USD/UF/EUR a CLP
-def getConversionCLP(monedaBase, n = 100):
+def getConversionCLP(monedaBase, n = 200):
     """
     Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
     :param monedaBase: String con la moneda que se desea llevar a CLP.
