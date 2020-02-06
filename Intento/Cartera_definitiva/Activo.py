@@ -6,6 +6,7 @@ import numpy as np
 
 from Correlaciones import ewma, ewma_matriz
 
+import math
 
 """
 Clase Abstracta Activo correspondiente a generar los diferentes activos
@@ -204,6 +205,19 @@ class Activo(ABC):
         vol = self.volatilidad.iloc[:, 0]
         D = np.diag(vol)
         self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D))
+
+
+    def solucion_ecuacion(self, sigma_flujo, sigma_pivote1, sigma_pivote2, ro):
+
+
+        A = (sigma_pivote1**2 + sigma_pivote2**2 - 2*ro*sigma_pivote1*sigma_pivote2)
+        B = (2 * ro * sigma_pivote1* sigma_pivote2 - 2*sigma_pivote2**2)
+        C = (sigma_pivote2**2 - sigma_flujo**2)
+
+        x1 = (-B+math.sqrt(B**2-(4*A*C)))/(2*A)  # Fórmula de Bhaskara parte positiva
+        x2 = (-B-math.sqrt(B**2-(4*A*C)))/(2*A)  # Fórmula de Bhaskara parte negativa
+
+        return[x1, x2]
 
 
     

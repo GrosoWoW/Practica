@@ -5,6 +5,7 @@ import numpy as np
 from UtilesValorizacion import parsear_curva, diferencia_dias_convencion
 from Matematica import interpolacion_log_escalar
 from Util import add_days
+import sys
 
 
 class Derivado(Activo):
@@ -16,8 +17,6 @@ class Derivado(Activo):
         self.derivado_generico = derivado_generico
         self.derivado_generico.genera_flujos()
         self.derivado_generico.valoriza_flujos()
-
-
 
     def get_derivado_generico(self):
 
@@ -86,6 +85,16 @@ class Derivado(Activo):
 
         return monedas
 
+    def pedir_curva(self, moneda):
+
+        cn = self.get_cn()
+
+        fecha_valorizacion = self.get_fecha_valorizacion_date()
+        curva = ("SELECT * FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+moneda+"' AND Fecha = '"+str(fecha_valorizacion)+"'")
+        curva = pd.read_sql(curva, cn)
+        curva = parsear_curva(curva["Curva"][0], fecha_valorizacion)
+        return curva
+
     def buscar_pivote(self, fecha_pago):
 
         pivotes = self.get_plazos()
@@ -106,18 +115,6 @@ class Derivado(Activo):
 
                 return [pivotes[i - 1], pivotes[i]]
 
-            
-    def generar_diccionario_table(self, pivotes, fecha_valorizacion, monedas):
-
-        lenght = len(monedas)
-        diccionario = dict()
-        for i in range(lenght):
-
-            tabla = self.generar_tabla_completa(pivotes, fecha_valorizacion, monedas[i])
-            diccionario[monedas[i]] = tabla
-
-        return diccionario    
-
     def coeficiente_peso(self, pivote1, pivote2, fecha_actual_flujo):
 
         fecha_valorizacion = self.get_fecha_valorizacion_date()
@@ -130,21 +127,80 @@ class Derivado(Activo):
 
         return numerador/denominador 
 
+    def discrimador_sol(self, soluciones):
+
+        for i in range(2):
+            if 0 <= soluciones[i] and soluciones[i] <= 1:
+
+                return soluciones[i]
+        print("Javier, nos fallaste")
+        return sys.exit(1) 
+
 
     def distribucion_pivotes(self):
 
         pivotes = self.get_plazos()
         flujos = self.get_flujos()
+
         fecha_valorizacion = self.get_fecha_valorizacion()
+        fecha_valorizacion_date = self.get_fecha_valorizacion_date()
         fechas_pago = flujos["FechaFixing"]
         fechas_largo = len(fechas_pago)
+
+        corr = self.get_correlacion()
+
+        monedas_pagos = flujos["Moneda"]
+
+        volatilidades = self.get_volatilidad().values
+
+        distruciones = np.zeros(len(pivotes))
+
+
 
         for i in range(fechas_largo):
 
             fecha_pago_actual = fechas_pago[i]
-            pivotes = self.buscar_pivote(fecha_pago_actual)
+            moneda_pago_actual = monedas_pagos[i]
+            flujo_pago = flujos["Flujo"][i]
+
+            pivote_entremedio = self.buscar_pivote(fecha_pago_actual)
             alfa = self.coeficiente_peso(pivotes[0], pivotes[1], fecha_pago_actual)
-            print(alfa)
+
+            indice_pivote1 = pivotes.index(pivote_entremedio[0])
+            indice_pivote2 = pivotes.index(pivote_entremedio[1])
+
+
+
+            volatilidad_inter = alfa*volatilidades[indice_pivote1][0] + (1 - alfa)*volatilidades[indice_pivote2][0]
+
+            curva_parseada = self.pedir_curva(moneda_pago_actual)
+
+            diferencia_dias = diferencia_dias_convencion("ACT360", fecha_valorizacion_date, fecha_pago_actual)
+            factor_descuento = interpolacion_log_escalar(diferencia_dias, curva_parseada)
+            print(indice_pivote1, indice_pivote2)
+            print(volatilidad_inter)
+            print(volatilidades[indice_pivote1][0])
+            print(volatilidades[indice_pivote2][0])
+            print(corr[indice_pivote1][indice_pivote2])
+
+
+            valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[indice_pivote1][0], volatilidades[indice_pivote2][0],\
+                     corr[indice_pivote1][indice_pivote2] )
+
+            print(valor_alfa)
+            solucion = self.discrimador_sol(valor_alfa)
+
+            VP = factor_descuento*flujo_pago
+    
+            distruciones[indice_pivote1] += factor*VP
+            distruciones[indice_pivote2] += (1 - factor)*VP
+
+            print(distruciones)
+
+
+            
+
+
 
 
 
