@@ -22,7 +22,7 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion['Moneda'], accion['Historico'].split(','), moneda, fecha, cn)
+            obj_accion = Accion(accion['Moneda'], pd.DataFrame(accion['Historico'][0]), moneda, fecha, cn)
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -77,10 +77,15 @@ username = 'sa'
 password = 'qwerty123'
 driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
+
 # Acciones
+archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')      
+columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
+archivo = archivo[columnas][:200]
 accion = pd.DataFrame()
-accion['Moneda'] = ['USD', 'UF']
-accion['Historico'] = ['1,2,3,4,5,6,7,8,9,10', '1,2,3,4,5,6,7,8,9,10']
+accion['Moneda'] = ['USD']
+accion['Historico'] = [[archivo["Adj Close"]]]
+print(accion)
 # Bonos
 bono = pd.DataFrame()
 bono['Riesgo'] = ['AAA']  
@@ -125,7 +130,7 @@ cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2018,5,5), cn)
 #print(cartera.get_bonos())
 #print(cartera.get_derivados())
 
-bonos = cartera.get_acciones()
+bonos = cartera.get_bonos()
 print(bonos)
 bono = bonos[0]
 print(bono)
@@ -135,3 +140,7 @@ bono.set_retorno()
 print('Hola')
 bono.corregir_moneda()
 print(bono.get_retornos())
+bono.set_volatilidad()
+print(bono.get_volatilidad())
+bono.set_correlacion()
+print(bono.get_correlacion())

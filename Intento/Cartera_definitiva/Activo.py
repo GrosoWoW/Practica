@@ -157,7 +157,9 @@ class Activo(ABC):
 
         historicos = self.get_historicos()
         numero_filas = np.size(historicos, 0)
+        print(numero_filas)
         numero_columnas = np.size(historicos, 1)
+        print(numero_columnas)
         vector = np.zeros([numero_filas, numero_columnas])
 
         for i in range(numero_columnas):

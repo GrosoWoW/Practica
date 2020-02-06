@@ -54,11 +54,9 @@ class Bono(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
-        print(monedaBase,monedaCartera)
         n = 200
 
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
-        print(historico_moneda)
         retorno = np.zeros(n)
         retorno[0] = 0
 
@@ -69,10 +67,11 @@ class Bono(Activo):
                 retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
 
         aux = self.get_retornos()
-        print(aux)
-        print(retorno)
+
         for i in range(np.size(aux,1)):
+
             aux.iloc[:,i] = aux.iloc[:,i] + retorno
+
         self.retornos = aux
 
     def get_distribucionPlazos(self):
