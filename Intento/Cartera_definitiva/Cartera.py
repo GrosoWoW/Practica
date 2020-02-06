@@ -12,7 +12,7 @@ from DerivadosTipos.DerivadosSCC import *
 class Cartera:
     def __init__(self, acciones, bonos, derivados, moneda, fecha, cn):
         # Acciones: DataFrame con historico de precios (debe contener 200 datos) ['Moneda', 'Historico']
-        # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico']
+        # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico', 'FechaEmision]
         # Derivados: Objeto Derivado
 
         # Aqui se guarda una referencia a cada obj Accion
@@ -30,7 +30,7 @@ class Cartera:
         for j in range(np.size(bonos,0)):
 
             bono = bonos.iloc[j]
-            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], moneda, fecha, cn)
+            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn)
             self.bonos.append(obj_bono)
 
         self.derivados = []
@@ -92,6 +92,7 @@ bono['Riesgo'] = ['AAA']
 bono['Moneda'] = ["CLP"]
 bono['TablaDesarrollo'] = ["1#25-09-2018#2,2252#0#100#2,2252|2#25-03-2019#2,2252#0#100#2,2252|3#25-09-2019#2,2252#0#100#2,2252|4#25-03-2020#2,2252#0#100#2,2252|5#25-09-2020#2,2252#0#100#2,2252|6#25-03-2021#2,2252#100#0#102,2252"]
 bono['Convencion'] = ["ACT360"]
+bono['FechaEmision'] = ['2018-02-20']
 # Derivado
 info_derivado = dict()
 info_derivado["Tipo"] = 'SCC'

@@ -9,7 +9,7 @@ from Activo import Activo
 from math import exp, log
 class Bono(Activo):
 
-    def __init__(self, riesgo, moneda, cupones, convencion, monedaCartera, fecha, cn):
+    def __init__(self, riesgo, moneda, cupones, convencion, fechaEmision, monedaCartera, fecha, cn):
 
 
         super(Bono, self).__init__(monedaCartera, fecha, cn)
@@ -27,11 +27,17 @@ class Bono(Activo):
 
         self.distribucionPlazos = []
 
+        self.fecha_emision = fechaEmision
+
         self.cn = cn
 
         # En la base de datos, los casos enunciados traen la informacion de la curva por parametros, los otros vienen listos
         # para parsear e interpolar el caso requerido.
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
+
+    def get_fecha_emision(self):
+
+        return self.fecha_emision
 
     # Conversion de USD/UF/EUR a CLP
     def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
@@ -57,6 +63,7 @@ class Bono(Activo):
         n = 200
 
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
+        print(historico_moneda)
         retorno = np.zeros(n)
         retorno[0] = 0
 
@@ -276,6 +283,16 @@ class Bono(Activo):
                     historico[j][i] = factor_descuento(tir/100, fecha_ini, fecha_fin, convencion, 0)
 
         self.historicos = pd.DataFrame(historico)
+
+    def distribucion_pivotes(self):
+
+        plazos = self.get_plazos()
+        fecha_valorizacion = self.get_fecha_valorizacion()
+        convencion = self.get_convencion()
+        fecha_emision = self.get_fecha_emision()
+
+        cupones = self.get_cupones()
+        cupones = StrTabla2ArrTabla(cupones, fecha_emision)
 
 
 
