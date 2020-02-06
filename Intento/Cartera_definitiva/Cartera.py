@@ -19,10 +19,10 @@ class Cartera:
 
         # Por cada Accion en el dataFrame
         for i in range(np.size(acciones,0)):
+
             accion = acciones.iloc[i]
-            for x in accion['Historico'].split(','):
-                          obj_accion = Accion(accion['Moneda'], accion['Historico'].split(','), moneda, fecha, cn)
-            self.acciones.extend(accion)
+            obj_accion = Accion(accion['Moneda'], accion['Historico'].split(','), moneda, fecha, cn)
+            self.acciones.append(obj_accion)
         
     def get_acciones(self):
 
@@ -37,11 +37,11 @@ acciones['Acciones'] = [accion, accion, accion]
 
 server = '172.16.1.38'
 username = 'sa'
-password = 'qweVty123'
+password = 'qwerty123'
 driver = '{ODBC Driver 17 for SQL Server}'
 
-cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + esserver + ';UID=' + username + ';PWD=' + password)
+cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
-
-cartera = Cartera(accion, None, None, 'CLP', '2020-02-06', cn)
+print(acciones)
+cartera = Cartera(acciones, None, None, 'CLP', '2020-02-06', cn)
 print(cartera.get_acciones())

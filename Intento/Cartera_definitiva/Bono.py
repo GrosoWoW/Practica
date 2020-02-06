@@ -2,6 +2,7 @@
 from BonoUtil import *
 from UtilesValorizacion import *
 from Util import *
+from Matematica import interpolacion_escalar
 
 from Activo import Activo
 
@@ -31,7 +32,7 @@ class Bono(Activo):
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
 
     # Conversion de USD/UF/EUR a CLP
-    def getConversionCLP(monedaCartera, monedaBase, n = '200'):
+    def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
         """
         Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
         :param monedaBase: String con la moneda que se desea llevar a CLP.
@@ -42,7 +43,7 @@ class Bono(Activo):
             conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
         else:
             conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = '" + monedaCartera + "' AND Hora = 'CIERRE' ORDER BY Fecha DESC"
-        conversion = pd.read_sql(conversion, cn)
+        conversion = pd.read_sql(conversion, self.get_cn())
         conversion = conversion.values[::-1]
         conversion = pd.DataFrame(conversion, columns=['Cambio'])
         return conversion
@@ -51,9 +52,9 @@ class Bono(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
-        riesgo = self.get_riesgo()
+        n = 200
 
-        historico_moneda = getConversionCLP(monedaCartera, monedaBase)
+        historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
         retorno = np.zeros(n)
         retorno[0] = 0
 
@@ -61,7 +62,7 @@ class Bono(Activo):
 
             for i in range(1,n):
 
-                retorno[i] = np.log(historico['Cambio'][i]/historico['Cambio'][i-1])
+                retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
 
         aux = self.get_retornos()
 
@@ -201,7 +202,7 @@ class Bono(Activo):
 
         if (float(XY[n][1]) < 0 or float(XY[m][1]) < 0): 
 
-            return self.interpolacion_escalar(x, XY, n, m, first)
+            return interpolacion_escalar(x, XY, n, m, first)
 
         else:
 

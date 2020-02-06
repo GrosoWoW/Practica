@@ -1,3 +1,5 @@
+import pandas as pd
+import numpy as np
 from Activo import Activo
 
 class Accion(Activo):
@@ -26,7 +28,7 @@ class Accion(Activo):
         pass
 
     # Conversion de USD/UF/EUR a CLP
-    def getConversionCLP(monedaCartera, monedaBase, n = '200'):
+    def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
         """
         Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
         :param monedaBase: String con la moneda que se desea llevar a CLP.
@@ -37,7 +39,7 @@ class Accion(Activo):
             conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
         else:
             conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = '" + monedaCartera + "' AND Hora = 'CIERRE' ORDER BY Fecha DESC"
-        conversion = pd.read_sql(conversion, cn)
+        conversion = pd.read_sql(conversion, self.get_cn())
         conversion = conversion.values[::-1]
         conversion = pd.DataFrame(conversion, columns=['Cambio'])
         return conversion
@@ -46,8 +48,9 @@ class Accion(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
+        n = 200
 
-        historico_moneda = getConversionCLP(monedaCartera, monedaBase)
+        historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
         retorno = np.zeros(n)
         retorno[0] = 0
 
@@ -55,7 +58,7 @@ class Accion(Activo):
 
             for i in range(1,n):
 
-                retorno[i] = np.log(historico['Cambio'][i]/historico['Cambio'][i-1])
+                retorno[i] = np.log(historico_moneda['Cambio'][i]/historico_moneda['Cambio'][i-1])
 
         aux = self.get_retornos()
 
