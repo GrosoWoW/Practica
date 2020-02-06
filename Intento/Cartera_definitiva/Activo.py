@@ -198,6 +198,7 @@ class Activo(ABC):
         D = np.diag(vol)
         self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D))
 
+
     
 
 

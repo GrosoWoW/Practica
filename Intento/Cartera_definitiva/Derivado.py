@@ -70,4 +70,50 @@ class Derivado(Activo):
 
         pass
 
+    def monedas(self):
+
+        flujos = self.get_flujos()["Moneda"]
+        lenght = len(flujos)
+        monedas = []
+
+        for i in range(lenght):
+            moneda_aux = flujos[i]
+            
+            if moneda_aux not in monedas:
+
+                monedas.append(moneda_aux)
+
+        return monedas
+
+    def generar_diccionario_table(self, pivotes, fecha_valorizacion, monedas):
+
+        lenght = len(monedas)
+        diccionario = dict()
+        for i in range(lenght):
+
+            tabla = self.generar_tabla_completa(pivotes, fecha_valorizacion, monedas[i])
+            diccionario[monedas[i]] = tabla
+
+        return diccionario    
+
+    def coeficiente_peso(self, fecha_pivote1, fecha_pivote2):
+
+        fecha_valorizacion = self.get_fecha_valorizacion()
+
+        
+
+
+
+
+    def distribucion_pivotes(self):
+
+        pivotes = self.get_plazos()
+        fecha_valorizacion = self.get_fecha_valorizacion()
+
+
+
+
+
+
+ 
 
