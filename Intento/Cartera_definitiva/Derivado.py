@@ -1,3 +1,6 @@
+from Activo import Activo
+
+
 
 class Derivado(Activo):
 
@@ -5,7 +8,7 @@ class Derivado(Activo):
 
         self.derivado_generico = derivado_generico
         self.derivado_generico.genera_flujos()
-        self.valoriza_flujos()
+        self.derivado_generico.valoriza_flujos()
 
     def get_derivado_generico(self):
 
@@ -13,7 +16,8 @@ class Derivado(Activo):
 
     def get_flujos(self):
 
-        return self.get_derivado_generico().get_flujos_valorizados()
+        return self.get_derivado_generico().flujos_valorizados[["ID","ActivoPasivo", "Fecha"\
+            , "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase", "MonedaPasivo"]]
 
 
     def set_historico(self):
@@ -38,5 +42,9 @@ class Derivado(Activo):
                 matriz[i][j] = interpolacion_log_escalar(valor_dia, curva_parseada)
                 
         self.historicos = pd.DataFrame(matriz)
+
+    def corregir_moneda(self):
+
+        pass
 
 
