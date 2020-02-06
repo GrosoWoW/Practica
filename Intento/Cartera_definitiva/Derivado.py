@@ -2,8 +2,9 @@ from Activo import Activo
 import datetime
 import pandas as pd
 import numpy as np
-from UtilesValorizacion import parsear_curva
+from UtilesValorizacion import parsear_curva, diferencia_dias_convencion
 from Matematica import interpolacion_log_escalar
+from Util import add_days
 
 
 class Derivado(Activo):
@@ -85,6 +86,27 @@ class Derivado(Activo):
 
         return monedas
 
+    def buscar_pivote(self, fecha_pago):
+
+        pivotes = self.get_plazos()
+        largo_pivotes = len(pivotes)
+        fecha_valorizacion = self.get_fecha_valorizacion_date()
+
+        for i in range(largo_pivotes):
+
+            pos_pivote = pivotes[i]
+            
+            fecha_pivote = add_days(fecha_valorizacion, int(pos_pivote*360))
+
+            if i == 0 and fecha_pago < fecha_pivote:
+
+                return [pivotes[i], pivotes[i]]
+
+            elif fecha_pivote > fecha_pago:
+
+                return [pivotes[i - 1], pivotes[i]]
+
+            
     def generar_diccionario_table(self, pivotes, fecha_valorizacion, monedas):
 
         lenght = len(monedas)
@@ -96,19 +118,35 @@ class Derivado(Activo):
 
         return diccionario    
 
-    def coeficiente_peso(self, fecha_pivote1, fecha_pivote2):
+    def coeficiente_peso(self, pivote1, pivote2, fecha_actual_flujo):
 
-        fecha_valorizacion = self.get_fecha_valorizacion()
+        fecha_valorizacion = self.get_fecha_valorizacion_date()
 
+        fecha_pivote1 = add_days(fecha_valorizacion, int(pivote1*360))
+        fecha_pivote2 = add_days(fecha_valorizacion, int(pivote2*360))
         
+        numerador = diferencia_dias_convencion("ACT360", fecha_pivote1, fecha_actual_flujo)
+        denominador = diferencia_dias_convencion("ACT360", fecha_pivote1 , fecha_pivote2)
 
-
+        return numerador/denominador 
 
 
     def distribucion_pivotes(self):
 
         pivotes = self.get_plazos()
+        flujos = self.get_flujos()
         fecha_valorizacion = self.get_fecha_valorizacion()
+        fechas_pago = flujos["FechaFixing"]
+        fechas_largo = len(fechas_pago)
+
+        for i in range(fechas_largo):
+
+            fecha_pago_actual = fechas_pago[i]
+            pivotes = self.buscar_pivote(fecha_pago_actual)
+            alfa = self.coeficiente_peso(pivotes[0], pivotes[1], fecha_pago_actual)
+            print(alfa)
+
+
 
 
 

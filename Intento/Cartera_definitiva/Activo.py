@@ -44,6 +44,7 @@ class Activo(ABC):
         # Fecha a la que se desea valorizar (se pasa a string para mejor manejo YYYY-mm-dd)
         self.fecha_valorizacion = str(fecha_valorizacion).split(" ")[0]
 
+        self.fecha_valorizacion_date = fecha_valorizacion
         # Conexion a base de datos
         self.cn = cn
 
@@ -57,6 +58,10 @@ class Activo(ABC):
         """
 
         return self.fecha_valorizacion
+
+    def get_fecha_valorizacion_date(self):
+
+        return self.fecha_valorizacion_date
     
     def get_cn(self):
 
