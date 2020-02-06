@@ -7,33 +7,69 @@ from Matematica import interpolacion_log_escalar
 from Util import add_days
 import sys
 
+"""
+Clase principal de derivado hereda de la clase abstracta Activo
+funciona como un adapter entre las clases derivado Abstracto y la clase cartera
+
+"""
 
 class Derivado(Activo):
 
     def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn):
 
+        # Super para la clase DerivadoAbstracto y entregar los valores
         super(Derivado, self).__init__(monedaCartera, fecha_valorizacion, cn)
 
+        # Derivado de la clase abstracta DerivadoAbstracto
         self.derivado_generico = derivado_generico
+
+        # Se generan y valorizan los flujos del derivado
         self.derivado_generico.genera_flujos()
         self.derivado_generico.valoriza_flujos()
 
+        # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
 
     def get_derivado_generico(self):
 
+        """
+        Retorna el derivado abstracto de la clase DerivadoAbstracto
+        :return: DerivadoAbstracto 
+
+        """
+
         return self.derivado_generico
 
     def get_flujos(self):
+
+        """
+        Retorna los flujos de el derivado
+        :return: DataFrame con los flujos del derivado
+
+        """
 
         return self.get_derivado_generico().flujos_valorizados[["ID","ActivoPasivo", "Fecha"\
             , "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
 
     def get_distribucion_pivotes(self):
 
+        """
+        Retorna el vector con la distribucion de los flujos en los
+        pivotes
+        :return: Vector con las distintas distribuciones
+
+        """
+
         return self.distribucion_pivotes
 
     def seleccionar_curva_derivados(self, moneda, n, fecha=datetime.date(2018, 1, 22)):
+
+        """
+        Funcion encargada de seleccionar la curva correspondiende en TdCurvasDerivados
+        :param moneda: Str con la moneda correspondiente a la curva
+        :param n: int con la cantidad de curvas que se desean consultar a la db
+
+        """
 
         monedas = moneda
         cnn = self.get_cn()
@@ -48,9 +84,15 @@ class Derivado(Activo):
 
     def set_historico(self):
 
+        """
+        Funcion encargada de calcular el historico de los derivados
+        Setea self.historicos con el DataFrame resultante
+
+        """
+
         n = 1000
         moneda = self.get_flujos()["Moneda"][0]
-        curvas = self.seleccionar_curva_derivados(moneda, n)[::-1]
+        curvas = self.seleccionar_curva_derivados(moneda, n, self.get_fecha_valorizacion_date())[::-1]
 
         largo = len(self.get_plazos())
         cantidad_curvas = len(curvas["Curva"])
@@ -78,6 +120,12 @@ class Derivado(Activo):
 
     def monedas(self):
 
+        """
+        Funcion encargada de obtener las distintas monedas del bono
+        :return: Vector con las monedas sin repeticion
+
+        """
+
         flujos = self.get_flujos()["Moneda"]
         lenght = len(flujos)
         monedas = []
@@ -91,7 +139,33 @@ class Derivado(Activo):
 
         return monedas
 
+    def diccionario_monedas(self):
+
+        """
+        Funcion en encargada de crear el diccionario
+        con las monedas de activo y pasivo
+
+        """
+
+        vector_monedas = self.monedas()
+        plazos = self.get_plazos()
+        dicc = dict()
+
+        for i in range(len(vector_monedas)):
+
+
+            dicc[vector_monedas[i]] = np.zeros(len(plazos))
+
+        return dicc
+
     def pedir_curva(self, moneda):
+
+        """
+        Funcion encargada de pedir la cirva a la base de datos 
+        con los factores de descuento correspondientes
+        :return: DataFrame con las distintas curvas
+
+        """
 
         cn = self.get_cn()
 
@@ -102,6 +176,14 @@ class Derivado(Activo):
         return curva
 
     def buscar_pivote(self, fecha_pago):
+
+        """
+        Funcion encargada de buscar los pivotes entre donde se encuentra la
+        fecha de pago
+        :param fecha_pago: Fecha que se desea pivotear
+        :return: Vector de dos dimensiones con los dos pivotes calculados
+
+        """
 
         pivotes = self.get_plazos()
         largo_pivotes = len(pivotes)
@@ -123,6 +205,14 @@ class Derivado(Activo):
 
     def coeficiente_peso(self, pivote1, pivote2, fecha_actual_flujo):
 
+        """
+        Funcion encargada de calcular el alfa_0
+        :param pivote1: int con el valor del pivote1 en años
+        :param pivote2: int con el valor del pivote2 en años
+        :param fecha_actual_flujo: Fecha con el flujo que se desea pivotear
+
+        """
+
         fecha_valorizacion = self.get_fecha_valorizacion_date()
 
         fecha_pivote1 = add_days(fecha_valorizacion, int(pivote1*360))
@@ -135,6 +225,12 @@ class Derivado(Activo):
 
     def discrimador_sol(self, soluciones):
 
+        """
+        Funcion para discriminar las soluciones de la ecuacion
+        es decir que se tome una que se encuentre entre 0 y 1
+
+        """
+
         for i in range(2):
             if 0 <= soluciones[i] and soluciones[i] <= 1:
 
@@ -144,6 +240,13 @@ class Derivado(Activo):
 
 
     def set_distribucion_pivotes(self):
+
+        """
+        Funcion de calculo principal de la distribucion
+        de los pivotes
+        Setea la distribucion en self.distribucion_pivotes
+
+        """
 
         pivotes = self.get_plazos()
         flujos = self.get_flujos()
@@ -159,7 +262,7 @@ class Derivado(Activo):
 
         volatilidades = self.get_volatilidad().values
 
-        distruciones = np.zeros(len(pivotes))
+        distruciones = self.diccionario_monedas()
 
         for i in range(fechas_largo):
 
@@ -187,8 +290,8 @@ class Derivado(Activo):
 
             VP = factor_descuento*flujo_pago
     
-            distruciones[indice_pivote1] += solucion*VP
-            distruciones[indice_pivote2] += (1 - solucion)*VP
+            distruciones[moneda_pago_actual][indice_pivote1] += solucion*VP
+            distruciones[moneda_pago_actual][indice_pivote2] += (1 - solucion)*VP
 
         self.distribucion_pivotes = (distruciones)
 
