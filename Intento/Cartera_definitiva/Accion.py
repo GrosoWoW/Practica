@@ -26,6 +26,7 @@ class Accion(Activo):
     def set_historico(self):
 
         pass
+        
 
     # Conversion de USD/UF/EUR a CLP
     def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
@@ -61,6 +62,8 @@ class Accion(Activo):
                 retorno[i] = np.log(historico_moneda['Cambio'][i]/historico_moneda['Cambio'][i-1])
 
         aux = self.get_retornos()
+        print(aux)
+        print(retorno)
 
         self.retornos = aux + retorno
 

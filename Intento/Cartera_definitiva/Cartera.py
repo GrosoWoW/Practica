@@ -39,6 +39,25 @@ class Cartera:
             derivado = derivados.iloc[k]
             obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn)
             self.derivados.append(obj_derivado)
+
+        self.moneda = moneda
+
+        self.cn = cn
+
+        self.fecha = fecha
+
+
+    def get_moneda(self):
+
+        return self.moneda
+
+    def get_cn(self):
+
+        return self.cn
+
+    def get_fecha(self):
+
+        return self.fecha
         
     def get_acciones(self):
 
@@ -102,6 +121,17 @@ derivado['Derivado'] = [derivado_info]
 
 
 cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2018,5,5), cn)
-print(cartera.get_acciones())
-print(cartera.get_bonos())
-print(cartera.get_derivados())
+#print(cartera.get_acciones())
+#print(cartera.get_bonos())
+#print(cartera.get_derivados())
+
+bonos = cartera.get_acciones()
+print(bonos)
+bono = bonos[0]
+print(bono)
+bono.set_historico()
+print(bono.get_historicos())
+bono.set_retorno()
+print('Hola')
+bono.corregir_moneda()
+print(bono.get_retornos())

@@ -11,6 +11,7 @@ class Bono(Activo):
 
     def __init__(self, riesgo, moneda, cupones, convencion, monedaCartera, fecha, cn):
 
+
         super(Bono, self).__init__(monedaCartera, fecha, cn)
 
         self.riesgo = riesgo
@@ -19,6 +20,7 @@ class Bono(Activo):
 
         self.monedaCartera = monedaCartera
 
+        #  Hay que parsearlo
         self.cupones = cupones
 
         self.convencion = convencion
@@ -52,9 +54,11 @@ class Bono(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
+        print(monedaBase,monedaCartera)
         n = 200
 
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
+        print(historico_moneda)
         retorno = np.zeros(n)
         retorno[0] = 0
 
@@ -65,8 +69,11 @@ class Bono(Activo):
                 retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
 
         aux = self.get_retornos()
-
-        self.retornos = aux + retorno
+        print(aux)
+        print(retorno)
+        for i in range(np.size(aux,1)):
+            aux.iloc[:,i] = aux.iloc[:,i] + retorno
+        self.retornos = aux
 
     def get_distribucionPlazos(self):
 
