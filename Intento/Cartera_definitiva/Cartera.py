@@ -71,6 +71,40 @@ class Cartera:
 
         return self.derivados
 
+    
+    def historicos_totales(self):
+
+        bonos = self.get_bonos()
+        largo_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        largo_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        largo_acciones = len(acciones)
+
+        df = pd.DataFrame()
+
+        for i in range(largo_bonos):
+
+            bono = bonos[i]
+            historico_bono = bono.get_historicos()
+            df = pd.concat([df, historico_bono], 1)
+
+        for i in range(largo_derivados):
+
+            derivado = derivados[i]
+            historico_derivado = derivado.get_historicos()
+            df = pd.concat([df, historico_derivado], 1)
+
+        for i in range(largo_acciones):
+
+            accion = acciones[i]
+            historico_accion = accion.get_historicos()
+            df = pd.concat([df, historico_accion], 1)
+
+        self.historicos_totales = df
+
 # Conexion
 server = '172.16.1.38'
 username = 'sa'
@@ -79,7 +113,7 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Acciones
-archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')      
+archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')      
 columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
 archivo = archivo[columnas][:200]
 accion = pd.DataFrame()

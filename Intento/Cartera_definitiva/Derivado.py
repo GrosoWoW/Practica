@@ -30,6 +30,8 @@ class Derivado(Activo):
         # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
 
+        self.set_historico()
+
     def get_derivado_generico(self):
 
         """
