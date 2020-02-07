@@ -34,6 +34,8 @@ class Derivado(Activo):
 
         self.set_retorno()
 
+        self.corregir_moneda()
+
         self.set_volatilidad()
 
     def get_derivado_generico(self):
@@ -121,8 +123,28 @@ class Derivado(Activo):
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
 
     def corregir_moneda(self):
+        moneda_cartera = self.get_monedaCartera()
+        retornos = self.get_retornos()
+        moneda_activo = retornos.keys()[0].split('#')[0]
+        n = 200
+        historico_moneda = self.getConversionCLP(moneda_cartera, moneda_activo)
+        retorno = np.zeros(n)
+        retorno[0] = 0
 
-        pass
+        if moneda_activo != moneda_cartera: 
+
+            for i in range(1,n):
+
+                retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
+
+            aux = self.get_retornos()
+
+            for i in range(np.size(aux,1)):
+
+                aux.iloc[:,i] = aux.iloc[:,i] + retorno
+
+            self.retornos = aux
+        
 
     def monedas(self):
 

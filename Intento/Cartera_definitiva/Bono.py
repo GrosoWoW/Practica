@@ -440,8 +440,8 @@ class Bono(Activo):
 
             flujo_plazos = self.actualizar(solucion, vp_flujo, plazos_index, flujo_plazos)
 
-        self.distribucion_pivotes = pd.DataFrame(flujo_plazos)
-        print("Aqui" ,self.get_distribucionPlazos())
+        self.distribucionPlazos = pd.DataFrame(flujo_plazos)
+        
 
 
 

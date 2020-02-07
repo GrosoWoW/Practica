@@ -174,8 +174,8 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Acciones
-archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
-#archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
+#archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
+archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
 columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
 archivo = archivo[columnas][:200]
 accion = pd.DataFrame()
