@@ -50,22 +50,7 @@ class Bono(Activo):
 
         return self.fecha_emision
 
-    def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
-        """
-        Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
-        :param monedaBase: String con la moneda que se desea llevar a CLP.
-        :param n: String con la cantidad de dias que se quieren.
-        :return: Un DataFrame con el historico de conversion.
-        """
-        if (monedaBase == 'UF' and monedaCartera == 'CLP'):
-            conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
-        else:
-            conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = '" + monedaCartera + "' AND Hora = 'CIERRE' ORDER BY Fecha DESC"
-        conversion = pd.read_sql(conversion, self.get_cn())
-        conversion = conversion.values[::-1]
-        conversion = pd.DataFrame(conversion, columns=['Cambio'])
-        return conversion
-
+   
     def corregir_moneda(self):
         '''
         Lleva la inversion a la moneda de la cartera
@@ -153,6 +138,21 @@ class Bono(Activo):
         """
 
         return self.parametroInterpolado
+
+    def get_nombres_columnas(self):
+
+        moneda = self.get_moneda()
+        riesgo = self.get_riesgo()
+        plazo = self.get_plazos()
+
+        nombres = []
+
+        for i in range(len(plazo)):
+
+            nombres.append(moneda + "#" + str(int(plazo[i] * 360)) + "#" + riesgo)
+
+        return nombres
+
 
     def TIR(self, param, p):
         '''
@@ -268,6 +268,7 @@ class Bono(Activo):
         plazos = self.get_plazos()
         convencion = self.get_convencion()
         fecha_aux = self.cast_day(self.get_fecha_valorizacion())
+        nombre_columna = self.get_nombres_columnas()
 
         cant_curvas = np.size(curvas, 0)
 
@@ -291,7 +292,7 @@ class Bono(Activo):
                     tir = self.analisisCasoBorde(plazos[i], c)
                     historico[j][i] = factor_descuento(tir/100, fecha_ini, fecha_fin, convencion, 0)
 
-        self.historicos = pd.DataFrame(historico)
+        self.historicos = pd.DataFrame(historico, columns =  nombre_columna)
 
     def piv_near(self, dia):
         '''

@@ -5,9 +5,11 @@ from Activo import Activo
 class Accion(Activo):
 
 
-    def __init__(self, moneda, historico, monedaCartera, fecha_valorizacion, cn):
+    def __init__(self, nombre, moneda, historico, monedaCartera, fecha_valorizacion, cn):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
+
+        self.nombre = nombre
 
         self.moneda = moneda
 
@@ -17,13 +19,17 @@ class Accion(Activo):
 
         self.set_volatilidad()
 
-    
+    def get_nombre(self):
+
+        return self.nombre
+
     def get_moneda(self):
 
         return self.moneda
 
     def get_historicos(self):
 
+        self.historico.columns = [self.get_nombre()]
         return self.historico
 
     def set_historico(self):

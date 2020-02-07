@@ -22,7 +22,7 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion['Moneda'], pd.DataFrame(accion['Historico'][0]), moneda, fecha, cn)
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), moneda, fecha, cn)
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -174,13 +174,14 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Acciones
-#archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
-archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
+archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
+#archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
 columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
 archivo = archivo[columnas][:200]
 accion = pd.DataFrame()
 accion['Moneda'] = ['USD']
 accion['Historico'] = [[archivo["Adj Close"]]]
+accion['Nombre'] = "Amazon"
 print(accion)
 # Bonos
 bono = pd.DataFrame()
