@@ -288,7 +288,7 @@ class Derivado(Activo):
             valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[indice_pivote1][0], volatilidades[indice_pivote2][0],\
                      corr[indice_pivote1][indice_pivote2] )
 
-            solucion = self.discrimador_sol(valor_alfa)
+            solucion = self.discriminador_sol(valor_alfa)
 
             VP = factor_descuento*flujo_pago
     

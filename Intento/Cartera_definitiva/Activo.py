@@ -1,4 +1,4 @@
-
+import sys
 from abc import ABC, abstractmethod
 
 import pandas as pd
@@ -154,7 +154,7 @@ class Activo(ABC):
 
         pass
 
-    def discrimador_sol(self, soluciones):
+    def discriminador_sol(self, soluciones):
 
         """
         Funcion para discriminar las soluciones de la ecuacion
@@ -163,7 +163,7 @@ class Activo(ABC):
         """
 
         for i in range(2):
-            if 0 <= soluciones[i] and soluciones[i] <= 1:
+            if (0 <= soluciones[i] and soluciones[i] <= 1):
 
                 return soluciones[i]
         print("Javier, nos fallaste")
@@ -233,7 +233,7 @@ class Activo(ABC):
         x1 = (-B+math.sqrt(B**2-(4*A*C)))/(2*A)  # Fórmula de Bhaskara parte positiva
         x2 = (-B-math.sqrt(B**2-(4*A*C)))/(2*A)  # Fórmula de Bhaskara parte negativa
 
-        return[x1, x2]
+        return [x1, x2]
 
 
     
