@@ -262,7 +262,7 @@ class Derivado(Activo):
 
         monedas_pagos = flujos["Moneda"]
 
-        volatilidades = self.get_volatilidad().values
+        volatilidades = self.get_volatilidad()
 
         distruciones = self.diccionario_monedas()
 
@@ -276,17 +276,20 @@ class Derivado(Activo):
             pivote_entremedio = self.buscar_pivote(fecha_pago_actual)
             alfa = self.coeficiente_peso(pivote_entremedio[0], pivote_entremedio[1], fecha_pago_actual)
 
+            nombre_pivote1 = moneda_pago_actual + "#" + str(int(pivote_entremedio[0]*360))
+            nombre_pivote2 = moneda_pago_actual + "#" + str(int(pivote_entremedio[1]*360))
+
             indice_pivote1 = pivotes.index(pivote_entremedio[0])
             indice_pivote2 = pivotes.index(pivote_entremedio[1])
 
-            volatilidad_inter = alfa*volatilidades[indice_pivote1][0] + (1 - alfa)*volatilidades[indice_pivote2][0]
+            volatilidad_inter = alfa*volatilidades[0][nombre_pivote1] + (1 - alfa)*volatilidades[0][indice_pivote2]
 
             curva_parseada = self.pedir_curva(moneda_pago_actual)
 
             diferencia_dias = diferencia_dias_convencion("ACT360", fecha_valorizacion_date, fecha_pago_actual)
             factor_descuento = interpolacion_log_escalar(diferencia_dias, curva_parseada)
-            valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[indice_pivote1][0], volatilidades[indice_pivote2][0],\
-                     corr[indice_pivote1][indice_pivote2] )
+            valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[0][nombre_pivote1], volatilidades[0][indice_pivote2],\
+                     corr[nombre_pivote1][indice_pivote2] )
 
             solucion = self.discriminador_sol(valor_alfa)
 

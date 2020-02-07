@@ -194,6 +194,7 @@ class Activo(ABC):
     def set_volatilidad(self):
 
         retornos = self.get_retornos()
+        columnas_nombre = list(retornos)
         cantidad_columnas = np.size(retornos, 1)
         volatilidades_vector = np.zeros(cantidad_columnas)
 
@@ -203,7 +204,7 @@ class Activo(ABC):
             volatilidad_aux = ewma(retornos_vector, 0.94)
             volatilidades_vector[i] = volatilidad_aux["Vol c/ajuste"][0]
         
-        self.volatilidad = pd.DataFrame(volatilidades_vector)
+        self.volatilidad = pd.DataFrame(volatilidades_vector, index=columnas_nombre)
 
     def set_correlacion(self):
 
