@@ -13,6 +13,10 @@ class Accion(Activo):
 
         self.historico = historico
 
+        self.set_retorno()
+
+        self.set_volatilidad()
+
     
     def get_moneda(self):
 
@@ -25,22 +29,6 @@ class Accion(Activo):
     def set_historico(self):
 
         pass
-
-    '''def set_retorno(self):
-
-        historicos = self.get_historicos()
-        numero_filas = np.size(historicos, 0)
-
-        vector = np.zeros(numero_filas)
-        for j in range(1, numero_filas):
-
-            valor_actual = historicos[j]
-            valor_previo = historicos[j - 1]
-            retorno = np.log(valor_actual/valor_previo)
-            vector[j] = retorno
-
-        self.retornos = vector'''
-        
 
     # Conversion de USD/UF/EUR a CLP
     def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):

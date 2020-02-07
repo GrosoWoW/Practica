@@ -154,13 +154,28 @@ class Activo(ABC):
 
         pass
 
+    def discrimador_sol(self, soluciones):
+
+        """
+        Funcion para discriminar las soluciones de la ecuacion
+        es decir que se tome una que se encuentre entre 0 y 1
+
+        """
+
+        for i in range(2):
+            if 0 <= soluciones[i] and soluciones[i] <= 1:
+
+                return soluciones[i]
+        print("Javier, nos fallaste")
+        return sys.exit(1) 
+
+
     def set_retorno(self):
 
         historicos = self.get_historicos()
+        columna_nombre = list(historicos)
         numero_filas = np.size(historicos, 0)
-        print(numero_filas)
         numero_columnas = np.size(historicos, 1)
-        print(numero_columnas)
         vector = np.zeros([numero_filas, numero_columnas])
 
         for i in range(numero_columnas):
@@ -173,7 +188,8 @@ class Activo(ABC):
                 retorno = np.log(valor_actual/valor_previo)
                 vector[j][i] = retorno
 
-        self.retornos = pd.DataFrame(vector)
+        data = pd.DataFrame(data = vector, columns=columna_nombre, index=[i for i in range(numero_filas)])
+        self.retornos = data
 
     def set_volatilidad(self):
 

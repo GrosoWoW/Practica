@@ -32,6 +32,10 @@ class Derivado(Activo):
 
         self.set_historico()
 
+        self.set_retorno()
+
+        self.set_volatilidad()
+
     def get_derivado_generico(self):
 
         """
@@ -92,7 +96,7 @@ class Derivado(Activo):
 
         """
 
-        n = 1000
+        n = 200
         moneda = self.get_flujos()["Moneda"][0]
         curvas = self.seleccionar_curva_derivados(moneda, n, self.get_fecha_valorizacion_date())[::-1]
 
@@ -113,8 +117,8 @@ class Derivado(Activo):
                 fecha_curva = curvas["Fecha"][j]
                 curva_parseada = parsear_curva(curva, fecha_curva)
                 matriz[j][i] = interpolacion_log_escalar(int(valor_dia*360), curva_parseada)
-                
-        self.historicos = pd.DataFrame(matriz)
+
+        self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
 
     def corregir_moneda(self):
 
@@ -159,6 +163,18 @@ class Derivado(Activo):
             dicc[vector_monedas[i]] = np.zeros(len(plazos))
 
         return dicc
+
+    def nombre_df(self, moneda):
+
+        pivotes = self.get_plazos()
+        arreglo = []
+
+        for j in range(len(pivotes)):
+
+            arreglo.append(moneda + "#" + str(int(pivotes[j]*360)))
+
+        return arreglo
+
 
     def pedir_curva(self, moneda):
 
@@ -224,22 +240,6 @@ class Derivado(Activo):
         denominador = diferencia_dias_convencion("ACT360", fecha_pivote1 , fecha_pivote2)
 
         return numerador/denominador 
-
-    def discrimador_sol(self, soluciones):
-
-        """
-        Funcion para discriminar las soluciones de la ecuacion
-        es decir que se tome una que se encuentre entre 0 y 1
-
-        """
-
-        for i in range(2):
-            if 0 <= soluciones[i] and soluciones[i] <= 1:
-
-                return soluciones[i]
-        print("Javier, nos fallaste")
-        return sys.exit(1) 
-
 
     def set_distribucion_pivotes(self):
 
