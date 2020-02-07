@@ -5,7 +5,7 @@ from Activo import Activo
 class Accion(Activo):
 
 
-    def __init__(self, nombre, moneda, historico, monedaCartera, fecha_valorizacion, cn):
+    def __init__(self, nombre, moneda, historico, montoInvertido, monedaCartera, fecha_valorizacion, cn):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
 
@@ -15,9 +15,15 @@ class Accion(Activo):
 
         self.historico = historico
 
+        self.inversion = montoInvertido
+
         self.set_retorno()
 
         self.set_volatilidad()
+
+    def get_inversion(self):
+
+        return self.inversion
 
     def get_nombre(self):
 

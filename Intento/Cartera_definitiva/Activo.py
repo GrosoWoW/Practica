@@ -206,12 +206,8 @@ class Activo(ABC):
         
         self.volatilidad = pd.DataFrame(volatilidades_vector, index=columnas_nombre)
 
-    def set_correlacion(self):
+    def set_correlacion(self, corr):
 
-        lenght = len(self.get_plazos())
-        volatilidad = self.get_volatilidad()
-        retornos = self.get_retornos()
-        corr = ewma_matriz(lenght, retornos, volatilidad)
         self.correlacion = corr
 
     
@@ -251,6 +247,8 @@ class Activo(ABC):
         conversion = conversion.values[::-1]
         conversion = pd.DataFrame(conversion, columns=['Cambio'])
         return conversion
+
+    
 
 
     

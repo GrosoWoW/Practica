@@ -30,13 +30,19 @@ class Derivado(Activo):
         # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
 
+        # Setea el historico del derivado
         self.set_historico()
 
+        # Setea el retorno del derivado
         self.set_retorno()
 
+        # Realiza el calculo de correcion de moneda para los pivotes
         self.corregir_moneda()
 
+        # Setea la volatilidad del derivado
         self.set_volatilidad()
+
+
 
     def get_derivado_generico(self):
 
@@ -167,26 +173,15 @@ class Derivado(Activo):
 
         return monedas
 
-    def diccionario_monedas(self):
-
-        """
-        Funcion en encargada de crear el diccionario
-        con las monedas de activo y pasivo
-
-        """
-
-        vector_monedas = self.monedas()
-        plazos = self.get_plazos()
-        dicc = dict()
-
-        for i in range(len(vector_monedas)):
-
-
-            dicc[vector_monedas[i]] = np.zeros(len(plazos))
-
-        return dicc
-
     def nombre_df(self, moneda):
+
+        """
+        Funcion encargada de obtener el nombre de las columnas 
+        del DataFrame, el formato es Moneda#Plazo
+        :param moneda: String con la moneda que se desea poner en la columna
+        :return: Arreglo con los nombres
+
+        """
 
         pivotes = self.get_plazos()
         arreglo = []
@@ -286,7 +281,7 @@ class Derivado(Activo):
 
         volatilidades = self.get_volatilidad()
 
-        distruciones = self.diccionario_monedas()
+        distruciones = np.zeros(len(pivotes))
 
         for i in range(fechas_largo):
 
@@ -317,8 +312,8 @@ class Derivado(Activo):
 
             VP = factor_descuento*flujo_pago
     
-            distruciones[moneda_pago_actual][indice_pivote1] += solucion*VP
-            distruciones[moneda_pago_actual][indice_pivote2] += (1 - solucion)*VP
+            distruciones[indice_pivote1] += solucion*VP
+            distruciones[indice_pivote2] += (1 - solucion)*VP
 
         self.distribucion_pivotes = (distruciones)
 

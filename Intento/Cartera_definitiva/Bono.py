@@ -20,7 +20,6 @@ class Bono(Activo):
 
         self.monedaCartera = monedaCartera
 
-        #  Hay que parsearlo
         self.cupones = cupones
 
         self.convencion = convencion
@@ -40,8 +39,7 @@ class Bono(Activo):
         self.set_retorno()
         self.corregir_moneda()
         self.set_volatilidad()
-        self.set_correlacion()
-        self.distribucion_pivotes()
+        
 
     def get_fecha_emision(self):
         '''
@@ -390,7 +388,7 @@ class Bono(Activo):
             flujo[piv[1]] += vp*(1-alfa)
         return flujo
 
-    def distribucion_pivotes(self):
+    def set_distribucionPlazos(self):
 
         plazos = self.get_plazos()
         fecha_valorizacion = self.cast_day(self.get_fecha_valorizacion())
@@ -398,6 +396,8 @@ class Bono(Activo):
         fecha_emision = self.get_fecha_emision()
         volatilidad = self.get_volatilidad()
         correlacion = self.get_correlacion()
+        moneda = self.get_moneda()
+        riesgo = self.get_riesgo()
 
         cupones = self.get_cupones()
         cupones = StrTabla2ArrTabla(cupones, fecha_emision)
@@ -433,9 +433,12 @@ class Bono(Activo):
             volatilidad_flujo = a_0 * volatilidad.iloc[plazos_index[0]] + (1 - a_0) * volatilidad.iloc[plazos_index[1]]
 
             vp_flujo = flujo / ( 1 + tir_flujo ) ** plazo_flujo
-
+            
+            llave1 = moneda + '#' + str(int(plazos[plazos_index[0]]*360)) + '#' + riesgo
+            llave2 = moneda + '#' + str(int(plazos[plazos_index[1]]*360)) + '#' + riesgo
+    
             alfa = self.solucion_ecuacion(volatilidad_flujo[0], volatilidad.iloc[plazos_index[0]][0], volatilidad.iloc[plazos_index[1]][0], \
-                        correlacion.iloc[plazos_index[0]][plazos_index[1]])
+                        correlacion[llave1][llave2])
             
             solucion = self.discriminador_sol(alfa)
 
