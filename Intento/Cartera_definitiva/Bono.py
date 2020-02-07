@@ -36,6 +36,9 @@ class Bono(Activo):
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
 
     def get_fecha_emision(self):
+        '''
+        Retorna la fecha de emision del bono
+        '''
 
         return self.fecha_emision
 
@@ -57,11 +60,14 @@ class Bono(Activo):
         return conversion
 
     def corregir_moneda(self):
+        '''
+        Lleva la inversion a la moneda de la cartera
+        '''
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
         n = 200
-
+        print(monedaBase,monedaCartera)
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
         print(historico_moneda)
         retorno = np.zeros(n)
@@ -82,6 +88,9 @@ class Bono(Activo):
         self.retornos = aux
 
     def get_distribucionPlazos(self):
+        '''
+        Retorna la distribucion de los cupones en los plazos
+        '''
 
         return self.distribucionPlazos
 
@@ -246,6 +255,10 @@ class Bono(Activo):
         return pd.DataFrame(curva)
 
     def castDay(self, strday):
+        '''
+        Pasa una fecha en STR a DATE
+        '''
+
 
         if(type(strday) != type('hola')): return strday
         else:
@@ -254,6 +267,9 @@ class Bono(Activo):
             return datetime.date(int(arrayDay[0]), int(arrayDay[1]), int(arrayDay[2]))
 
     def set_historico(self):
+        '''
+        Define el historico de un bono en virtud de su moneda y riesgo
+        '''
 
         curvas = self.curvas_historico()
         plazos = self.get_plazos()
@@ -284,15 +300,116 @@ class Bono(Activo):
 
         self.historicos = pd.DataFrame(historico)
 
+    def piv_near(self, dia):
+        '''
+        Funcion que entrega los indices de los periodos en el arreglo que colindan a la fecha a evaluar
+        :param: dia: Plazo correspondiente a la fecha a evaluar
+        :param: periodos: Arreglo de plazos
+        '''
+        periodos = self.get_plazos()
+        pivotes = [-1,-1]
+        for i in range(len(periodos)):
+            if (dia < periodos[0]):
+                pivotes[1] = 0
+            elif(dia > periodos[len(periodos)-1]):
+                pivotes[0] = len(periodos)-1
+            elif(dia > periodos[i]):
+                pivotes[1] = i+1
+                pivotes[0] = i
+            elif (dia == periodos[i]):
+                pivotes[0] = pivotes[1] = i
+        return pivotes
+
+    def cast_day(self,strday):
+        if(type(strday) != type('hola')): return strday
+        else:
+            arrayDay = strday.split('-')
+        return datetime.date(int(arrayDay[0]), int(arrayDay[1]), int(arrayDay[2]))
+
+    def curvaBono(self, fecha):
+        '''
+        Funcion que entrega la curva para un bono en base a su riesgo, moneda y la fecha deseada.
+        :param fecha: String de la fecha que se quiere la curva.
+        :return: dataFrame con la informacion.
+        '''
+        riesgo = self.get_riesgo()
+        moneda = self.get_moneda()
+        cn = self.get_cn()
+
+        # Se usan curvas por parametros para los casos USD de todo riesgo y CLP de riesgo AAA
+        if( ((riesgo == 'AAA' or riesgo == 'A') and moneda == 'CLP') or moneda == 'USD'):
+            cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvaNS] WHERE Tipo = 'IF#" + moneda + "' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
+        elif(riesgo == 'AA' and moneda == 'CLP'):
+            cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Consolidado#Prepagables' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
+        else:
+            cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
+        cb = pd.read_sql(cb, cn)
+        return cb
+
+    def tir_plazos(self, p):
+        '''
+        Calcula el TIR para dos plazos, en base a la moneda y riesgo asociados.
+        :param p: Arreglo con los indices de los plazos a calcular.
+        :return: Arreglo de tamaño 2 con el TIR.
+        '''
+        riesgo = self.get_riesgo()
+        moneda = self.get_moneda()
+        plazos = self.get_plazos()
+        fecha = self.get_fecha_valorizacion()
+
+        curva = self.curvaBono(fecha)
+
+        tir = np.zeros(2)
+        if (((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD'):
+            tir = TIR(curva, [plazos[p[0]], plazos[p[1]]])
+        else:
+            for i in range(2):
+                c = parsear_curva(curva["StrCurva"][0], add_days(castDay(fecha), int(plazos[p[i]])))
+                tir[i] = interpolacion_log_escalarBonos(plazos[p[i]], c)
+        return tir
+
     def distribucion_pivotes(self):
 
         plazos = self.get_plazos()
-        fecha_valorizacion = self.get_fecha_valorizacion()
+        fecha_valorizacion = self.cast_day(self.get_fecha_valorizacion())
+        print(fecha_valorizacion)
         convencion = self.get_convencion()
         fecha_emision = self.get_fecha_emision()
 
         cupones = self.get_cupones()
         cupones = StrTabla2ArrTabla(cupones, fecha_emision)
+        print(cupones)
+        
+        n_cupones = np.size(cupones,0)
+
+        flujo_plazos = np.zeros(len(plazos))
+        # cupon = (nroDelCupon, fechaCupon, fechaEmision, cupon, amortizacion, inversion, flujo )
+        # Para cada cupon
+        for i in range(n_cupones):
+            flujo = cupones[i][6]
+            fecha_flujo = cupones[i][1].date()
+
+            plazo_flujo = diferencia_dias_convencion(convencion, fecha_valorizacion, fecha_flujo)
+
+            if(plazo_flujo < 0): continue
+
+            plazos_index = self.piv_near(plazo_flujo)
+            print(plazos_index)
+
+            tir_plazos = self.tir_plazos(plazos_index)
+
+            # Casos borde.
+            if (plazos_index[1] == -1): 
+                flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[plazos_index[0]])**plazo_flujo
+                continue
+            elif (p[0] == -1): 
+                flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[plazos_index[1]])**plazos_flujo
+                continue
+
+            a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
+
+            print(plazos[plazos_index[0]] , plazos[plazos_index[1]], a_0)
+
 
 
 
