@@ -35,6 +35,14 @@ class Bono(Activo):
         # para parsear e interpolar el caso requerido.
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
 
+        # Procesos de inicializacion
+        self.set_historico()
+        self.set_retorno()
+        self.corregir_moneda()
+        self.set_volatilidad()
+        self.set_correlacion()
+        self.distribucion_pivotes()
+
     def get_fecha_emision(self):
         '''
         Retorna la fecha de emision del bono
@@ -346,6 +354,22 @@ class Bono(Activo):
         cb = pd.read_sql(cb, cn)
         return cb
 
+    def TIR_plazos(self, param, p):
+        '''
+        Calcula el TIR para el periodo p, en base a los parametros entregados, usando la formula de interpolacion.
+        :param param: Dataframe con los parametros de la curva.
+        :param p: Plazo donde se evaluará la curva.
+        :return: TIR.
+        '''
+        coef0 = param['ancla']
+        coef1 = param['y0']
+        coef2 = param['y1']
+        coef3 = param['y2']
+        tir = np.zeros(len(p))
+        for i in range(len(p)):
+            tir[i] = (coef1 + (coef0 - coef1) * (1 - np.exp(-(p[i]*360) / coef2)) * (coef2 / (p[i]*360)) + coef3 * ((1 - np.exp(-(p[i]*360) /                        coef2)) * (coef2 / (p[i]*360)) - np.exp(-p[i]*360 / coef2)))
+        return tir
+
     def tir_plazos(self, p):
         '''
         Calcula el TIR para dos plazos, en base a la moneda y riesgo asociados.
@@ -356,16 +380,17 @@ class Bono(Activo):
         moneda = self.get_moneda()
         plazos = self.get_plazos()
         fecha = self.get_fecha_valorizacion()
-
+        print(riesgo, moneda, fecha)
         curva = self.curvaBono(fecha)
+        print(curva)
 
         tir = np.zeros(2)
         if (((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD'):
-            tir = TIR(curva, [plazos[p[0]], plazos[p[1]]])
+            tir = self.TIR_plazos(curva, [plazos[p[0]], plazos[p[1]]])
         else:
             for i in range(2):
-                c = parsear_curva(curva["StrCurva"][0], add_days(castDay(fecha), int(plazos[p[i]])))
-                tir[i] = interpolacion_log_escalarBonos(plazos[p[i]], c)
+                c = parsear_curva(curva["StrCurva"][0], add_days(self.cast_day(fecha), int(plazos[p[i]])))
+                tir[i] = self.interpolacion_log_escalarBonos(plazos[p[i]], c)
         return tir
 
     def distribucion_pivotes(self):
@@ -400,10 +425,10 @@ class Bono(Activo):
 
             # Casos borde.
             if (plazos_index[1] == -1): 
-                flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[plazos_index[0]])**plazo_flujo
+                flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
                 continue
-            elif (p[0] == -1): 
-                flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[plazos_index[1]])**plazos_flujo
+            elif (plazos_index[0] == -1): 
+                flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
                 continue
 
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])

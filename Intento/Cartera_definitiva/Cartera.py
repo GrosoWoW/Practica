@@ -113,7 +113,8 @@ driver = '{ODBC Driver 17 for SQL Server}'
 cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
 
 # Acciones
-archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')      
+#archivo_tobal = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
+archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
 columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
 archivo = archivo[columnas][:200]
 accion = pd.DataFrame()
@@ -160,12 +161,12 @@ derivado['Derivado'] = [derivado_info]
 
 
 
-cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2018,5,5), cn)
+cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2019,2,1), cn)
 #print(cartera.get_acciones())
 #print(cartera.get_bonos())
 #print(cartera.get_derivados())
 
-bonos = cartera.get_bonos()
+'''bonos = cartera.get_bonos()
 #print(bonos)
 bono = bonos[0]
 #print(bono)
@@ -179,4 +180,4 @@ bono.set_volatilidad()
 #print(bono.get_volatilidad())
 bono.set_correlacion()
 #print(bono.get_correlacion())
-bono.distribucion_pivotes()
+bono.distribucion_pivotes()'''
