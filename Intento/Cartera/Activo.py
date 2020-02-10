@@ -42,6 +42,8 @@ class Activo(ABC):
         self.plazos = [30/self.anio, 90/self.anio, 180/self.anio, 360/self.anio, 2, 3, 4, 5, 7,\
             9, 10, 15, 20, 30]
 
+        self.volatilidad_general = 0
+
         # Fecha a la que se desea valorizar (se pasa a string para mejor manejo YYYY-mm-dd)
         self.fecha_valorizacion = str(fecha_valorizacion).split(" ")[0]
 
@@ -49,6 +51,13 @@ class Activo(ABC):
         # Conexion a base de datos
         self.cn = cn
 
+    def get_volatilidad_general(self):
+
+        """
+        Retorna la volatilidad total del activo
+        
+        """
+        return self.volatilidad_general
 
     def get_fecha_valorizacion(self):
 
@@ -154,6 +163,15 @@ class Activo(ABC):
 
         pass
 
+    @abstractmethod
+    def set_volatilidad_general(self):
+        
+        """
+        Define la volatilidad del activo
+
+        """
+        pass
+
     def discriminador_sol(self, soluciones):
 
         """
@@ -205,6 +223,7 @@ class Activo(ABC):
             volatilidades_vector[i] = volatilidad_aux["Vol c/ajuste"][0]
         
         self.volatilidad = pd.DataFrame(volatilidades_vector, index=columnas_nombre)
+
 
     def set_correlacion(self):
 

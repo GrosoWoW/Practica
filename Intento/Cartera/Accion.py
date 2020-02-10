@@ -36,6 +36,8 @@ class Accion(Activo):
         
         self.set_covarianza()
 
+        self.set_volatilidad_general()
+
 
     def get_inversion(self):
 
@@ -81,6 +83,10 @@ class Accion(Activo):
     def set_historico(self):
 
         pass
+
+    def set_volatilidad_general(self):
+
+        self.volatilidad_general = self.get_volatilidad()
 
     # Conversion de USD/UF/EUR a CLP
     def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):

@@ -46,6 +46,10 @@ class Derivado(Activo):
 
         self.set_covarianza()
 
+        self.set_distribucion_pivotes()
+
+        self.set_volatilidad_general()
+
 
 
 
@@ -328,3 +332,12 @@ class Derivado(Activo):
             distruciones[indice_pivote2] += (1 - solucion)*VP
 
         self.distribucion_pivotes = (distruciones)
+
+    def set_volatilidad_general(self):
+
+        vector = self.get_distribucion_pivotes()
+        suma = sum(vector)
+        vector = vector/suma
+        covarianza = self.get_covarianza()
+
+        self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))      

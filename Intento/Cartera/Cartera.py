@@ -388,7 +388,7 @@ class Cartera:
         vector = vector/suma
         covarianza = self.get_covarianza()
 
-        self.volatilidad_cartera = np.dot(np.dot(vector, covarianza), vector)
+        self.volatilidad_cartera = np.sqrt(np.dot(np.dot(vector, covarianza), vector))
         
     def set_vector_acciones(self):
 
@@ -484,67 +484,3 @@ class Cartera:
 
         self.vector_supremo = vector_supremo
 
-
-
-
-server = '172.16.1.38'
-username = 'sa'
-password = 'qwerty123'
-driver = '{ODBC Driver 17 for SQL Server}'
-cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
-
-archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
-#archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
-columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
-archivo = archivo[columnas][:200]
-accion = pd.DataFrame()
-accion['Moneda'] = ['USD']
-accion['Historico'] = [[archivo["Adj Close"]]]
-accion['Nombre'] = "Amazon"
-accion['Inversion'] = [500000]
-
-bono = pd.DataFrame()
-bono['Riesgo'] = ['AAA']  
-bono['Moneda'] = ["CLP"]
-bono['TablaDesarrollo'] = ["1#25-09-2018#2,2252#0#100#2,2252|2#25-03-2019#2,2252#0#100#2,2252|3#25-09-2019#2,2252#0#100#2,2252|4#25-03-2020#2,2252#0#100#2,2252|5#25-09-2020#2,2252#0#100#2,2252|6#25-03-2021#2,2252#100#0#102,2252"]
-bono['Convencion'] = ["ACT360"]
-bono['FechaEmision'] = ['2018-02-20']
-
-info_derivado = dict()
-info_derivado["Tipo"] = 'SCC'
-info_derivado["ID_Key"] = ""
-info_derivado["Administradora"] = "Admin"
-info_derivado["Fondo"] = "Fondo"
-info_derivado["Contraparte"] = "Contraparte"
-info_derivado["ID"] = 3
-info_derivado["Nemotecnico"] = ""
-info_derivado["Mercado"] = "Local"
-fecha = datetime.date(2019, 12, 20)
-hora = '1700'
-info_derivado["FechaEfectiva"] = '12/11/2019'
-info_derivado["FechaVenc"] = '12/11/2021'
-info_derivado["AjusteFeriados"] = "CL"
-info_derivado["NocionalActivo"] = 10*(10**9)
-info_derivado["MonedaActivo"] = 'CLP'
-info_derivado["MonedaBase"] = 'CLP'
-info_derivado["TipoTasaActivo"] = 'Fija'
-info_derivado["TipoTasaPasivo"] = 'Flotante'
-info_derivado["TasaActivo"] = 1.45
-info_derivado["TasaPasivo"] = -1000
-info_derivado["FrecuenciaActivo"] = "Semi annual"
-info_derivado["FrecuenciaPasivo"] = info_derivado["FrecuenciaActivo"]
-
-info1 = pd.DataFrame([info_derivado])
-derivado_info = DerivadosSCC(fecha, hora, info1, cn)
-derivado = pd.DataFrame()
-derivado['Derivado'] = [derivado_info]
-
-cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2019,2,1), cn)
-
-cartera.set_hist_ret_vol_totales()
-
-derivado_ge = cartera.get_derivados()[0]
-
-print(derivado_ge.get_correlacion())
-
-print(derivado_ge.get_covarianza())

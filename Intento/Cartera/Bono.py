@@ -40,6 +40,8 @@ class Bono(Activo):
         self.set_volatilidad()
         self.set_correlacion()
         self.set_covarianza()
+        self.set_distribucionPlazos()
+        self.set_volatilidad_general()
         
 
     def get_fecha_emision(self):
@@ -231,6 +233,16 @@ class Bono(Activo):
 
         self.distribucionPlazos = pd.DataFrame(flujo_plazos)
         
+    def set_volatilidad_general(self):
+
+        vector = np.transpose(self.get_distribucionPlazos())
+        suma = sum(vector)
+        vector = vector/suma
+        covarianza = self.get_covarianza()
+
+        self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))        
+
+
     def corregir_moneda(self):
 
         """
