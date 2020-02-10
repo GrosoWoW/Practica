@@ -206,9 +206,20 @@ class Activo(ABC):
         
         self.volatilidad = pd.DataFrame(volatilidades_vector, index=columnas_nombre)
 
-    def set_correlacion(self, corr):
+    def set_correlacion(self):
 
+        """
+        Funcion que calcula la correlacion de
+        el activo
+
+        """
+
+        lenght = len(list(self.get_historicos()))
+        volatilidad = self.get_volatilidad()
+        retornos = self.get_retornos()
+        corr = ewma_matriz(lenght, retornos, volatilidad)
         self.correlacion = corr
+
 
     
     def set_covarianza(self):

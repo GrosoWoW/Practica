@@ -42,6 +42,11 @@ class Derivado(Activo):
         # Setea la volatilidad del derivado
         self.set_volatilidad()
 
+        self.set_correlacion()
+
+        self.set_covarianza()
+
+
 
 
     def get_derivado_generico(self):

@@ -38,6 +38,8 @@ class Bono(Activo):
         self.set_retorno()
         self.corregir_moneda()
         self.set_volatilidad()
+        self.set_correlacion()
+        self.set_covarianza()
         
 
     def get_fecha_emision(self):

@@ -32,6 +32,11 @@ class Accion(Activo):
         # Funcion para calculo de volatilidades
         self.set_volatilidad()
 
+        self.set_correlacion()
+        
+        self.set_covarianza()
+
+
     def get_inversion(self):
 
         """

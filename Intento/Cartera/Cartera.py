@@ -72,10 +72,7 @@ class Cartera:
         self.set_hist_ret_vol_totales()
 
         # Setea la correlacion de la cartera
-        self.set_correlacion()
-
-        # Entrega la matriz de correlacion a todos los activos de la cartera
-        self.entregar_corr()
+        self.set_correlacion_total()
 
         # Covarianza de la cartera
         self.covarianza = pd.DataFrame()
@@ -328,7 +325,7 @@ class Cartera:
         self.retornos_totales = df[1]
         self.volatilidades_totales = df[2]
 
-    def set_correlacion(self):
+    def set_correlacion_total(self):
 
         """
         Funcion que calcula la correlacion de
@@ -343,25 +340,7 @@ class Cartera:
         corr = ewma_matriz(lenght, retornos, volatilidad)
         self.correlacion = corr
 
-    def entregar_corr(self):
 
-        """
-        Funcion encargada de entregar la correlacion 
-        total a todos los activos que estan en la cartera
-        
-        """
-
-        corr = self.get_correlacion()
-        bonos = self.get_bonos()
-        derivados = self.get_derivados()
-
-        for i in range(len(bonos)):
-            
-            bonos[i].set_correlacion(corr)
-
-        for i in range(len(derivados)):
-
-            derivados[i].set_correlacion(corr)
             
     def set_covarianza(self):
 
@@ -506,3 +485,66 @@ class Cartera:
         self.vector_supremo = vector_supremo
 
 
+
+
+server = '172.16.1.38'
+username = 'sa'
+password = 'qwerty123'
+driver = '{ODBC Driver 17 for SQL Server}'
+cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + username + ';PWD=' + password)
+
+archivo = pd.read_excel('C:\\Users\\groso\\Desktop\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')    
+#archivo = pd.read_excel('C:\\Users\\Lenovo\\Documents\\Universidad\\Practica\\Cartera_V2\\Practica\\Intento\\Cartera_definitiva\\AMZN.xlsx')
+columnas = ["Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"]
+archivo = archivo[columnas][:200]
+accion = pd.DataFrame()
+accion['Moneda'] = ['USD']
+accion['Historico'] = [[archivo["Adj Close"]]]
+accion['Nombre'] = "Amazon"
+accion['Inversion'] = [500000]
+
+bono = pd.DataFrame()
+bono['Riesgo'] = ['AAA']  
+bono['Moneda'] = ["CLP"]
+bono['TablaDesarrollo'] = ["1#25-09-2018#2,2252#0#100#2,2252|2#25-03-2019#2,2252#0#100#2,2252|3#25-09-2019#2,2252#0#100#2,2252|4#25-03-2020#2,2252#0#100#2,2252|5#25-09-2020#2,2252#0#100#2,2252|6#25-03-2021#2,2252#100#0#102,2252"]
+bono['Convencion'] = ["ACT360"]
+bono['FechaEmision'] = ['2018-02-20']
+
+info_derivado = dict()
+info_derivado["Tipo"] = 'SCC'
+info_derivado["ID_Key"] = ""
+info_derivado["Administradora"] = "Admin"
+info_derivado["Fondo"] = "Fondo"
+info_derivado["Contraparte"] = "Contraparte"
+info_derivado["ID"] = 3
+info_derivado["Nemotecnico"] = ""
+info_derivado["Mercado"] = "Local"
+fecha = datetime.date(2019, 12, 20)
+hora = '1700'
+info_derivado["FechaEfectiva"] = '12/11/2019'
+info_derivado["FechaVenc"] = '12/11/2021'
+info_derivado["AjusteFeriados"] = "CL"
+info_derivado["NocionalActivo"] = 10*(10**9)
+info_derivado["MonedaActivo"] = 'CLP'
+info_derivado["MonedaBase"] = 'CLP'
+info_derivado["TipoTasaActivo"] = 'Fija'
+info_derivado["TipoTasaPasivo"] = 'Flotante'
+info_derivado["TasaActivo"] = 1.45
+info_derivado["TasaPasivo"] = -1000
+info_derivado["FrecuenciaActivo"] = "Semi annual"
+info_derivado["FrecuenciaPasivo"] = info_derivado["FrecuenciaActivo"]
+
+info1 = pd.DataFrame([info_derivado])
+derivado_info = DerivadosSCC(fecha, hora, info1, cn)
+derivado = pd.DataFrame()
+derivado['Derivado'] = [derivado_info]
+
+cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2019,2,1), cn)
+
+cartera.set_hist_ret_vol_totales()
+
+derivado_ge = cartera.get_derivados()[0]
+
+print(derivado_ge.get_correlacion())
+
+print(derivado_ge.get_covarianza())
