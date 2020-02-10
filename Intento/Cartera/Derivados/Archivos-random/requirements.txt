@@ -1,8 +1,0 @@
-numpy==1.16.0
-pandas==0.23.4
-pyodbc==4.0.25
-python-dateutil==2.7.5
-pytz==2018.9
-six==1.12.0
-sqlalchemy==1.3.8
-pysftp==0.2.9
