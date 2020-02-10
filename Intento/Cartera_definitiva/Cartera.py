@@ -316,6 +316,45 @@ class Cartera:
     def get_covarianza(self):
 
         return self.covarianza
+
+
+
+    def unir_activos(self, activos):
+
+        """
+        Funcion que se encarga de unir los dataframes de historicos,
+        retornos y volatilidades de todos los activos que se encuentran
+        en la cartera
+        :param activos: Arreglo con todos los activos de la cartera
+        :return: Arreglo con los tres DataFrame solicitados
+
+        """
+
+
+        dfHistorico = pd.DataFrame()
+        dfRetornos = pd.DataFrame()
+        dfVolatilidades = pd.DataFrame()
+        largo_activos = len(activos)
+
+        for j in range(largo_activos):
+
+            tipo_activo = activos[j]
+            largo_activo = len(tipo_activo)
+
+            for i in range(largo_activo):
+
+                activo_actual = tipo_activo[i]
+                historico_activo = activo_actual.get_historicos()
+                retorno_activo = activo_actual.get_retornos()
+                volatilidad_activo = activo_actual.get_volatilidad()
+            
+                dfHistorico = pd.concat([dfHistorico, historico_activo], 1)
+                dfRetornos = pd.concat([dfRetornos, retorno_activo], 1)
+                dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_activo], 0)
+
+        return [dfHistorico, dfRetornos, dfVolatilidades]
+
+
     
     def set_hist_ret_vol_totales(self):
 
@@ -327,54 +366,15 @@ class Cartera:
         """
 
         bonos = self.get_bonos()
-        largo_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        largo_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        largo_acciones = len(acciones)
+        arreglo_activos = [bonos, derivados, acciones]
 
-        dfHistorico = pd.DataFrame()
-        dfRetornos = pd.DataFrame()
-        dfVolatilidades = pd.DataFrame()
-
-        for i in range(largo_bonos):
-
-            bono = bonos[i]
-            historico_bono = bono.get_historicos()
-            retorno_bono = bono.get_retornos()
-            volatilidad_bono = bono.get_volatilidad()
+        df = self.unir_activos(arreglo_activos)
         
-            dfHistorico = pd.concat([dfHistorico, historico_bono], 1)
-            dfRetornos = pd.concat([dfRetornos, retorno_bono], 1)
-            dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_bono], 0)
-
-        for i in range(largo_derivados):
-
-            derivado = derivados[i]
-            historico_derivado = derivado.get_historicos()
-            retorno_derivado = derivado.get_retornos()
-            volatilidad_derivado = derivado.get_volatilidad()
-        
-            dfHistorico = pd.concat([dfHistorico, historico_derivado], 1)
-            dfRetornos = pd.concat([dfRetornos, retorno_derivado], 1)
-            dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_derivado], 0)
-    
-        for i in range(largo_acciones):
-
-            accion = acciones[i]
-            historico_accion = accion.get_historicos()
-            retorno_accion = accion.get_retornos()
-            volatilidad_accion = accion.get_volatilidad()
-        
-            dfHistorico = pd.concat([dfHistorico, historico_accion], 1)
-            dfRetornos = pd.concat([dfRetornos, retorno_accion], 1)
-            dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_accion], 0)
-
-        self.historicos_totales = dfHistorico
-        self.retornos_totales = dfRetornos
-        self.volatilidades_totales = dfVolatilidades
+        self.historicos_totales = df[0]
+        self.retornos_totales = df[1]
+        self.volatilidades_totales = df[2]
 
     def set_correlacion(self):
 
@@ -499,6 +499,10 @@ derivado['Derivado'] = [derivado_info]
 cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2019,2,1), cn)
 
 cartera.set_hist_ret_vol_totales()
+
+print(cartera.get_historicos_totales())
+print(cartera.get_retornos_totales())
+print(cartera.get_volatilidades_totales())
 
 
 
