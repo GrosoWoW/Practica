@@ -151,22 +151,6 @@ class Bono(Activo):
 
         return nombres
 
-
-    def TIR(self, param, p):
-        '''
-        Calcula el TIR para el periodo p, en base a los parametros entregados, usando la formula de interpolacion.
-        :param param: Dataframe con los parametros de la curva.
-        :param p: Plazo donde se evaluará la curva.
-        :return: TIR.
-        '''
-
-        coef0 = param[1]
-        coef1 = param[2]
-        coef2 = param[3]
-        coef3 = param[4]
-        tir = (coef1 + (coef0 - coef1) * (1 - np.exp(-(p*360) / coef2)) * (coef2 / (p*360)) + coef3 * ((1 - np.exp(-(p*360) /                        coef2)) * (coef2 / (p*360)) - np.exp(-p*360 / coef2)))
-        return tir
-
     def interpolacion_log_escalarBonos(self, x, XY, n=0, m=0, siExt=True, first=True):
         """Indica la abscica en la ordenada x al realizar interpolación logaritmica con los puntos del arreglo XY
 
@@ -253,7 +237,7 @@ class Bono(Activo):
             cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' ORDER BY Fecha DESC "
         
         cb = pd.read_sql(cb, cn)
-        curva = cb.values[::-1]
+        curva = cb[::-1]
 
         return pd.DataFrame(curva)
 
@@ -280,7 +264,7 @@ class Bono(Activo):
             for j in range(cant_curvas):
                 
                 if(caso_parametro):
-                    tir = self.TIR(curvas.iloc[j], plazos[i])
+                    tir = self.TIR_p(curvas.iloc[j],[plazos[i]])[0]
                     historico[j][i] = factor_descuento(tir, self.cast_day(self.get_fecha_valorizacion()), add_days(self.cast_day(self.get_fecha_valorizacion()), plazos[i]* 360), convencion, 0)
                 
                 else:
