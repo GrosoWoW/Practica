@@ -2,6 +2,11 @@ import pandas as pd
 import numpy as np
 from Activo import Activo
 
+"""
+Clase principal de Accion hereda de la clase abstracta Activo
+
+"""
+
 class Accion(Activo):
 
 
@@ -9,31 +14,61 @@ class Accion(Activo):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
 
+        # Nombre de la accion (empresa, etc)
         self.nombre = nombre
 
+        # Moneda que se esta trabajando la accion
         self.moneda = moneda
 
+        # DataFrame con los historicos
         self.historico = historico
 
+        # Monto que se invierte en la accion
         self.inversion = montoInvertido
 
+        # Funcion para calculo de retornos
         self.set_retorno()
 
+        # Funcion para calculo de volatilidades
         self.set_volatilidad()
 
     def get_inversion(self):
+
+        """
+        Retorna el monto de la inversion que posee la accion
+        :return: float con la inversion de accion
+
+        """
 
         return self.inversion
 
     def get_nombre(self):
 
+        """
+        Retorna el nombre de la accion
+        :return: String con el nombre de la empresa de la accion
+
+        """
+
         return self.nombre
 
     def get_moneda(self):
 
+        """
+        Retorna la moneda en la que se encuentra la accion
+        :return: String con la moneda de la accion
+
+        """
+        
         return self.moneda
 
     def get_historicos(self):
+
+        """
+        Retorna los historicos de la accion
+        :return: DataFrame con los historicos de la accion
+
+        """
 
         self.historico.columns = [self.get_nombre()]
         return self.historico
@@ -60,6 +95,13 @@ class Accion(Activo):
         return conversion
 
     def corregir_moneda(self):
+
+        """
+        Funcion que se encarga de corregir la moneda de los derivados
+        de manera que se este trabajando en un sola moneda, esa moneda
+        correponde a la dada en la cartera
+
+        """
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()

@@ -129,6 +129,13 @@ class Derivado(Activo):
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
 
     def corregir_moneda(self):
+
+        """
+        Funcion que se encarga de corregir la moneda de los derivados
+        de manera que se este trabajando en un sola moneda, esa moneda
+        correponde a la dada en la cartera
+
+        """
         moneda_cartera = self.get_monedaCartera()
         retornos = self.get_retornos()
         moneda_activo = retornos.keys()[0].split('#')[0]
@@ -316,18 +323,3 @@ class Derivado(Activo):
             distruciones[indice_pivote2] += (1 - solucion)*VP
 
         self.distribucion_pivotes = (distruciones)
-
-
-            
-
-
-
-
-
-
-
-
-
-
- 
-
