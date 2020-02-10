@@ -100,73 +100,8 @@ class Cartera:
 
         self.set_covarianza()
 
-        self.volatilidad_cartera()
+        self.volatilidad_cartera = 0
 
-    def volatilidad_cartera(self):
-
-        vector = self.get_vector_supremo()
-        suma = sum(vector)
-        vector = vector/suma
-        covarianza = self.get_covarianza()
-
-        vol_cartera = np.dot(np.dot(vector, covarianza), vector)
-        print(vol_cartera)
-        
-    def set_vector_acciones(self):
-
-        acciones = self.get_acciones()
-        n_acciones = len(acciones)
-        inversiones = np.zeros(n_acciones)
-
-        for i in range(n_acciones):
-
-            inversiones[i] = acciones[i].get_inversion()
-            
-        self.vector_acciones = inversiones
-
-    def set_vector_bonos(self):
-
-        bonos = self.get_bonos()
-        n_bonos = len(bonos)
-        monedas_riesgos = []
-        
-        # Extraemos las monedas y riesgos
-
-        for i in range(n_bonos):
-            bono = bonos[i]
-            llave = bono.get_riesgo()
-            if (llave not in monedas_riesgos):
-                monedas_riesgos.append(llave)
-        
-        # Creamos el diccionario para guardar las distribuciones
-
-        distribuciones = {}
-        for j in range(len(monedas_riesgos)):
-            distribuciones[monedas_riesgos[i]] = pd.DataFrame(np.zeros(len(self.get_plazos())))
-
-        # Para cada bono, identificamos su moneda y riesgo
-        
-        for k in range(n_bonos):
-            bono = bonos[k]
-            llave = bono.get_riesgo()
-            bono_plazos = bono.get_distribucionPlazos()
-            distribuciones[llave] += bono_plazos
-
-        self.vector_bonos = distribuciones
-
-    def set_vector_derivados(self):
-
-        derivados = self.get_derivados()
-        n_derivados = len(derivados)
-        distribucion = pd.DataFrame(np.zeros(len(self.get_plazos())))
-        
-        for i in range(n_derivados):
-
-            derivado = derivados[i]
-            distribucion_plazos = pd.DataFrame(derivado.get_distribucion_pivotes())
-            distribucion += distribucion_plazos
-        
-        self.vector_derivados = distribucion
 
     def get_vector_acciones(self):
 
@@ -179,25 +114,6 @@ class Cartera:
     def get_vector_derivados(self):
 
         return self.vector_derivados
-
-    def set_vector_supremo(self):
-
-        acciones = self.get_vector_acciones()
-        bonos = self.get_vector_bonos()
-        derivados = self.get_vector_derivados()
-        
-        vector_supremo = []
-
-        vector_supremo.extend(acciones)
-        
-        for key in bonos:
-            print(bonos[key].iloc[:,0])
-            vector_supremo.extend(bonos[key].iloc[:,0])
-       
-
-        vector_supremo.extend(derivados.iloc[:,0])
-
-        self.vector_supremo = vector_supremo
         
     def get_vector_supremo(self):
 
@@ -306,7 +222,7 @@ class Cartera:
     def get_correlacion(self):
 
         """
-        Retornaa correlacion de la cartera
+        Retorna correlacion de la cartera
         :return: DataFrame con la correlacion de la cartera
         
         """
@@ -315,9 +231,23 @@ class Cartera:
     
     def get_covarianza(self):
 
+        """
+        Retorna la covarianza de la cartera
+        :return: DataFrame con la covarianza total de la cartera
+
+        """
+
+    def get_volatilidad_cartera(self):
+
+        """
+        Retorna la volatilidad total de la cartera
+        :return: float con la volatilidad de la cartera
+
+        """
+
+        return self.volatilidad_cartera
+
         return self.covarianza
-
-
 
     def unir_activos(self, activos):
 
@@ -329,12 +259,11 @@ class Cartera:
         :return: Arreglo con los tres DataFrame solicitados
 
         """
-
-
         dfHistorico = pd.DataFrame()
         dfRetornos = pd.DataFrame()
         dfVolatilidades = pd.DataFrame()
         largo_activos = len(activos)
+        arreglo_nombres = []
 
         for j in range(largo_activos):
 
@@ -347,7 +276,13 @@ class Cartera:
                 historico_activo = activo_actual.get_historicos()
                 retorno_activo = activo_actual.get_retornos()
                 volatilidad_activo = activo_actual.get_volatilidad()
-            
+
+                nombre_columnas = list(historico_activo)
+
+                if nombre_columnas in arreglo_nombres: continue
+
+                arreglo_nombres.append(nombre_columnas)
+        
                 dfHistorico = pd.concat([dfHistorico, historico_activo], 1)
                 dfRetornos = pd.concat([dfRetornos, retorno_activo], 1)
                 dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_activo], 0)
@@ -385,7 +320,7 @@ class Cartera:
         """
 
         largo_pivotes = len(self.get_plazos())
-        lenght = largo_pivotes*(len(self.get_bonos()) + len(self.get_derivados())) + len(self.get_acciones())
+        lenght = len(list(self.get_historicos_totales()))
         volatilidad = self.get_volatilidades_totales()
         retornos = self.get_retornos_totales()
         corr = ewma_matriz(lenght, retornos, volatilidad)
@@ -413,6 +348,13 @@ class Cartera:
             
     def set_covarianza(self):
 
+        """
+        Esta funcion se encarga de carcular la matriz de
+        covarianza para todos los activos que se encuentran
+        en la cartera, la setea en self.covarianza
+
+        """
+
         corr = self.get_correlacion()
         cor = corr.values
         vol = self.get_volatilidades_totales().iloc[:, 0]
@@ -437,6 +379,89 @@ class Cartera:
         for i in range(len(derivados)):
 
             derivados[i].set_distribucion_pivotes()
+
+    def volatilidad_cartera(self):
+
+        vector = self.get_vector_supremo()
+        suma = sum(vector)
+        vector = vector/suma
+        covarianza = self.get_covarianza()
+
+        self.volatilidad_cartera = np.dot(np.dot(vector, covarianza), vector)
+        
+    def set_vector_acciones(self):
+
+        acciones = self.get_acciones()
+        n_acciones = len(acciones)
+        inversiones = np.zeros(n_acciones)
+
+        for i in range(n_acciones):
+
+            inversiones[i] = acciones[i].get_inversion()
+            
+        self.vector_acciones = inversiones
+
+    def set_vector_bonos(self):
+
+        bonos = self.get_bonos()
+        n_bonos = len(bonos)
+        monedas_riesgos = []
+        
+        # Extraemos las monedas y riesgos
+
+        for i in range(n_bonos):
+            bono = bonos[i]
+            llave = bono.get_riesgo()
+            if (llave not in monedas_riesgos):
+                monedas_riesgos.append(llave)
+        
+        # Creamos el diccionario para guardar las distribuciones
+
+        distribuciones = {}
+        for j in range(len(monedas_riesgos)):
+            distribuciones[monedas_riesgos[j]] = pd.DataFrame(np.zeros(len(self.get_plazos())))
+
+        # Para cada bono, identificamos su moneda y riesgo
+        
+        for k in range(n_bonos):
+            bono = bonos[k]
+            llave = bono.get_riesgo()
+            bono_plazos = bono.get_distribucionPlazos()
+            distribuciones[llave] += bono_plazos
+
+        self.vector_bonos = distribuciones
+
+    def set_vector_derivados(self):
+
+        derivados = self.get_derivados()
+        n_derivados = len(derivados)
+        distribucion = pd.DataFrame(np.zeros(len(self.get_plazos())))
+        
+        for i in range(n_derivados):
+
+            derivado = derivados[i]
+            distribucion_plazos = pd.DataFrame(derivado.get_distribucion_pivotes())
+            distribucion += distribucion_plazos
+        
+        self.vector_derivados = distribucion
+
+    def set_vector_supremo(self):
+
+        acciones = self.get_vector_acciones()
+        bonos = self.get_vector_bonos()
+        derivados = self.get_vector_derivados()
+        
+        vector_supremo = []
+
+        vector_supremo.extend(acciones)
+        
+        for key in bonos:
+            vector_supremo.extend(bonos[key].iloc[:,0])
+       
+
+        vector_supremo.extend(derivados.iloc[:,0])
+
+        self.vector_supremo = vector_supremo
 
 
 # Conexion
@@ -463,6 +488,15 @@ bono['Moneda'] = ["CLP"]
 bono['TablaDesarrollo'] = ["1#25-09-2018#2,2252#0#100#2,2252|2#25-03-2019#2,2252#0#100#2,2252|3#25-09-2019#2,2252#0#100#2,2252|4#25-03-2020#2,2252#0#100#2,2252|5#25-09-2020#2,2252#0#100#2,2252|6#25-03-2021#2,2252#100#0#102,2252"]
 bono['Convencion'] = ["ACT360"]
 bono['FechaEmision'] = ['2018-02-20']
+
+bono2 = pd.DataFrame()
+bono2['Riesgo'] = ['AAA']  
+bono2['Moneda'] = ["CLP"]
+bono2['TablaDesarrollo'] = ["1#25-09-2018#2,2252#0#100#2,2252|2#25-03-2019#2,2252#0#100#2,2252|3#25-09-2019#2,2252#0#100#2,2252|4#25-03-2020#2,2252#0#100#2,2252|5#25-09-2020#2,2252#0#100#2,2252|6#25-03-2021#2,2252#100#0#102,2252"]
+bono2['Convencion'] = ["ACT360"]
+bono2['FechaEmision'] = ['2018-02-20']
+
+bonos = pd.concat([bono, bono2], 0)
 # Derivado
 info_derivado = dict()
 info_derivado["Tipo"] = 'SCC'
@@ -496,9 +530,8 @@ derivado['Derivado'] = [derivado_info]
 
 
 
-cartera = Cartera(accion, bono, derivado, 'CLP', datetime.date(2019,2,1), cn)
+cartera = Cartera(accion, bonos, derivado, 'CLP', datetime.date(2019,2,1), cn)
 
-cartera.set_hist_ret_vol_totales()
 
 print(cartera.get_historicos_totales())
 print(cartera.get_retornos_totales())
