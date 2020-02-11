@@ -10,11 +10,13 @@ from DerivadosTipos.DerivadosSCC import *
 
 
 class Cartera:
-    def __init__(self, acciones, bonos, derivados, moneda, fecha, cn):
+    def __init__(self, acciones, bonos, derivados, moneda, fecha, cn, n = 60):
         # Acciones: DataFrame con historico de precios (debe contener 200 datos) ['Moneda', 'Historico']
         # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico', 'FechaEmision]
         # Derivados: Objeto Derivado
-
+        
+        # Esta variable define la cantidad de datos que se toma para historicos
+        self.n = n
         # Aqui se guarda una referencia a cada obj Accion
         self.acciones = []
 
@@ -22,7 +24,7 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn)
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n)
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -30,14 +32,14 @@ class Cartera:
         for j in range(np.size(bonos,0)):
 
             bono = bonos.iloc[j]
-            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn)
+            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n)
             self.bonos.append(obj_bono)
 
         self.derivados = []
 
         for k in range(np.size(derivados,0)):
             derivado = derivados.iloc[k]
-            obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn)
+            obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn, n)
             self.derivados.append(obj_derivado)
 
         # Moneda a la que se desea trabajar y valorizar la cartera
@@ -99,6 +101,9 @@ class Cartera:
 
         self.volatilidad_cartera = 0
 
+    def get_n(self):
+
+        return self.n
 
     def get_vector_acciones(self):
 

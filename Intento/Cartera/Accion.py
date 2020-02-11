@@ -10,9 +10,10 @@ Clase principal de Accion hereda de la clase abstracta Activo
 class Accion(Activo):
 
 
-    def __init__(self, nombre, moneda, historico, montoInvertido, monedaCartera, fecha_valorizacion, cn):
+    def __init__(self, nombre, moneda, historico, montoInvertido, monedaCartera, fecha_valorizacion, cn, n):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
+        self.n = n
 
         # Nombre de la accion (empresa, etc)
         self.nombre = nombre
@@ -38,6 +39,9 @@ class Accion(Activo):
 
         self.set_volatilidad_general()
 
+    def get_n(self):
+
+        return self.n
 
     def get_inversion(self):
 
@@ -89,13 +93,15 @@ class Accion(Activo):
         self.volatilidad_general = self.get_volatilidad()
 
     # Conversion de USD/UF/EUR a CLP
-    def getConversionCLP(self, monedaCartera, monedaBase, n = '200'):
+    def getConversionCLP(self, monedaCartera, monedaBase):
         """
         Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
         :param monedaBase: String con la moneda que se desea llevar a CLP.
         :param n: String con la cantidad de dias que se quieren.
         :return: Un DataFrame con el historico de conversion.
+
         """
+        n = self.get_n()
         if (monedaBase == 'UF' and monedaCartera == 'CLP'):
             conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
         else:
@@ -116,7 +122,7 @@ class Accion(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
-        n = 200
+        n = self.get_n()
 
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
         retorno = np.zeros(n)

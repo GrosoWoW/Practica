@@ -8,10 +8,12 @@ from Activo import Activo
 from math import exp, log
 class Bono(Activo):
 
-    def __init__(self, riesgo, moneda, cupones, convencion, fechaEmision, monedaCartera, fecha, cn):
+    def __init__(self, riesgo, moneda, cupones, convencion, fechaEmision, monedaCartera, fecha, cn, n):
 
 
         super(Bono, self).__init__(monedaCartera, fecha, cn)
+
+        self.n = n
 
         self.riesgo = riesgo
 
@@ -43,6 +45,10 @@ class Bono(Activo):
         self.set_distribucionPlazos()
         self.set_volatilidad_general()
         
+    def get_n(self):
+
+        return self.n
+
 
     def get_fecha_emision(self):
         '''
@@ -252,7 +258,7 @@ class Bono(Activo):
 
         monedaCartera = self.get_monedaCartera()
         monedaBase = self.get_moneda()
-        n = 200
+        n = self.get_n()
         historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
         retorno = np.zeros(n)
         retorno[0] = 0
@@ -350,7 +356,7 @@ class Bono(Activo):
         Por defecto, se toman 200 datos.
 
         """
-        n = '200'
+        n = str(self.get_n())
         cn = self.get_cn()
         moneda = self.get_moneda()
         riesgo = self.get_riesgo()

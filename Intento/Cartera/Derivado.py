@@ -15,10 +15,11 @@ funciona como un adapter entre las clases derivado Abstracto y la clase cartera
 
 class Derivado(Activo):
 
-    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn):
+    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn, n):
 
         # Super para la clase DerivadoAbstracto y entregar los valores
         super(Derivado, self).__init__(monedaCartera, fecha_valorizacion, cn)
+        self.n = n
 
         # Derivado de la clase abstracta DerivadoAbstracto
         self.derivado_generico = derivado_generico
@@ -50,7 +51,9 @@ class Derivado(Activo):
 
         self.set_volatilidad_general()
 
+    def get_n(self):
 
+        return self.n
 
 
     def get_derivado_generico(self):
@@ -113,7 +116,7 @@ class Derivado(Activo):
 
         """
 
-        n = 200
+        n = self.get_n()
         moneda = self.get_flujos()["Moneda"][0]
         curvas = self.seleccionar_curva_derivados(moneda, n, self.get_fecha_valorizacion_date())[::-1]
 
@@ -148,7 +151,7 @@ class Derivado(Activo):
         moneda_cartera = self.get_monedaCartera()
         retornos = self.get_retornos()
         moneda_activo = retornos.keys()[0].split('#')[0]
-        n = 200
+        n = self.get_n()
         historico_moneda = self.getConversionCLP(moneda_cartera, moneda_activo)
         retorno = np.zeros(n)
         retorno[0] = 0
