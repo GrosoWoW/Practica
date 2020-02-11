@@ -385,7 +385,6 @@ class Cartera:
 
         vector = self.get_vector_supremo()
         suma = sum(vector)
-        print(vector)
 
         vector = vector/suma
         covarianza = self.get_covarianza()
@@ -453,7 +452,9 @@ class Cartera:
 
         derivados = self.get_derivados()
         n_derivados = len(derivados)
+        
         distribucion = pd.DataFrame(np.zeros(len(self.get_plazos())))
+        if(n_derivados == 0): distribucion = pd.DataFrame()
         
         for i in range(n_derivados):
 
@@ -472,17 +473,22 @@ class Cartera:
         
         acciones = self.get_vector_acciones()
         bonos = self.get_vector_bonos()
+        print(bonos)
         derivados = self.get_vector_derivados()
         
         vector_supremo = []
+        print(vector_supremo)
 
         vector_supremo.extend(acciones)
+        print(vector_supremo)
         
         for key in bonos:
             vector_supremo.extend(bonos[key].iloc[:,0])
        
-
-        vector_supremo.extend(derivados.iloc[:,0])
+        print(vector_supremo)
+        if (not derivados.empty):
+            vector_supremo.extend(derivados.iloc[:,0])
+        print(vector_supremo)
 
         self.vector_supremo = np.array(vector_supremo)
 
