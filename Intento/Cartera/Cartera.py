@@ -385,6 +385,8 @@ class Cartera:
 
         vector = self.get_vector_supremo()
         suma = sum(vector)
+        print(vector)
+
         vector = vector/suma
         covarianza = self.get_covarianza()
 
@@ -482,5 +484,5 @@ class Cartera:
 
         vector_supremo.extend(derivados.iloc[:,0])
 
-        self.vector_supremo = vector_supremo
+        self.vector_supremo = np.array(vector_supremo)
 

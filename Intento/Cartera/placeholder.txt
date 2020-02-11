@@ -1,0 +1,4 @@
+ERROR: Falta ingresar columna 'ID'
+ERROR: Falta ingresar columna 'ID'
+ERROR: Falta ingresar columna 'FechaEfectiva'
+ERROR: Falta ingresar columna 'FechaEfectiva'
