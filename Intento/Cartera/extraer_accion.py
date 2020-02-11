@@ -16,22 +16,28 @@ def seleccionar_accion(nemotecnico):
 
     return accion
 
-def historico(nemotecnico):
+def historico(nemotecnico, n = 60):
 
     accion_actual = seleccionar_accion(nemotecnico)
 
     nominales = accion_actual["Nominales"]
     monto = accion_actual["ValorizacionCLP"]
     largo = len(nominales)
+    largo_final = max(largo, n)
     arreglo_valores = []
 
-    for i in range(largo):
+    for i in range(largo_final):
 
         calculo = monto[i]/nominales[i]
         arreglo_valores.append(calculo)
 
-    df = pd.DataFrame(arreglo_valores, columns=["Historico"])
-    return df
+    
+    df1 = pd.DataFrame()
+    df1["Moneda"] = ["CLP"]
+    df1["Nombre"] = [nemotecnico]
+    df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
+    df1["Historico"] = [[arreglo_valores]]
+    return df1
 
 
 

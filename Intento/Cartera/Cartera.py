@@ -24,8 +24,9 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n)
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n)
             self.acciones.append(obj_accion)
+
 
         self.bonos = []
 
@@ -478,22 +479,17 @@ class Cartera:
         
         acciones = self.get_vector_acciones()
         bonos = self.get_vector_bonos()
-        print(bonos)
         derivados = self.get_vector_derivados()
         
         vector_supremo = []
-        print(vector_supremo)
 
         vector_supremo.extend(acciones)
-        print(vector_supremo)
         
         for key in bonos:
             vector_supremo.extend(bonos[key].iloc[:,0])
        
-        print(vector_supremo)
         if (not derivados.empty):
             vector_supremo.extend(derivados.iloc[:,0])
-        print(vector_supremo)
 
         self.vector_supremo = np.array(vector_supremo)
 
