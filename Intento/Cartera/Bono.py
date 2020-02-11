@@ -160,9 +160,9 @@ class Bono(Activo):
                     historico[j][i] = factor_descuento(tir, self.cast_day(self.get_fecha_valorizacion()), add_days(self.cast_day(self.get_fecha_valorizacion()), plazos[i]* 360), convencion, 0)
                 
                 else:
-                    fecha_ini = curvas[0][j].date()
+                    fecha_ini = curvas.iloc[j]['Fecha'].date()
                     fecha_fin = add_days(fecha_ini, plazos[i] * 360)
-                    c = parsear_curva(curvas[2][j], fecha_aux)
+                    c = parsear_curva(curvas.iloc[j]['StrCurva'], fecha_aux)
                     tir = self.analisisCasoBorde(plazos[i], c)
                     historico[j][i] = factor_descuento(tir/100, fecha_ini, fecha_fin, convencion, 0)
 
@@ -206,13 +206,12 @@ class Bono(Activo):
             tir_plazos = self.tir_plazos(plazos_index)
 
             # Casos borde.
-            if (plazos_index[1] == -1): 
+            if (plazos_index[1] == -1 or (plazos_index[0] == plazos_index[1])): 
                 flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
                 continue
             elif (plazos_index[0] == -1): 
                 flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
                 continue
-
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
 
             tir_flujo = a_0 * tir_plazos[0] + (1 - a_0) * tir_plazos[1]
