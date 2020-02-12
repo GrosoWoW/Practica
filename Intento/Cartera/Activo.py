@@ -188,7 +188,7 @@ class Activo(ABC):
         return sys.exit(1) 
 
 
-    def set_retorno(self):
+    def calcular_retorno(self):
 
         historicos = self.get_historicos()
         columna_nombre = list(historicos)
@@ -208,8 +208,13 @@ class Activo(ABC):
 
         data = pd.DataFrame(data = vector, columns=columna_nombre, index=[i for i in range(numero_filas)])
         self.retornos = data
+        return self.retornos
 
-    def set_volatilidad(self):
+    def set_retorno(self, retorno):
+
+        self.retornos = retorno
+
+    def calcular_volatilidad(self):
 
         retornos = self.get_retornos()
         columnas_nombre = list(retornos)
@@ -223,9 +228,14 @@ class Activo(ABC):
             volatilidades_vector[i] = volatilidad_aux["Vol c/ajuste"][0]
         
         self.volatilidad = pd.DataFrame(volatilidades_vector, index=columnas_nombre)
+        return self.volatilidad
+
+    def set_volatilidad(self, volatilidad):
+
+        self.volatilidad = volatilidad
 
 
-    def set_correlacion(self):
+    def calcular_correlacion(self):
 
         """
         Funcion que calcula la correlacion de
@@ -239,15 +249,25 @@ class Activo(ABC):
         corr = ewma_matriz(lenght, retornos, volatilidad)
         self.correlacion = corr
 
+        return self.correlacion
+
+    def set_correlacion(self, correlacion):
+
+        self.correlacion = correlacion
 
     
-    def set_covarianza(self):
+    def calcular_covarianza(self):
 
         corr = self.get_correlacion()
         cor = corr.values
         vol = self.volatilidad.iloc[:, 0]
         D = np.diag(vol)
         self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D))
+        return self.covarianza
+
+    def set_covarianza(self, covarianza):
+
+        self.covarianza = covarianza
 
 
     def solucion_ecuacion(self, sigma_flujo, sigma_pivote1, sigma_pivote2, ro):

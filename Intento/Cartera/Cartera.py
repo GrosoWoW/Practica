@@ -6,6 +6,7 @@ from Bono import *
 from Derivado import *
 from DerivadosTipos.DerivadosSCC import *
 
+import time
 # (..., monedaCartera, fecha_valorizacion, cn)
 
 
@@ -20,6 +21,12 @@ class Cartera:
         # Aqui se guarda una referencia a cada obj Accion
         self.acciones = []
 
+        self.historico_dict = dict()
+        self.retorno_dict = dict()
+        self.volatilidad_dict = dict()
+        self.correlacion_dict = dict()
+        self.covarianza_dict = dict()
+
         # Por cada Accion en el dataFrame
         for i in range(np.size(acciones,0)):
 
@@ -32,16 +39,31 @@ class Cartera:
 
         for j in range(np.size(bonos,0)):
 
+            tiempo_inicial = time.time()
             bono = bonos.iloc[j]
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n)
-            self.bonos.append(obj_bono)
+            
+            moneda = obj_bono.get_moneda() 
+            riesgo = obj_bono.get_riesgo()
+            bon_act = self.funcion_optimizacion(obj_bono, moneda, riesgo)
+
+            self.bonos.append(bon_act)
+            tiempo_final = time.time()
+
+            print(tiempo_final-tiempo_inicial)
 
         self.derivados = []
 
+        
         for k in range(np.size(derivados,0)):
+
             derivado = derivados.iloc[k]
             obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn, n)
-            self.derivados.append(obj_derivado)
+            moneda = obj_derivado.get_moneda()
+            derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
+
+            self.derivados.append(derivado_act)
+
 
         # Moneda a la que se desea trabajar y valorizar la cartera
         self.moneda = moneda
@@ -311,6 +333,41 @@ class Cartera:
 
         return [dfHistorico, dfRetornos, dfVolatilidades]
 
+    def funcion_optimizacion(self, activo, moneda, riesgo=""):
+
+        nombre = moneda+riesgo
+        print(nombre)
+
+        if nombre in self.historico_dict:
+
+            activo.set_historico(self.historico_dict[nombre])
+            activo.set_retorno(self.retorno_dict[nombre])
+            activo.set_volatilidad(self.volatilidad_dict[nombre])
+            activo.set_correlacion(self.correlacion_dict[nombre])
+            activo.set_covarianza(self.covarianza_dict[nombre])
+
+        else:
+
+            historico_calculado = activo.calcular_historico()
+            self.historico_dict[nombre] = historico_calculado
+
+            retorno_calculado = activo.calcular_retorno()
+            self.retorno_dict[nombre] = retorno_calculado
+
+            volatilidad_calculada = activo.calcular_volatilidad()
+            self.volatilidad_dict[nombre] = volatilidad_calculada
+
+            correlacion_calculada = activo.calcular_correlacion()
+            self.correlacion_dict[nombre] = correlacion_calculada
+
+            covarianza_calculada = activo.calcular_covarianza()
+            self.covarianza_dict[nombre] = covarianza_calculada
+
+        activo.set_distribucion_pivotes()
+        activo.set_volatilidad_general()
+        return activo
+
+
     def set_hist_ret_vol_totales(self):
 
         """
@@ -376,7 +433,7 @@ class Cartera:
 
         for i in range(len(bonos)):
             
-            bonos[i].set_distribucionPlazos()
+            bonos[i].set_distribucion_pivotes()
 
         for i in range(len(derivados)):
 

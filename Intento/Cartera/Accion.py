@@ -28,15 +28,13 @@ class Accion(Activo):
         self.inversion = montoInvertido
 
         # Funcion para calculo de retornos
-        self.set_retorno()
+        self.calcular_retorno()
 
         # Funcion para calculo de volatilidades
-        self.set_volatilidad()
+        self.calcular_volatilidad()
 
-        self.set_correlacion()
+        self.calcular_correlacion()
         
-        self.set_covarianza()
-
         self.set_volatilidad_general()
 
     def get_n(self):

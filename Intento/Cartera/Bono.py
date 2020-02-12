@@ -36,14 +36,7 @@ class Bono(Activo):
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
 
         # Procesos de inicializacion
-        self.set_historico()
-        self.set_retorno()
-        self.corregir_moneda()
-        self.set_volatilidad()
-        self.set_correlacion()
-        self.set_covarianza()
-        self.set_distribucionPlazos()
-        self.set_volatilidad_general()
+
         
     def get_n(self):
 
@@ -137,7 +130,7 @@ class Bono(Activo):
 
         return nombres
 
-    def set_historico(self):
+    def calcular_historico(self):
 
         """
         Define el historico de las curvas de TIR en virtud de la moneda y el riesgo del bono.
@@ -173,8 +166,13 @@ class Bono(Activo):
                     historico[j][i] = factor_descuento(tir/100, fecha_ini, fecha_fin, convencion, 0)
 
         self.historicos = pd.DataFrame(historico, columns =  nombre_columna)
+        return self.historicos
 
-    def set_distribucionPlazos(self):
+    def set_historico(self, historico):
+
+        self.historicos = historico
+
+    def set_distribucion_pivotes(self):
 
         """
         Distribuye la valorización de los cupones de un bono en los plazos correspondientes.

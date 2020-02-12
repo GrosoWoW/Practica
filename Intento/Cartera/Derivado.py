@@ -32,24 +32,7 @@ class Derivado(Activo):
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
 
         # Setea el historico del derivado
-        self.set_historico()
 
-        # Setea el retorno del derivado
-        self.set_retorno()
-
-        # Realiza el calculo de correcion de moneda para los pivotes
-        self.corregir_moneda()
-
-        # Setea la volatilidad del derivado
-        self.set_volatilidad()
-
-        self.set_correlacion()
-
-        self.set_covarianza()
-
-        self.set_distribucion_pivotes()
-
-        self.set_volatilidad_general()
 
     def get_n(self):
 
@@ -88,6 +71,10 @@ class Derivado(Activo):
 
         return self.distribucion_pivotes
 
+    def get_moneda(self):
+
+        return self.get_flujos()["Moneda"][0]
+
     def seleccionar_curva_derivados(self, moneda, n, fecha=datetime.date(2018, 1, 22)):
 
         """
@@ -108,7 +95,7 @@ class Derivado(Activo):
         return curva
 
 
-    def set_historico(self):
+    def calcular_historico(self):
 
         """
         Funcion encargada de calcular el historico de los derivados
@@ -139,6 +126,11 @@ class Derivado(Activo):
                 matriz[j][i] = interpolacion_log_escalar(int(valor_dia*360), curva_parseada)
 
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
+        return self.historicos
+
+    def set_historico(self, historico):
+
+        self.historicos = historico
 
     def corregir_moneda(self):
 
