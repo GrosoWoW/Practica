@@ -28,7 +28,7 @@ class Accion(Activo):
         self.inversion = montoInvertido
 
         # Funcion para calculo de retornos
-        self.calcular_retorno()
+        self.calcular_retorno(moneda)
 
         # Funcion para calculo de volatilidades
         self.calcular_volatilidad()
@@ -90,51 +90,7 @@ class Accion(Activo):
 
         self.volatilidad_general = self.get_volatilidad()
 
-    # Conversion de USD/UF/EUR a CLP
-    def getConversionCLP(self, monedaCartera, monedaBase):
-        """
-        Entrega el historico del valor de conversion en CLP/monedaBase por n dias.
-        :param monedaBase: String con la moneda que se desea llevar a CLP.
-        :param n: String con la cantidad de dias que se quieren.
-        :return: Un DataFrame con el historico de conversion.
 
-        """
-        n = self.get_n()
-        if (monedaBase == 'UF' and monedaCartera == 'CLP'):
-            conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = 'CLF' AND Campo = 'PX_LAST' AND Hora = '1700' ORDER BY Fecha DESC "
-        else:
-            conversion = "SELECT TOP(" + n + ") Valor FROM [dbAlgebra].[dbo].[TdMonedas] WHERE Ticker = '" + monedaBase + "' AND Campo = '" + monedaCartera + "' AND Hora = 'CIERRE' ORDER BY Fecha DESC"
-        conversion = pd.read_sql(conversion, self.get_cn())
-        conversion = conversion.values[::-1]
-        conversion = pd.DataFrame(conversion, columns=['Cambio'])
-        return conversion
-
-    def corregir_moneda(self):
-
-        """
-        Funcion que se encarga de corregir la moneda de los derivados
-        de manera que se este trabajando en un sola moneda, esa moneda
-        correponde a la dada en la cartera
-
-        """
-
-        monedaCartera = self.get_monedaCartera()
-        monedaBase = self.get_moneda()
-        n = self.get_n()
-
-        historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
-        retorno = np.zeros(n)
-        retorno[0] = 0
-
-        if monedaBase != monedaCartera: 
-
-            for i in range(1,n):
-
-                retorno[i] = np.log(historico_moneda['Cambio'][i]/historico_moneda['Cambio'][i-1])
-
-        aux = self.get_retornos()
-
-        self.retornos = aux + pd.DataFrame(retorno)
 
     
 

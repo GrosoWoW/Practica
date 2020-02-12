@@ -23,7 +23,7 @@ def historico(nemotecnico, n = 60):
     nominales = accion_actual["Nominales"]
     monto = accion_actual["ValorizacionCLP"]
     largo = len(nominales)
-    largo_final = max(largo, n)
+    largo_final = min(largo, n)
     arreglo_valores = []
 
     for i in range(largo_final):

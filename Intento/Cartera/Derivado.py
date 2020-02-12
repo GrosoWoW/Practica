@@ -131,36 +131,6 @@ class Derivado(Activo):
     def set_historico(self, historico):
 
         self.historicos = historico
-
-    def corregir_moneda(self):
-
-        """
-        Funcion que se encarga de corregir la moneda de los derivados
-        de manera que se este trabajando en un sola moneda, esa moneda
-        correponde a la dada en la cartera
-
-        """
-        moneda_cartera = self.get_monedaCartera()
-        retornos = self.get_retornos()
-        moneda_activo = retornos.keys()[0].split('#')[0]
-        n = self.get_n()
-        historico_moneda = self.getConversionCLP(moneda_cartera, moneda_activo)
-        retorno = np.zeros(n)
-        retorno[0] = 0
-
-        if moneda_activo != moneda_cartera: 
-
-            for i in range(1,n):
-
-                retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
-
-            aux = self.get_retornos()
-
-            for i in range(np.size(aux,1)):
-
-                aux.iloc[:,i] = aux.iloc[:,i] + retorno
-
-            self.retornos = aux
         
 
     def monedas(self):

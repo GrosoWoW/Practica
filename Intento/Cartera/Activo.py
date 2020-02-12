@@ -158,10 +158,6 @@ class Activo(ABC):
 
         pass
     
-    @abstractmethod
-    def corregir_moneda(self):
-
-        pass
 
     @abstractmethod
     def set_volatilidad_general(self):
@@ -188,7 +184,7 @@ class Activo(ABC):
         return sys.exit(1) 
 
 
-    def calcular_retorno(self):
+    def calcular_retorno(self, moneda):
 
         historicos = self.get_historicos()
         columna_nombre = list(historicos)
@@ -207,6 +203,30 @@ class Activo(ABC):
                 vector[j][i] = retorno
 
         data = pd.DataFrame(data = vector, columns=columna_nombre, index=[i for i in range(numero_filas)])
+
+        monedaCartera = self.get_monedaCartera()
+        monedaBase = moneda
+        print(numero_filas, numero_columnas)
+        print(monedaBase, monedaCartera)
+        
+
+        if monedaBase != monedaCartera: 
+
+            historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
+            print(historico_moneda)
+            retorno_moneda = np.zeros(numero_filas)
+            retorno_moneda[0] = 0
+
+            for i in range(1,numero_filas):
+
+                retorno_moneda[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
+
+            for i in range(0,np.size(data, 1)):
+
+                for j in range(0,np.size(data, 0)):
+
+                    data.iloc[j][i] = data.iloc[j][i] + retorno_moneda[j]
+
         self.retornos = data
         return self.retornos
 

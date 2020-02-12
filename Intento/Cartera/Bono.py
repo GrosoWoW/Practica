@@ -246,35 +246,6 @@ class Bono(Activo):
         self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))        
 
 
-    def corregir_moneda(self):
-
-        """
-        Lleva la inversion a la moneda de la cartera por medio de sumar los retornos de la moneda respectiva
-        a los retornos de los bonos.
-        
-        """
-
-        monedaCartera = self.get_monedaCartera()
-        monedaBase = self.get_moneda()
-        n = self.get_n()
-        historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
-        retorno = np.zeros(n)
-        retorno[0] = 0
-
-        if monedaBase != monedaCartera: 
-
-            for i in range(1,n):
-
-                retorno[i] = np.log(historico_moneda['Cambio'][i] / historico_moneda['Cambio'][i-1])
-
-        aux = self.get_retornos()
-
-        for i in range(np.size(aux,1)):
-
-            aux.iloc[:,i] = aux.iloc[:,i] + retorno
-
-        self.retornos = aux
-
     def interpolacion_log_escalarBonos(self, x, XY, n=0, m=0, siExt=True, first=True):
         """Indica la abscica en la ordenada x al realizar interpolación logaritmica con los puntos del arreglo XY
 

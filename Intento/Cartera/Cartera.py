@@ -15,7 +15,7 @@ class Cartera:
         # Acciones: DataFrame con historico de precios (debe contener 200 datos) ['Moneda', 'Historico']
         # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico', 'FechaEmision]
         # Derivados: Objeto Derivado
-        
+        moneda_cartera = moneda
         # Esta variable define la cantidad de datos que se toma para historicos
         self.n = n
         # Aqui se guarda una referencia a cada obj Accion
@@ -58,7 +58,7 @@ class Cartera:
         for k in range(np.size(derivados,0)):
 
             derivado = derivados.iloc[k]
-            obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn, n)
+            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n)
             moneda = obj_derivado.get_moneda()
             derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
 
@@ -351,7 +351,7 @@ class Cartera:
             historico_calculado = activo.calcular_historico()
             self.historico_dict[nombre] = historico_calculado
 
-            retorno_calculado = activo.calcular_retorno()
+            retorno_calculado = activo.calcular_retorno(moneda)
             self.retorno_dict[nombre] = retorno_calculado
 
             volatilidad_calculada = activo.calcular_volatilidad()
