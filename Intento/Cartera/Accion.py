@@ -33,11 +33,19 @@ class Accion(Activo):
         # Funcion para calculo de volatilidades
         self.calcular_volatilidad()
 
+        # Funcion de calculo de la correlacion
         self.calcular_correlacion()
         
+        # Funcion de calculo de la volatilidad de la accion
         self.set_volatilidad_general()
 
     def get_n(self):
+
+        """
+        Retorna el parametro self.n correpondiente a la cantidad
+        de datos que se desean obtener de historicos
+
+        """
 
         return self.n
 
@@ -84,13 +92,18 @@ class Accion(Activo):
 
     def set_historico(self):
 
+        """
+        Funcion de setear historico
+
+        """
+
         pass
 
     def set_volatilidad_general(self):
 
+        """
+        Funcion que setea la volatilidad total de la accion
+
+        """
+
         self.volatilidad_general = self.get_volatilidad()
-
-
-
-    
-

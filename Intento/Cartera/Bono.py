@@ -40,6 +40,12 @@ class Bono(Activo):
         
     def get_n(self):
 
+        """
+        Retorna el parametro self.n correpondiente a la cantidad
+        de datos que se desean obtener de historicos
+
+        """
+
         return self.n
 
 
@@ -170,6 +176,12 @@ class Bono(Activo):
 
     def set_historico(self, historico):
 
+        """
+        Funcion que setea el historico de el bono
+        :param historico: DataFrame con los historicos que se desean setear
+
+        """
+
         self.historicos = historico
 
     def set_distribucion_pivotes(self):
@@ -238,6 +250,11 @@ class Bono(Activo):
         
     def set_volatilidad_general(self):
 
+        """
+        Funcion que calcula la volatilidad total de el bono
+
+        """
+
         vector = np.transpose(self.get_distribucionPlazos())
         suma = sum(vector)
         vector = vector/suma
@@ -247,6 +264,7 @@ class Bono(Activo):
 
 
     def interpolacion_log_escalarBonos(self, x, XY, n=0, m=0, siExt=True, first=True):
+
         """Indica la abscica en la ordenada x al realizar interpolación logaritmica con los puntos del arreglo XY
 
         :param x: float abscica al cual se le busca la ordenada con interpolación
@@ -483,14 +501,3 @@ class Bono(Activo):
             flujo[piv[1]] += vp*(1-alfa)
 
         return flujo
-
-
-
-
-            
-
-            
-
-
-
-

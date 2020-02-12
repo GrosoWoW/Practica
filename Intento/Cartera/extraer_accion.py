@@ -38,6 +38,3 @@ def historico(nemotecnico, n = 60):
     df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
     df1["Historico"] = [[arreglo_valores]]
     return df1
-
-
-

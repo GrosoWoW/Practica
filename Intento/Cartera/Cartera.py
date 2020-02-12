@@ -15,12 +15,16 @@ class Cartera:
         # Acciones: DataFrame con historico de precios (debe contener 200 datos) ['Moneda', 'Historico']
         # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico', 'FechaEmision]
         # Derivados: Objeto Derivado
+
         moneda_cartera = moneda
+
         # Esta variable define la cantidad de datos que se toma para historicos
         self.n = n
+
         # Aqui se guarda una referencia a cada obj Accion
         self.acciones = []
 
+        # Diccionarios donde se incluiran todos los calculos
         self.historico_dict = dict()
         self.retorno_dict = dict()
         self.volatilidad_dict = dict()
@@ -49,8 +53,6 @@ class Cartera:
 
             self.bonos.append(bon_act)
             tiempo_final = time.time()
-
-            print(tiempo_final-tiempo_inicial)
 
         self.derivados = []
 
@@ -102,6 +104,7 @@ class Cartera:
         # Covarianza de la cartera
         self.covarianza = pd.DataFrame()
 
+        # Distribuciones de los flujos de los activos
         self.distribuciones_activos()
 
         self.vector_acciones = []
@@ -120,11 +123,19 @@ class Cartera:
 
         self.set_vector_supremo()
 
+        # Covarianza de la cartera
         self.set_covarianza()
 
+        # Volatilidad de la cartera
         self.volatilidad_cartera = 0
 
     def get_n(self):
+
+        """
+        Retorna el parametro self.n correpondiente a la cantidad
+        de datos que se desean obtener de historicos
+
+        """
 
         return self.n
 
@@ -335,8 +346,19 @@ class Cartera:
 
     def funcion_optimizacion(self, activo, moneda, riesgo=""):
 
+        """
+        Funcion encargada de optimizar el calculo de historicos, retornos,
+        volatilidades, correlacion y covarianzas, para esto utiliza un diccionario
+        donde incluye los calculos que no se encuentran realizados para su futura
+        utilizacion
+        :param activo: Activo al que se desea optimizar su calculo
+        :param moneda: Moneda del activo
+        :param riesgo: Riesgo del activo
+        :return: Activo con todos los datos necesarios
+
+        """
+
         nombre = moneda+riesgo
-        print(nombre)
 
         if nombre in self.historico_dict:
 
@@ -549,4 +571,3 @@ class Cartera:
             vector_supremo.extend(derivados.iloc[:,0])
 
         self.vector_supremo = np.array(vector_supremo)
-

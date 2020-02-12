@@ -31,10 +31,13 @@ class Derivado(Activo):
         # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
 
-        # Setea el historico del derivado
-
-
     def get_n(self):
+
+        """
+        Retorna el parametro self.n correpondiente a la cantidad
+        de datos que se desean obtener de historicos
+
+        """
 
         return self.n
 
@@ -129,6 +132,12 @@ class Derivado(Activo):
         return self.historicos
 
     def set_historico(self, historico):
+
+        """
+        Funcion de seteo del historico
+        :param historico: DataFrame con el historico que se desea setear
+
+        """
 
         self.historicos = historico
         
@@ -300,9 +309,13 @@ class Derivado(Activo):
 
     def set_volatilidad_general(self):
 
+        """
+        Funcion que calcula la volatilidad general del derivado
+
+        """
+
         vector = self.get_distribucion_pivotes()
         suma = sum(vector)
         vector = vector/suma
         covarianza = self.get_covarianza()
-
         self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))      
