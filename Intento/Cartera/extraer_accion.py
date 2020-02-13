@@ -23,18 +23,21 @@ def historico(nemotecnico, n = 60):
     nominales = accion_actual["Nominales"]
     monto = accion_actual["ValorizacionCLP"]
     largo = len(nominales)
-    largo_final = min(largo, n)
-    arreglo_valores = []
+    if largo < n : 
+        ## Hay que ir a buscar el IPSA
+    else:
+        largo_final = n
+        arreglo_valores = []
 
-    for i in range(largo_final):
+        for i in range(largo_final):
 
-        calculo = monto[i]/nominales[i]
-        arreglo_valores.append(calculo)
+            calculo = monto[i]/nominales[i]
+            arreglo_valores.append(calculo)
 
-    
-    df1 = pd.DataFrame()
-    df1["Moneda"] = ["CLP"]
-    df1["Nombre"] = [nemotecnico]
-    df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
-    df1["Historico"] = [[arreglo_valores]]
+
+        df1 = pd.DataFrame()
+        df1["Moneda"] = ["CLP"]
+        df1["Nombre"] = [nemotecnico]
+        df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
+        df1["Historico"] = [[arreglo_valores]]
     return df1
