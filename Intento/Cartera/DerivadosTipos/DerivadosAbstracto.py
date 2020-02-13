@@ -119,6 +119,10 @@ class DerivadosAbstracto(ABC):
         self.hora = hora
         self.msg = "INFO: Derivado inicializado"
         self.revisar_input()
+    
+    def get_fecha_efectiva(self):
+
+        return self.info_cartera['FechaEfectiva']
 
     @abstractmethod
     def genera_flujos(self):

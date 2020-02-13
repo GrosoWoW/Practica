@@ -1,10 +1,14 @@
 import pyodbc
+import matplotlib.pyplot as plt
+import seaborn as sb
+from sklearn.cluster import KMeans
 
 from Activo import *
 from Accion import *
 from Bono import *
 from Derivado import *
 from DerivadosTipos.DerivadosSCC import *
+from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion
 
 import time
 # (..., monedaCartera, fecha_valorizacion, cn)
@@ -60,7 +64,7 @@ class Cartera:
         for k in range(np.size(derivados,0)):
 
             derivado = derivados.iloc[k]
-            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n)
+            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva())
             moneda = obj_derivado.get_moneda()
             derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
 
@@ -85,12 +89,9 @@ class Cartera:
         # Volatilidades de todos los activos
         self.volatilidades_totales = pd.DataFrame()
 
-        # Convecion para la cantidad de dias en un anio
-        self.anio = 360 
+        # Empezar arreglo de los plazos en funcion de la cartera
 
-        # Plazos a los que se trabajaran los pivotes
-        self.plazos = [30/self.anio, 90/self.anio, 180/self.anio, 360/self.anio, 2, 3, 4, 5, 7,\
-            9, 10, 15, 20, 30]
+        self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         # Correlacion de la cartera
         self.correlacion = pd.DataFrame()
@@ -128,6 +129,69 @@ class Cartera:
 
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
+
+    def dict_fechas(self, tabla):
+
+        fecha_valorizacion = self.get_fecha()
+
+        fechas = dict()
+        for i in range(len(tabla)):
+            if tabla[i].date() >= fecha_valorizacion:
+                if (tabla[i].date() not in fechas.keys()) :
+                    fechas[tabla[i].date()] = 1
+                else:
+                    fechas[tabla[i].date()] += 1
+        return fechas
+
+    def dict_to_df(self, dict):
+
+        fecha_valorizacion = self.get_fecha()
+
+
+        df = pd.DataFrame()
+        df['Fechas'] = dict.keys()
+        df['Frecuencia'] = dict.values()
+        df['Fechas'] = df['Fechas'].apply(lambda x: diferencia_dias_convencion('ACT/360', fecha_valorizacion, x))
+        print(sum(dict.values()))
+        return df
+
+    def definir_plazos(self, bonos, derivados):
+
+        n_bonos = len(bonos)
+        n_derivados = len(derivados)
+
+        tabla_fechas = np.array([])
+
+        # Extraemos la data de los bonos
+        for i in range(n_bonos):
+            bono = bonos[i]
+            tabla = StrTabla2ArrTabla(bono.get_cupones(), bono.get_fecha_emision())
+            fechas = tabla[:,1]
+            tabla_fechas = np.append(tabla_fechas,fechas)
+
+        # Extraemos la data de los derivados
+        for j in range(n_derivados):
+            derivado = derivados[j]
+            fecha = derivado.get_fecha_efectiva()[0]
+            fecha = fecha.split('/')
+            fecha = np.array([datetime.datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]),0,0,0)])
+            tabla_fechas = np.append(tabla_fechas,fecha)
+        
+        fechas = self.dict_fechas(tabla_fechas)
+        
+        df = self.dict_to_df(fechas)
+        
+        n = int(np.size(df,0)*(2/3))
+        
+        kmeans = KMeans(n_clusters=n).fit(df)
+
+        centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)
+        centroids.plot.scatter(x=0, y=1)
+        print(centroids[0])
+
+        return centroids[0]
+        
+
 
     def get_n(self):
 

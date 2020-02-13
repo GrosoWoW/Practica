@@ -15,11 +15,13 @@ funciona como un adapter entre las clases derivado Abstracto y la clase cartera
 
 class Derivado(Activo):
 
-    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn, n):
+    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn, n, fechaEfectiva):
 
         # Super para la clase DerivadoAbstracto y entregar los valores
         super(Derivado, self).__init__(monedaCartera, fecha_valorizacion, cn)
         self.n = n
+
+        self.fecha_efectiva = fechaEfectiva
 
         # Derivado de la clase abstracta DerivadoAbstracto
         self.derivado_generico = derivado_generico
@@ -30,6 +32,10 @@ class Derivado(Activo):
 
         # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
+
+    def get_fecha_efectiva(self):
+
+        return self.fecha_efectiva
 
     def get_n(self):
 
