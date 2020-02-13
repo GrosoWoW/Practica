@@ -160,6 +160,10 @@ class Activo(ABC):
         """
 
         return self.covarianza
+    
+    def set_plazos(self, plazos):
+
+        self.plazos = plazos
 
     
     @abstractmethod

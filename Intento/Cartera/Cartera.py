@@ -39,11 +39,22 @@ class Cartera:
         self.correlacion_dict = dict()
         self.covarianza_dict = dict()
 
+        # Moneda a la que se desea trabajar y valorizar la cartera
+        self.moneda = moneda
+
+        # Conexion a base de datos
+        self.cn = cn
+
+        # Fecha a la que se desea valorizar
+        self.fecha = fecha
+
+        self.plazos = []
+
         # Por cada Accion en el dataFrame
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n)
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n, "A")
             self.acciones.append(obj_accion)
 
 
@@ -72,7 +83,8 @@ class Cartera:
 
             self.derivados.append(obj_derivado)
 
-        self.plazos = self.definir_plazos(self.bonos, self.derivados)
+        if len(bonos) != 0 and len(derivados) != 0:
+            self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         arreglo_bonos = self.bonos
         arreglo_bonos_nuevo = []
@@ -98,17 +110,6 @@ class Cartera:
             arreglo_derivados_nuevo.append(derivado_act)
 
         self.derivados = arreglo_derivados_nuevo
-
-
-
-        # Moneda a la que se desea trabajar y valorizar la cartera
-        self.moneda = moneda
-
-        # Conexion a base de datos
-        self.cn = cn
-
-        # Fecha a la que se desea valorizar
-        self.fecha = fecha
 
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
@@ -210,6 +211,7 @@ class Cartera:
         
         n = int(np.size(df,0)*(2/3))
         
+        print(df)
         kmeans = KMeans(n_clusters=n).fit(df)
 
         centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)

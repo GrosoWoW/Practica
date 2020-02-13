@@ -22,7 +22,7 @@ class Accion(Activo):
         self.moneda = moneda
 
         # DataFrame con los historicos
-        #self.historico = historico
+        self.historico = retornos
 
         self.retornos_accion = retornos
 
@@ -30,7 +30,7 @@ class Accion(Activo):
         self.inversion = montoInvertido
 
         # Funcion para calculo de retornos
-        self.calcular_retorno(moneda)
+        self.set_retorno(retornos)
 
         # Funcion para calculo de volatilidades
         self.calcular_volatilidad()
