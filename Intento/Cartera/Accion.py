@@ -10,7 +10,7 @@ Clase principal de Accion hereda de la clase abstracta Activo
 class Accion(Activo):
 
 
-    def __init__(self, nombre, moneda, historico, montoInvertido, monedaCartera, fecha_valorizacion, cn, n):
+    def __init__(self, nombre, moneda, retornos, montoInvertido, monedaCartera, fecha_valorizacion, cn, n, fondo):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
         self.n = n
@@ -22,7 +22,9 @@ class Accion(Activo):
         self.moneda = moneda
 
         # DataFrame con los historicos
-        self.historico = historico
+        #self.historico = historico
+
+        self.retornos_accion = retornos
 
         # Monto que se invierte en la accion
         self.inversion = montoInvertido
@@ -38,6 +40,13 @@ class Accion(Activo):
         
         # Funcion de calculo de la volatilidad de la accion
         self.set_volatilidad_general()
+
+        # Fondo al que pertenece la accion
+        self.fondo = fondo
+
+    def get_fondo(self):
+
+        return self.fondo
 
     def get_n(self):
 

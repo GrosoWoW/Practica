@@ -10,6 +10,10 @@ from Derivado import *
 from DerivadosTipos.DerivadosSCC import *
 from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion
 
+import numpy as np
+import pandas as pd
+import datetime
+
 import time
 # (..., monedaCartera, fecha_valorizacion, cn)
 
@@ -47,16 +51,14 @@ class Cartera:
 
         for j in range(np.size(bonos,0)):
 
-            tiempo_inicial = time.time()
             bono = bonos.iloc[j]
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n)
             
             moneda = obj_bono.get_moneda() 
             riesgo = obj_bono.get_riesgo()
-            bon_act = self.funcion_optimizacion(obj_bono, moneda, riesgo)
+            #bon_act = self.funcion_optimizacion(obj_bono, moneda, riesgo)
 
-            self.bonos.append(bon_act)
-            tiempo_final = time.time()
+            self.bonos.append(obj_bono)
 
         self.derivados = []
 
@@ -66,9 +68,37 @@ class Cartera:
             derivado = derivados.iloc[k]
             obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva())
             moneda = obj_derivado.get_moneda()
-            derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
+            #derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
 
-            self.derivados.append(derivado_act)
+            self.derivados.append(obj_derivado)
+
+        self.plazos = self.definir_plazos(self.bonos, self.derivados)
+
+        arreglo_bonos = self.bonos
+        arreglo_bonos_nuevo = []
+
+        for l in range(np.size(bonos,0)):
+
+            arreglo_bonos[l].set_plazos(self.plazos)
+            moneda = arreglo_bonos[l].get_moneda()
+            riesgo = arreglo_bonos[l].get_riesgo()
+            bonos_act = self.funcion_optimizacion(arreglo_bonos[l], moneda, riesgo)
+            arreglo_bonos_nuevo.append(bonos_act)
+
+        self.bonos = arreglo_bonos_nuevo
+
+        arreglo_derivados = self.derivados
+        arreglo_derivados_nuevo = []
+
+        for h in range(np.size(derivados,0)):
+
+            arreglo_derivados[h].set_plazos(self.plazos)
+            moneda = arreglo_derivados[h].get_moneda()
+            derivado_act = self.funcion_optimizacion(arreglo_derivados[h], moneda)
+            arreglo_derivados_nuevo.append(derivado_act)
+
+        self.derivados = arreglo_derivados_nuevo
+
 
 
         # Moneda a la que se desea trabajar y valorizar la cartera
@@ -89,9 +119,6 @@ class Cartera:
         # Volatilidades de todos los activos
         self.volatilidades_totales = pd.DataFrame()
 
-        # Empezar arreglo de los plazos en funcion de la cartera
-
-        self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         # Correlacion de la cartera
         self.correlacion = pd.DataFrame()
