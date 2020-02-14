@@ -2,3 +2,6 @@ ERROR: Falta ingresar columna 'ID'
 ERROR: Falta ingresar columna 'ID'
 ERROR: Falta ingresar columna 'FechaEfectiva'
 ERROR: Falta ingresar columna 'FechaEfectiva'
+ERROR: Fecha vencimiento anterior a la fecha de valorizacion.
+ERROR: No viene la columna 'NocionalPasivo'
+ERROR: No viene la columna 'MonedaPasivo'

@@ -20,19 +20,15 @@ def historico(nemotecnico, fondo,n = 60):
 
     accion_actual = seleccionar_accion(nemotecnico, fondo)
 
-    a = accion_actual.groupby(["Fecha", "Fondo", "Nemotecnico"], as_index=False).sum()
+    accion_modificada = accion_actual.groupby(["Fecha", "Fondo", "Nemotecnico"], as_index=False).sum()
 
-    valorizacion = a["ValorizacionCLP"]
-    nominales = a["Nominales"]
+    valorizacion = accion_modificada["ValorizacionCLP"]
+    nominales = accion_modificada["Nominales"]
     largo = len(nominales)
 
-    print(a)
-
     largo_final = max(n, largo)
-    print(largo_final)
     arreglo_valores = []
     arreglo_valores.append(0)
-
 
     for i in range(1, largo_final):
 
@@ -44,7 +40,6 @@ def historico(nemotecnico, fondo,n = 60):
     df1["Nombre"] = [nemotecnico]
     df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
     df1["Historico"] = [[arreglo_valores]]
-    print(df1)
 
     return df1
 
