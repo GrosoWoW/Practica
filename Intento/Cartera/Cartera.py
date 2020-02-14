@@ -83,7 +83,7 @@ class Cartera:
 
             self.derivados.append(obj_derivado)
 
-        if len(bonos) != 0 and len(derivados) != 0:
+        if len(bonos) != 0 or len(derivados) != 0:
             self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         arreglo_bonos = self.bonos
@@ -200,9 +200,8 @@ class Cartera:
         # Extraemos la data de los derivados
         for j in range(n_derivados):
             derivado = derivados[j]
-            fecha = derivado.get_fecha_efectiva()[0]
-            fecha = fecha.split('/')
-            fecha = np.array([datetime.datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]),0,0,0)])
+            fecha = derivado.get_fecha_efectiva()['FechaFixing'][0]
+            fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
             tabla_fechas = np.append(tabla_fechas,fecha)
         
         fechas = self.dict_fechas(tabla_fechas)
@@ -212,13 +211,17 @@ class Cartera:
         n = int(np.size(df,0)*(2/3))
         
         print(df)
-        kmeans = KMeans(n_clusters=n).fit(df)
+        if np.size(df,0) != 1:
+            kmeans = KMeans(n_clusters=n).fit(df)
 
-        centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)
-        centroids.plot.scatter(x=0, y=1)
-        print(centroids[0])
+            centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)
+            centroids.plot.scatter(x=0, y=1)
+            print(centroids[0])
 
-        return centroids[0]
+            return centroids[0]
+        else:
+            print( [int(df['Fechas']/2), int(df['Fechas'])])
+            return [int(df['Fechas']/2), int(df['Fechas'])]
         
 
 

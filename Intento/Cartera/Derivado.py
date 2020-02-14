@@ -103,18 +103,18 @@ class Derivado(Activo):
         curva = pd.read_sql(curva, cnn)
         return curva
 
-        def obtener_monedas(self):
+    def obtener_monedas(self):
 
-            tabla = self.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
-            monedas = tabla["Moneda"]
-            arreglo_monedas = []
-            for i in range(len(monedas)):
+        tabla = self.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
+        monedas = tabla["Moneda"]
+        arreglo_monedas = []
+        for i in range(len(monedas)):
 
-                moneda = monedas[i]
-                if moneda in arreglo_monedas: continue
-                arreglo_monedas.append(moneda)
+            moneda = monedas[i]
+            if moneda in arreglo_monedas: continue
+            arreglo_monedas.append(moneda)
 
-            return arreglo_monedas
+        return arreglo_monedas
 
 
     def calcular_historico(self):
@@ -148,10 +148,10 @@ class Derivado(Activo):
                 matriz[j][i] = interpolacion_log_escalar(int(valor_dia*360), curva_parseada)
 
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
-        monedas_derivado = self.obtener_monedas()
+        """monedas_derivado = self.obtener_monedas()
         if len(monedas_derivado) != 1:
 
-            print("dwad")
+            print("dwad")"""
 
 
         return self.historicos
