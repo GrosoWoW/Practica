@@ -200,15 +200,18 @@ class Cartera:
         # Extraemos la data de los derivados
         for j in range(n_derivados):
             derivado = derivados[j]
-            fecha = derivado.get_fecha_efectiva()['FechaFixing'][0]
-            fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
-            tabla_fechas = np.append(tabla_fechas,fecha)
+            flujos = derivado.get_derivado_generico().flujos_valorizados[["ID","ActivoPasivo", "Fecha"\
+            , "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
+            for l in range(np.size(flujos,0)):
+                fecha = flujos.iloc[l]['FechaFixing']
+                fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
+                tabla_fechas = np.append(tabla_fechas,fecha)
         
         fechas = self.dict_fechas(tabla_fechas)
         
         df = self.dict_to_df(fechas)
         
-        n = int(np.size(df,0)*(2/3))
+        n = int(np.size(df,0)*(3/4))
         
         print(df)
         if np.size(df,0) != 1:
@@ -220,7 +223,6 @@ class Cartera:
 
             return centroids[0]
         else:
-            print( [int(df['Fechas']/2), int(df['Fechas'])])
             return [int(df['Fechas']/2), int(df['Fechas'])]
         
 
