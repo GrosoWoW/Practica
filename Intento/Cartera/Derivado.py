@@ -283,6 +283,7 @@ class Derivado(Activo):
         """
 
         pivotes = self.get_plazos()
+        print(pivotes)
         flujos = self.get_flujos()
 
         fecha_valorizacion = self.get_fecha_valorizacion()

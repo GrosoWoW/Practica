@@ -180,8 +180,16 @@ class Cartera:
         df['Fechas'] = dict.keys()
         df['Frecuencia'] = dict.values()
         df['Fechas'] = df['Fechas'].apply(lambda x: diferencia_dias_convencion('ACT/360', fecha_valorizacion, x))
-        print(sum(dict.values()))
+        
         return df
+
+    def limpieza_datos(self, df):
+        n = np.size(df,0)
+        plazos = []
+        for i in range(n):
+            fecha = int(df[0][i])
+            plazos.extend([fecha])
+        return plazos[::-1]
 
     def definir_plazos(self, bonos, derivados):
 
@@ -213,15 +221,14 @@ class Cartera:
         
         n = int(np.size(df,0)*(3/4))
         
-        print(df)
         if np.size(df,0) != 1:
             kmeans = KMeans(n_clusters=n).fit(df)
 
             centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)
             centroids.plot.scatter(x=0, y=1)
-            print(centroids[0])
-
-            return centroids[0]
+            plazos = self.limpieza_datos(centroids)
+            
+            return plazos
         else:
             return [int(df['Fechas']/2), int(df['Fechas'])]
         
