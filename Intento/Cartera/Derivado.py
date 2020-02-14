@@ -105,7 +105,7 @@ class Derivado(Activo):
 
     def obtener_monedas(self):
 
-        tabla = self.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
+        tabla = self.derivado_generico.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
         monedas = tabla["Moneda"]
         arreglo_monedas = []
         for i in range(len(monedas)):
@@ -148,10 +148,10 @@ class Derivado(Activo):
                 matriz[j][i] = interpolacion_log_escalar(int(valor_dia*360), curva_parseada)
 
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
-        """monedas_derivado = self.obtener_monedas()
+        monedas_derivado = self.obtener_monedas()
         if len(monedas_derivado) != 1:
 
-            print("dwad")"""
+            print("dwad")
 
 
         return self.historicos
@@ -307,29 +307,39 @@ class Derivado(Activo):
 
 
             pivote_entremedio = self.buscar_pivote(fecha_pago_actual)
-            alfa = self.coeficiente_peso(pivote_entremedio[0], pivote_entremedio[1], fecha_pago_actual)
 
             nombre_pivote1 = moneda_pago_actual + "#" + str(int(pivote_entremedio[0]*360))
             nombre_pivote2 = moneda_pago_actual + "#" + str(int(pivote_entremedio[1]*360))
 
+            print(pivotes)
             indice_pivote1 = pivotes.index(pivote_entremedio[0])
             indice_pivote2 = pivotes.index(pivote_entremedio[1])
 
-            volatilidad_inter = alfa*volatilidades[0][nombre_pivote1] + (1 - alfa)*volatilidades[0][indice_pivote2]
-
             curva_parseada = self.pedir_curva(moneda_pago_actual)
-
             diferencia_dias = diferencia_dias_convencion("ACT360", fecha_valorizacion_date, fecha_pago_actual)
             factor_descuento = interpolacion_log_escalar(diferencia_dias, curva_parseada)
-            valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[0][nombre_pivote1], volatilidades[0][indice_pivote2],\
-                     corr[nombre_pivote1][indice_pivote2] )
 
-            solucion = self.discriminador_sol(valor_alfa)
 
-            VP = factor_descuento*flujo_pago
-    
-            distruciones[indice_pivote1] += solucion*VP
-            distruciones[indice_pivote2] += (1 - solucion)*VP
+            if indice_pivote1 == indice_pivote2:
+
+                VP = factor_descuento*flujo_pago
+                distruciones[indice_pivote1] += VP
+
+
+            else:
+
+                alfa = self.coeficiente_peso(pivote_entremedio[0], pivote_entremedio[1], fecha_pago_actual)
+                volatilidad_inter = alfa*volatilidades[0][nombre_pivote1] + (1 - alfa)*volatilidades[0][indice_pivote2]
+
+                valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[0][nombre_pivote1], volatilidades[0][indice_pivote2],\
+                        corr[nombre_pivote1][indice_pivote2] )
+
+                solucion = self.discriminador_sol(valor_alfa)
+
+                VP = factor_descuento*flujo_pago
+        
+                distruciones[indice_pivote1] += solucion*VP
+                distruciones[indice_pivote2] += (1 - solucion)*VP
 
         self.distribucion_pivotes = (distruciones)
 
