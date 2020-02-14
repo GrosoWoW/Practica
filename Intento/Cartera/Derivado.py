@@ -35,7 +35,7 @@ class Derivado(Activo):
 
     def get_fecha_efectiva(self):
 
-        return self.fecha_efectiva
+        return self.get_flujos()
 
     def get_n(self):
 

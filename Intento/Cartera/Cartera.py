@@ -83,7 +83,7 @@ class Cartera:
 
             self.derivados.append(obj_derivado)
 
-        if len(bonos) != 0 and len(derivados) != 0:
+        if len(bonos) != 0 or len(derivados) != 0:
             self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         arreglo_bonos = self.bonos
@@ -161,7 +161,7 @@ class Cartera:
     def dict_fechas(self, tabla):
 
         fecha_valorizacion = self.get_fecha()
-
+    
         fechas = dict()
         for i in range(len(tabla)):
             if tabla[i].date() >= fecha_valorizacion:
@@ -172,7 +172,7 @@ class Cartera:
         return fechas
 
     def dict_to_df(self, dict):
-
+        
         fecha_valorizacion = self.get_fecha()
 
 
@@ -180,7 +180,7 @@ class Cartera:
         df['Fechas'] = dict.keys()
         df['Frecuencia'] = dict.values()
         df['Fechas'] = df['Fechas'].apply(lambda x: diferencia_dias_convencion('ACT/360', fecha_valorizacion, x))
-        print(sum(dict.values()))
+        
         return df
 
     def definir_plazos(self, bonos, derivados):
@@ -196,17 +196,16 @@ class Cartera:
             tabla = StrTabla2ArrTabla(bono.get_cupones(), bono.get_fecha_emision())
             fechas = tabla[:,1]
             tabla_fechas = np.append(tabla_fechas,fechas)
-
+        print(tabla_fechas)
         # Extraemos la data de los derivados
         for j in range(n_derivados):
             derivado = derivados[j]
-            fecha = derivado.get_fecha_efectiva()[0]
-            fecha = fecha.split('/')
-            fecha = np.array([datetime.datetime(int(fecha[2]), int(fecha[1]), int(fecha[0]),0,0,0)])
+            fecha = derivado.get_fecha_efectiva()['FechaFixing'][0]
+            fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
             tabla_fechas = np.append(tabla_fechas,fecha)
-        
+        print(tabla_fechas)
         fechas = self.dict_fechas(tabla_fechas)
-        
+        print(fechas)
         df = self.dict_to_df(fechas)
         
         n = int(np.size(df,0)*(2/3))
