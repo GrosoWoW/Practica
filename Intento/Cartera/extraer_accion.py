@@ -26,7 +26,7 @@ def historico(nemotecnico, fondo,n = 60):
     nominales = accion_modificada["Nominales"]
     largo = len(nominales)
 
-    largo_final = max(n, largo)
+    largo_final = min(n, largo)
     arreglo_valores = []
     arreglo_valores.append(0)
 

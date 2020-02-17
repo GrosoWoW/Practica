@@ -1,11 +1,14 @@
-from Activo import Activo
 import datetime
-import pandas as pd
+import sys
+
 import numpy as np
-from UtilesValorizacion import parsear_curva, diferencia_dias_convencion
+import pandas as pd
+
+from Activo import Activo
 from Matematica import interpolacion_log_escalar
 from Util import add_days
-import sys
+from UtilesValorizacion import diferencia_dias_convencion, parsear_curva
+
 
 """
 Clase principal de derivado hereda de la clase abstracta Activo
@@ -32,6 +35,8 @@ class Derivado(Activo):
 
         # Vector con las distribuciones de sus pivotes
         self.distribucion_pivotes = np.zeros(len(self.get_plazos()))
+
+
 
     def get_fecha_efectiva(self):
 
@@ -82,7 +87,12 @@ class Derivado(Activo):
 
     def get_moneda(self):
 
-        return self.get_flujos()["Moneda"][0]
+        """
+        Retorna la moneda base del derivado
+
+        """
+
+        return self.get_flujos()["MonedaBase"][0]
 
     def seleccionar_curva_derivados(self, moneda, n, fecha=datetime.date(2018, 1, 22)):
 
@@ -104,6 +114,13 @@ class Derivado(Activo):
         return curva
 
     def obtener_monedas(self):
+
+        """
+        Funcion que permite obtener las monedas de los derivados
+        correspondientes a los activos y pasivos
+        :return: arreglo con string de monedas
+
+        """
 
         tabla = self.derivado_generico.flujos_valorizados[["ID","ActivoPasivo", "Fecha", "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
         monedas = tabla["Moneda"]
@@ -149,11 +166,8 @@ class Derivado(Activo):
 
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
         monedas_derivado = self.obtener_monedas()
-        if len(monedas_derivado) != 1:
 
-            print("dwad")
-
-
+        
         return self.historicos
 
     def set_historico(self, historico):
@@ -253,6 +267,10 @@ class Derivado(Activo):
 
                 return [pivotes[i - 1], pivotes[i]]
 
+            else:
+
+                return [pivotes[i], pivotes[i]]
+
     def coeficiente_peso(self, pivote1, pivote2, fecha_actual_flujo):
 
         """
@@ -283,7 +301,6 @@ class Derivado(Activo):
         """
 
         pivotes = self.get_plazos()
-        print(pivotes)
         flujos = self.get_flujos()
 
         fecha_valorizacion = self.get_fecha_valorizacion()
@@ -292,11 +309,8 @@ class Derivado(Activo):
         fechas_largo = len(fechas_pago)
 
         corr = self.get_correlacion()
-
         monedas_pagos = flujos["Moneda"]
-
         volatilidades = self.get_volatilidad()
-
         distruciones = np.zeros(len(pivotes))
 
         for i in range(fechas_largo):
@@ -311,7 +325,6 @@ class Derivado(Activo):
             nombre_pivote1 = moneda_pago_actual + "#" + str(int(pivote_entremedio[0]*360))
             nombre_pivote2 = moneda_pago_actual + "#" + str(int(pivote_entremedio[1]*360))
 
-            print(pivotes)
             indice_pivote1 = pivotes.index(pivote_entremedio[0])
             indice_pivote2 = pivotes.index(pivote_entremedio[1])
 

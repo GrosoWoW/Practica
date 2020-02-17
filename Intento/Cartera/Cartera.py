@@ -48,39 +48,32 @@ class Cartera:
         # Fecha a la que se desea valorizar
         self.fecha = fecha
 
+        # Plazos para la creacion de los pivotes
         self.plazos = []
 
-        # Por cada Accion en el dataFrame
+        # Por cada Accion en el dataFrame, se crea con la clase accion
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
             obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n, "A")
             self.acciones.append(obj_accion)
 
-
         self.bonos = []
 
+        # Por cada bono en el dataframe se crea un objeto bono
         for j in range(np.size(bonos,0)):
 
             bono = bonos.iloc[j]
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n)
-            
-            moneda = obj_bono.get_moneda() 
-            riesgo = obj_bono.get_riesgo()
-            #bon_act = self.funcion_optimizacion(obj_bono, moneda, riesgo)
-
             self.bonos.append(obj_bono)
 
         self.derivados = []
 
-        
+        # Por cada derivado en el dataframe, se crea un objeto derivado
         for k in range(np.size(derivados,0)):
 
             derivado = derivados.iloc[k]
             obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva())
-            moneda = obj_derivado.get_moneda()
-            #derivado_act = self.funcion_optimizacion(obj_derivado, moneda)
-
             self.derivados.append(obj_derivado)
 
         if len(bonos) != 0 or len(derivados) != 0:
@@ -89,27 +82,29 @@ class Cartera:
         arreglo_bonos = self.bonos
         arreglo_bonos_nuevo = []
 
+        # Por cada objeto bono, se calculan sus datos (historicos, retornos, etc)
         for l in range(np.size(bonos,0)):
 
             arreglo_bonos[l].set_plazos(self.plazos)
             moneda = arreglo_bonos[l].get_moneda()
             riesgo = arreglo_bonos[l].get_riesgo()
-            bonos_act = self.funcion_optimizacion(arreglo_bonos[l], moneda, riesgo)
+            bonos_act = self.funcion_optimizacion(arreglo_bonos[l], moneda, riesgo) # Optimiza el calculo
             arreglo_bonos_nuevo.append(bonos_act)
 
-        self.bonos = arreglo_bonos_nuevo
+        self.bonos = arreglo_bonos_nuevo # Reemplazamos los bonos, listos con todos sus calculos
 
         arreglo_derivados = self.derivados
         arreglo_derivados_nuevo = []
 
+        # Por cada objeto derivado, se calculan sus datos (historicos, retornos, etc)
         for h in range(np.size(derivados,0)):
 
             arreglo_derivados[h].set_plazos(self.plazos)
             moneda = arreglo_derivados[h].get_moneda()
-            derivado_act = self.funcion_optimizacion(arreglo_derivados[h], moneda)
+            derivado_act = self.funcion_optimizacion(arreglo_derivados[h], moneda) # Se optimiza el calculo
             arreglo_derivados_nuevo.append(derivado_act)
 
-        self.derivados = arreglo_derivados_nuevo
+        self.derivados = arreglo_derivados_nuevo # Reemplazamos los derivos, listos con sus calculos
 
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
@@ -119,7 +114,6 @@ class Cartera:
 
         # Volatilidades de todos los activos
         self.volatilidades_totales = pd.DataFrame()
-
 
         # Correlacion de la cartera
         self.correlacion = pd.DataFrame()
@@ -136,20 +130,28 @@ class Cartera:
         # Distribuciones de los flujos de los activos
         self.distribuciones_activos()
 
+        # Vector con valor presente de las acciones
         self.vector_acciones = []
 
+        # Setea el vector con todas las inversiones de las acciones
         self.set_vector_acciones()
 
+        # Vector con el valor presente de los bonos
         self.vector_bonos = []
 
+        # Setea el vector con la suma de todas las distribuciones de los bonos
         self.set_vector_bonos()
 
+        # Vector con el valor presente de los derivados
         self.vector_derivados = []
 
+        # Setea el vector con la suma de todas las distribuciones de los pivotes
         self.set_vector_derivados()
 
+        # Vector con todas las distribuciones de los bonos, derivados y la inversion de las acciones
         self.vector_supremo = []
 
+        # Setea el calculo del vector supremo
         self.set_vector_supremo()
 
         # Covarianza de la cartera
@@ -157,83 +159,7 @@ class Cartera:
 
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
-
-    def dict_fechas(self, tabla):
-
-        fecha_valorizacion = self.get_fecha()
-
-        fechas = dict()
-        for i in range(len(tabla)):
-            if tabla[i].date() >= fecha_valorizacion:
-                if (tabla[i].date() not in fechas.keys()) :
-                    fechas[tabla[i].date()] = 1
-                else:
-                    fechas[tabla[i].date()] += 1
-        return fechas
-
-    def dict_to_df(self, dict):
-
-        fecha_valorizacion = self.get_fecha()
-
-
-        df = pd.DataFrame()
-        df['Fechas'] = dict.keys()
-        df['Frecuencia'] = dict.values()
-        df['Fechas'] = df['Fechas'].apply(lambda x: diferencia_dias_convencion('ACT/360', fecha_valorizacion, x))
         
-        return df
-
-    def limpieza_datos(self, df):
-        n = np.size(df,0)
-        plazos = []
-        for i in range(n):
-            fecha = int(df[0][i])
-            plazos.extend([fecha])
-        return plazos[::-1]
-
-    def definir_plazos(self, bonos, derivados):
-
-        n_bonos = len(bonos)
-        n_derivados = len(derivados)
-
-        tabla_fechas = np.array([])
-
-        # Extraemos la data de los bonos
-        for i in range(n_bonos):
-            bono = bonos[i]
-            tabla = StrTabla2ArrTabla(bono.get_cupones(), bono.get_fecha_emision())
-            fechas = tabla[:,1]
-            tabla_fechas = np.append(tabla_fechas,fechas)
-
-        # Extraemos la data de los derivados
-        for j in range(n_derivados):
-            derivado = derivados[j]
-            flujos = derivado.get_derivado_generico().flujos_valorizados[["ID","ActivoPasivo", "Fecha"\
-            , "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
-            for l in range(np.size(flujos,0)):
-                fecha = flujos.iloc[l]['FechaFixing']
-                fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
-                tabla_fechas = np.append(tabla_fechas,fecha)
-        
-        fechas = self.dict_fechas(tabla_fechas)
-        
-        df = self.dict_to_df(fechas)
-        
-        n = int(np.size(df,0)*(3/4))
-        
-        if np.size(df,0) != 1:
-            kmeans = KMeans(n_clusters=n).fit(df)
-
-            centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True)
-            centroids.plot.scatter(x=0, y=1)
-            plazos = self.limpieza_datos(centroids)
-            
-            return plazos
-        else:
-            return [int(df['Fechas']/2), int(df['Fechas'])]
-        
-
-
     def get_n(self):
 
         """
@@ -408,6 +334,80 @@ class Cartera:
         """
 
         return self.volatilidad_cartera
+
+    def dict_fechas(self, tabla):
+
+        fecha_valorizacion = self.get_fecha()
+
+        fechas = dict()
+        for i in range(len(tabla)):
+            if tabla[i].date() >= fecha_valorizacion:
+                if (tabla[i].date() not in fechas.keys()) :
+                    fechas[tabla[i].date()] = 1
+                else:
+                    fechas[tabla[i].date()] += 1
+        return fechas
+
+    def dict_to_df(self, dict):
+
+        fecha_valorizacion = self.get_fecha()
+
+        df = pd.DataFrame()
+        df['Fechas'] = dict.keys()
+        df['Frecuencia'] = dict.values()
+        df['Fechas'] = df['Fechas'].apply(lambda x: diferencia_dias_convencion('ACT/360', fecha_valorizacion, x))
+        
+        return df
+
+    def limpieza_datos(self, df):
+
+        n = np.size(df,0)
+        plazos = []
+        for i in range(n):
+            fecha = (df[0][i] + 1)/365
+            plazos.extend([fecha])
+        return plazos
+
+    def definir_plazos(self, bonos, derivados):
+
+        n_bonos = len(bonos)
+        n_derivados = len(derivados)
+
+        tabla_fechas = np.array([])
+
+        # Extraemos la data de los bonos
+        for i in range(n_bonos):
+            bono = bonos[i]
+            tabla = StrTabla2ArrTabla(bono.get_cupones(), bono.get_fecha_emision())
+            fechas = tabla[:,1]
+            tabla_fechas = np.append(tabla_fechas,fechas)
+
+        # Extraemos la data de los derivados
+        for j in range(n_derivados):
+            derivado = derivados[j]
+            flujos = derivado.get_derivado_generico().flujos_valorizados[["ID","ActivoPasivo", "Fecha"\
+            , "FechaFixing", "FechaFlujo", "FechaPago", "Flujo", "ValorPresenteMonFlujo", "Moneda", "MonedaBase"]]
+            for l in range(np.size(flujos,0)):
+                fecha = flujos.iloc[l]['FechaFixing']
+                fecha = datetime.datetime.combine(fecha, datetime.datetime.min.time())
+                tabla_fechas = np.append(tabla_fechas,fecha)
+        
+        fechas = self.dict_fechas(tabla_fechas)
+        
+        df = self.dict_to_df(fechas)
+        
+        n = int(np.size(df,0)*(3/4))
+        
+        if np.size(df,0) != 1:
+            kmeans = KMeans(n_clusters=n).fit(df)
+
+            centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True).reset_index(drop=True)
+            centroids.plot.scatter(x=0, y=1)
+            plazos = self.limpieza_datos(centroids)
+            
+            return plazos
+        else:
+            return [int(df['Fechas']/2), int(df['Fechas'])]
 
     def unir_activos(self, activos):
 
