@@ -11,10 +11,16 @@ cn = pyodbc.connect('DRIVER=' + driver + ';SERVER=' + server + ';UID=' + usernam
 
 def seleccionar_accion(nemotecnico, fondo):
 
-    accion = "SELECT * FROM [dbPortFolio].[dbo].[TdPlanvitalCartera] WHERE Fondo = '" + fondo + "' AND TipoLva = 'EXT' AND Nemotecnico = '"+ str(nemotecnico) +"' ORDER BY Fecha DESC"
+    accion = "SELECT * FROM [dbPortFolio].[dbo].[TdPlanvitalCartera] WHERE Fondo = '" + fondo + "' AND Nemotecnico = '"+ str(nemotecnico) +"' ORDER BY Fecha DESC"
     accion = pd.read_sql(accion, cn)
 
     return accion
+
+def historico_IPSA(n, fecha):
+    ipsa = "SELECT TOP (" + n + ") [IPSA] FROM [dbAlgebra].[dbo].[TdIndicadores] WHERE Fecha <= '" + fecha + "'"
+    ipsa = pd.read_sql(ipsa, cn)[::-1]
+
+    return ipsa
 
 def historico(nemotecnico, fondo,n = 60):
 
@@ -26,14 +32,21 @@ def historico(nemotecnico, fondo,n = 60):
     nominales = accion_modificada["Nominales"]
     largo = len(nominales)
 
-    largo_final = min(n, largo)
+    
     arreglo_valores = []
     arreglo_valores.append(0)
 
-    for i in range(1, largo_final):
+    if (largo >= n):
 
-        calculo = np.log(abs(valorizacion[i]*nominales[i - 1]/(valorizacion[i - 1]*nominales[i])))
-        arreglo_valores.append(calculo)
+        for i in range(1, n):
+
+            calculo = np.log(abs(valorizacion[i]*nominales[i - 1]/(valorizacion[i - 1]*nominales[i])))
+            arreglo_valores.append(calculo)
+    
+    else:
+
+        arreglo_valores = historico_IPSA(str(n), '20200214').apply(lambda x: if (x == -1000): x = 0)
+        arreglo_valores = arreglo_valores.values().tolist()
 
     df1 = pd.DataFrame()
     df1["Moneda"] = ["CLP"]
