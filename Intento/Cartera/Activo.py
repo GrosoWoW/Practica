@@ -55,6 +55,10 @@ class Activo(ABC):
 
         self.nemotecnico = nemo
 
+        # Conexion a base de datos
+        self.cn = cn
+
+
         # Categorizacion
 
         self.nivel1 = ''
@@ -63,8 +67,15 @@ class Activo(ABC):
 
         self.set_niveles()
 
-        # Conexion a base de datos
-        self.cn = cn
+        
+    def get_niveln(self, n):
+
+        if n == 1:
+            return self.nivel1
+        elif n == 2:
+            return self.nivel2
+
+
 
     def get_volatilidad_general(self):
 
@@ -208,6 +219,8 @@ class Activo(ABC):
         cn = self.get_cn()
         niveles = "SELECT TOP (1) [Nivel1] , [Nivel2] FROM [dbPortFolio].[dbo].[TdPlanvitalAtributos] WHERE Nemotecnico = '" + nemo + "'"
         niveles = pd.read_sql(niveles, cn)
+        print(niveles, nemo)
+        print(niveles['Nivel1'][0], niveles['Nivel2'][0])
         self.nivel1 = niveles['Nivel1'][0]
         self.nivel2 = niveles['Nivel2'][0]
 

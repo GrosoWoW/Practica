@@ -45,12 +45,13 @@ def historico(nemotecnico, fondo,n = 60):
     
     else:
 
-        arreglo_valores = historico_IPSA(str(n), '20200214')['IPSA'].apply(lambda x: x = 0 if x == -1000)
+        arreglo_valores = historico_IPSA(str(n), '20200214')['IPSA'].apply(lambda x: 0 if x == -1000 else x)
         arreglo_valores = arreglo_valores.values.tolist()
 
     df1 = pd.DataFrame()
     df1["Moneda"] = ["CLP"]
     df1["Nombre"] = [nemotecnico]
+    df1["Nemotecnico"] = [nemotecnico]
     df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
     df1["Historico"] = [[arreglo_valores]]
 

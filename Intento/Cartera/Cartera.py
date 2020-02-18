@@ -159,6 +159,14 @@ class Cartera:
 
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
+
+        # -------------------- TRABAJO POR NIVELES ---------------------
+
+        self.lista_nivel1 = self.set_lista_niveln(1)
+
+        self.lista_nivel2 = self.set_lista_niveln(2)
+
+        print(self.lista_nivel1, self.lista_nivel2)
         
     def get_n(self):
 
@@ -493,6 +501,37 @@ class Cartera:
         activo.set_distribucion_pivotes()
         activo.set_volatilidad_general()
         return activo
+
+    def set_lista_niveln(self, n):
+
+        acciones = self.get_acciones()
+        bonos = self.get_bonos()
+        derivados = self.get_derivados()
+
+        lista_nivel_n = dict()
+
+        for i in range(len(acciones)):
+            if acciones[i].get_niveln(n) not in lista_nivel_n.keys():
+                lista_nivel_n[acciones[i].get_niveln(n)] = [acciones[i]]
+            else:
+                lista_nivel_n[acciones[i].get_niveln(n)].append(acciones[i])
+
+        for j in range(len(bonos)):
+            if bonos[i].get_niveln(n) not in lista_nivel_n.keys():
+                lista_nivel_n[bonos[j].get_niveln(n)] = [bonos[j]]
+            else:
+                lista_nivel_n[bonos[j].get_niveln(n)].append(bonos[j])
+
+        for k in range(len(derivados)):
+            if derivados[i].get_niveln(n) not in lista_nivel_n.keys():
+                lista_nivel_n[derivados[k].get_niveln(n)] = [derivados[k]]
+            else:
+                lista_nivel_n[derivados[k].get_niveln(n)].append(derivados[k])
+
+        return lista_nivel_n
+
+
+
 
 
     def set_hist_ret_vol_totales(self):
