@@ -10,9 +10,9 @@ Clase principal de Accion hereda de la clase abstracta Activo
 class Accion(Activo):
 
 
-    def __init__(self, nombre, moneda, retornos, montoInvertido, monedaCartera, fecha_valorizacion, cn, n, fondo):
+    def __init__(self, nombre, moneda, retornos, montoInvertido, monedaCartera, fecha_valorizacion, cn, n, fondo, nemo):
         
-        super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn)
+        super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn, nemo)
         self.n = n
 
         # Nombre de la accion (empresa, etc)

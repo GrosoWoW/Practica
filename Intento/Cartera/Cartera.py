@@ -55,7 +55,7 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n, "A")
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -64,7 +64,7 @@ class Cartera:
         for j in range(np.size(bonos,0)):
 
             bono = bonos.iloc[j]
-            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n)
+            obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n, bono['Nemotecnico'])
             self.bonos.append(obj_bono)
 
         self.derivados = []
@@ -73,7 +73,7 @@ class Cartera:
         for k in range(np.size(derivados,0)):
 
             derivado = derivados.iloc[k]
-            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva())
+            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
             self.derivados.append(obj_derivado)
 
         if len(bonos) != 0 or len(derivados) != 0:
@@ -523,7 +523,6 @@ class Cartera:
 
         """
 
-        largo_pivotes = len(self.get_plazos())
         lenght = len(list(self.get_historicos_totales()))
         volatilidad = self.get_volatilidades_totales()
         retornos = self.get_retornos_totales()

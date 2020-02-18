@@ -18,10 +18,10 @@ funciona como un adapter entre las clases derivado Abstracto y la clase cartera
 
 class Derivado(Activo):
 
-    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn, n, fechaEfectiva):
+    def __init__(self, derivado_generico, monedaCartera, fecha_valorizacion, cn, n, fechaEfectiva, nemo):
 
         # Super para la clase DerivadoAbstracto y entregar los valores
-        super(Derivado, self).__init__(monedaCartera, fecha_valorizacion, cn)
+        super(Derivado, self).__init__(monedaCartera, fecha_valorizacion, cn, nemo)
         self.n = n
 
         self.fecha_efectiva = fechaEfectiva

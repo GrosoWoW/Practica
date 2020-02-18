@@ -8,10 +8,10 @@ from Activo import Activo
 from math import exp, log
 class Bono(Activo):
 
-    def __init__(self, riesgo, moneda, cupones, convencion, fechaEmision, monedaCartera, fecha, cn, n):
+    def __init__(self, riesgo, moneda, cupones, convencion, fechaEmision, monedaCartera, fecha, cn, n, nemo):
 
 
-        super(Bono, self).__init__(monedaCartera, fecha, cn)
+        super(Bono, self).__init__(monedaCartera, fecha, cn, nemo)
 
         self.n = n
 

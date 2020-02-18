@@ -15,7 +15,7 @@ Clase Abstracta Activo correspondiente a generar los diferentes activos
 
 class Activo(ABC):
 
-    def __init__(self, monedaCartera, fecha_valorizacion, cn):
+    def __init__(self, monedaCartera, fecha_valorizacion, cn, nemo):
 
         # Moneda en que se desea trabajar dentro de la cartera
         self.monedaCartera = monedaCartera
@@ -50,6 +50,18 @@ class Activo(ABC):
 
         # Fecha de valorizacion en el formate datetime
         self.fecha_valorizacion_date = fecha_valorizacion
+
+        # nemotecnico del activo
+
+        self.nemotecnico = nemo
+
+        # Categorizacion
+
+        self.nivel1 = ''
+
+        self.nivel2 = ''
+
+        self.set_niveles()
 
         # Conexion a base de datos
         self.cn = cn
@@ -160,6 +172,10 @@ class Activo(ABC):
         """
 
         return self.covarianza
+
+    def get_nemotecnico(self):
+
+        return self.nemotecnico
     
     def set_plazos(self, plazos):
 
@@ -180,6 +196,21 @@ class Activo(ABC):
 
         """
         pass
+
+    def set_niveles(self):
+
+        """
+        Le asigna al activo su categoria correspondiente segun nivel
+        
+        """
+
+        nemo = self.get_nemotecnico()
+        cn = self.get_cn()
+        niveles = "SELECT TOP (1) [Nivel1] , [Nivel2] FROM [dbPortFolio].[dbo].[TdPlanvitalAtributos] WHERE Nemotecnico = '" + nemo + "'"
+        niveles = pd.read_sql(niveles, cn)
+        self.nivel1 = niveles['Nivel1'][0]
+        self.nivel2 = niveles['Nivel2'][0]
+
 
     def discriminador_sol(self, soluciones):
 
