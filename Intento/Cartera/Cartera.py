@@ -164,9 +164,18 @@ class Cartera:
 
         self.lista_nivel1 = self.set_lista_niveln(1)
 
+        self.vectores_nivel1 = self.set_vector_niveln(1)
+
         self.lista_nivel2 = self.set_lista_niveln(2)
 
         print(self.lista_nivel1, self.lista_nivel2)
+
+    def get_lista_n(self, n):
+
+        if  n == 1:
+            return self.lista_nivel1
+        elif n == 2:
+            return self.lista_nivel2
         
     def get_n(self):
 
@@ -501,6 +510,20 @@ class Cartera:
         activo.set_distribucion_pivotes()
         activo.set_volatilidad_general()
         return activo
+
+    def set_vector_niveln(self,n):
+
+        
+        dic_n = self.get_lista_n(n)
+        n_items = len(dic_n.keys())
+        a = 0
+        vector = dict()
+
+        for key in dic_n.keys():
+            vectores[key] = []
+            for i in range(len(dic_n[key])):
+                vectores[key].append
+
 
     def set_lista_niveln(self, n):
 
