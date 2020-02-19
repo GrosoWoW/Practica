@@ -550,7 +550,7 @@ class Cartera:
                 lista_nivel_n[bonos[j].get_niveln(n)].append(bonos[j])
 
             for a in range(1,3):
-                lista[a][bonos[j].get_niveln(a), "Bono"] = np.zeros(cantidad_datos)
+                lista[a][bonos[j].get_niveln(a), "Bono", bonos[j].get_riesgo()] = np.zeros(cantidad_datos)
 
         for k in range(len(derivados)):
             if derivados[i].get_niveln(n) not in lista_nivel_n.keys():
@@ -744,3 +744,23 @@ class Cartera:
             vector_supremo.extend(derivados.iloc[:,0])
 
         self.vector_supremo = np.array(vector_supremo)
+
+    def set_volatilidad_niveles(self):
+        
+        vol_niveles = [1:dict(), 2:dict()]
+
+        niveles = self.get_diccionario_niveles()
+
+        covarianza = self.get_covarianza()
+        size = np.size(covarianza,1)
+        vector = np.zeros(size)
+        
+        # Por cada nivel
+        for a in range(1,3):
+            # Para cada tipo de activo
+            for keys in niveles[a]:
+                if keys[1] == 'Accion':
+                    
+                elif keys[1] == 'Bono':
+
+                elif keys[1] == 'Derivado':
