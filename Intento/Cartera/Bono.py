@@ -15,30 +15,36 @@ class Bono(Activo):
 
         super(Bono, self).__init__(monedaCartera, fecha, cn, nemo)
 
+        # Parametro n con la cantidad de datos que se extraeran de sus fechas
         self.n = n
 
+        # String con el riesgo del bono ('AAA', 'AA', etc)
         self.riesgo = riesgo
 
+        # String con la moneda que se encuentran los pagos del bono
         self.moneda = moneda
 
+        # String con la moneda de la cartera
         self.monedaCartera = monedaCartera
 
+        # Pagos del bono
         self.cupones = cupones
 
+        # Convencion que se utiliza en los calculos (ACT360, etc)
         self.convencion = convencion
 
+        # Vector donde se pondran los calculos de valor presente en los pivotes
         self.distribucionPlazos = []
 
+        # Fecha de emision del bono
         self.fecha_emision = fechaEmision
 
+        # Conexion a base de datos
         self.cn = cn
 
         # En la base de datos, los casos enunciados traen la informacion de la curva por parametros, los otros vienen listos
         # para parsear e interpolar el caso requerido.
         self.parametroInterpolado = True if(((riesgo == 'AAA' or riesgo == 'A')  and moneda == 'CLP') or moneda == 'USD') else False
-
-        # Procesos de inicializacion
-
         
     def get_n(self):
 
