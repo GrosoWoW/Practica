@@ -747,7 +747,7 @@ class Cartera:
 
     def set_volatilidad_niveles(self):
         
-        vol_niveles = [1:dict(), 2:dict()]
+        vol_niveles = {1:dict(), 2:dict()}
 
         niveles = self.get_diccionario_niveles()
 
@@ -755,6 +755,7 @@ class Cartera:
         size = np.size(covarianza,1)
         vector = np.zeros(size)
         
+        """
         # Por cada nivel
         for a in range(1,3):
             # Para cada tipo de activo
@@ -764,3 +765,4 @@ class Cartera:
                 elif keys[1] == 'Bono':
 
                 elif keys[1] == 'Derivado':
+        """
