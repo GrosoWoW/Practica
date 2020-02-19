@@ -340,7 +340,7 @@ class Derivado(Activo):
 
                 VP = factor_descuento*flujo_pago
                 distruciones[indice_pivote1] += VP
-                nivel[nivel_nombre][indice_pivote1] += VP
+                nivel[nivel_nombre, "Derivado"][indice_pivote1] += VP
 
 
 
@@ -358,8 +358,8 @@ class Derivado(Activo):
         
                 distruciones[indice_pivote1] += solucion*VP
                 distruciones[indice_pivote2] += (1 - solucion)*VP
-                nivel[nivel_nombre][indice_pivote1] += VP
-                nivel[nivel_nombre][indice_pivote2] += VP
+                nivel[nivel_nombre, "Derivado"][indice_pivote1] += VP
+                nivel[nivel_nombre, "Derivado"][indice_pivote2] += VP
             
         self.distribucion_pivotes = (distruciones)
 

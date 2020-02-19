@@ -227,12 +227,19 @@ class Bono(Activo):
 
             tir_plazos = self.tir_plazos(plazos_index)
 
+            nivel = diccionario
+            nivel_nombre = self.get_niveln(1)
+
+
             # Casos borde.
             if (plazos_index[1] == -1 or (plazos_index[0] == plazos_index[1])): 
                 flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
+                nivel[nivel_nombre, "Bono"][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
                 continue
             elif (plazos_index[0] == -1): 
                 flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
+                nivel[nivel_nombre, "Bono"][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
+
                 continue
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
 
@@ -500,21 +507,11 @@ class Bono(Activo):
 
         p = self.get_plazos()
 
-        if(piv[0] == -1 or p[piv[1]] == p[piv[0]]):
-            flujo[0] += vp
-            nivel[nivel_nombre][0] += vp
 
-
-        elif (piv[1] == -1):
-            flujo[len(flujo)-1] += vp*alfa
-            nivel[nivel_nombre][len(flujo)-1] += vp*alfa
-
-
-        else:
-            flujo[piv[0]] += vp*alfa
-            flujo[piv[1]] += vp*(1-alfa)
-            nivel[nivel_nombre][piv[0]] += vp * alfa
-            nivel[nivel_nombre][piv[1]] += vp * (1 - alfa)
+        flujo[piv[0]] += vp*alfa
+        flujo[piv[1]] += vp*(1-alfa)
+        nivel[nivel_nombre, "Bono"][piv[0]] += vp * alfa
+        nivel[nivel_nombre, "Bono"][piv[1]] += vp * (1 - alfa)
 
         print("feñaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         print(nivel)
