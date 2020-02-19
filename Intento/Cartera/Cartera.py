@@ -170,6 +170,8 @@ class Cartera:
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
 
+        
+
         # -------------------- TRABAJO POR NIVELES ---------------------
 
     def get_diccionario_niveles(self):
@@ -180,8 +182,8 @@ class Cartera:
 
         if  n == 1:
             return self.lista_nivel1
-        elif n == 2:
-            return self.lista_nivel2
+        # elif n == 2:
+        #     return self.lista_nivel2
         
     def get_n(self):
 
@@ -517,19 +519,6 @@ class Cartera:
         activo.set_volatilidad_general()
         return activo
 
-    def set_vector_niveln(self,n):
-
-        
-        dic_n = self.get_lista_n(n)
-        n_items = len(dic_n.keys())
-        a = 0
-        vectores = dict()
-
-        for key in dic_n.keys():
-            vectores[key] = []
-            for i in range(len(dic_n[key])):
-                vectores[key].append
-
 
     def set_lista_niveln(self, n):
 
@@ -540,17 +529,19 @@ class Cartera:
         lista_nivel_n = dict()
         acciones_nombre = []
         cantidad_datos = len(self.get_plazos())*2 + len(self.acciones)
-        lista = dict()
+        lista = {1:dict(), 2: dict()}
 
         for i in range(len(acciones)):
             if acciones[i].get_niveln(n) not in lista_nivel_n.keys():
                 lista_nivel_n[acciones[i].get_niveln(n)] = [acciones[i]]
-                lista[acciones[i].get_niveln(n), "Accion"] = acciones[i].get_inversion
+                
 
             else:
                 lista_nivel_n[acciones[i].get_niveln(n)].append(acciones[i])
                 acciones_nombre.append(acciones[i].get_niveln(n))
-                lista[acciones[i].get_niveln(n), "Accion"] = acciones[i].get_inversion()
+            
+            for a in range(1,3):
+                lista[a][acciones[i].get_niveln(a), "Accion"] = acciones[i].get_inversion()
 
         for j in range(len(bonos)):
             if bonos[i].get_niveln(n) not in lista_nivel_n.keys():
@@ -558,7 +549,8 @@ class Cartera:
             else:
                 lista_nivel_n[bonos[j].get_niveln(n)].append(bonos[j])
 
-            lista[bonos[j].get_niveln(n), "Bono"] = np.zeros(cantidad_datos)
+            for a in range(1,3):
+                lista[a][bonos[j].get_niveln(a), "Bono"] = np.zeros(cantidad_datos)
 
         for k in range(len(derivados)):
             if derivados[i].get_niveln(n) not in lista_nivel_n.keys():
@@ -566,7 +558,8 @@ class Cartera:
             else:
                 lista_nivel_n[derivados[k].get_niveln(n)].append(derivados[k])
 
-            lista[derivados[j].get_niveln(n), "Derivado"] = np.zeros(cantidad_datos)
+            for a in range(1,3):
+                lista[a][derivados[j].get_niveln(a), "Derivado"] = np.zeros(cantidad_datos)
 
         self.diccionario_niveles = lista
         return lista_nivel_n

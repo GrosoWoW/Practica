@@ -314,7 +314,7 @@ class Derivado(Activo):
         distruciones = np.zeros(len(pivotes))
 
         nivel = diccionario
-        nivel_nombre = self.get_niveln(1)
+        
 
         for i in range(fechas_largo):
 
@@ -340,7 +340,10 @@ class Derivado(Activo):
 
                 VP = factor_descuento*flujo_pago
                 distruciones[indice_pivote1] += VP
-                nivel[nivel_nombre, "Derivado"][indice_pivote1] += VP
+
+                for a in range(1,3):
+                    nivel_nombre = self.get_niveln(a)
+                    nivel[a][nivel_nombre, "Derivado"][indice_pivote1] += VP
 
 
 
@@ -358,8 +361,12 @@ class Derivado(Activo):
         
                 distruciones[indice_pivote1] += solucion*VP
                 distruciones[indice_pivote2] += (1 - solucion)*VP
-                nivel[nivel_nombre, "Derivado"][indice_pivote1] += VP
-                nivel[nivel_nombre, "Derivado"][indice_pivote2] += VP
+
+                for a in range(1,3):
+                    nivel_nombre = self.get_niveln(a)
+                    nivel[a][nivel_nombre, "Derivado"][indice_pivote1] += VP
+                    nivel[a][nivel_nombre, "Derivado"][indice_pivote2] += VP
+
             
         self.distribucion_pivotes = (distruciones)
 

@@ -210,13 +210,11 @@ class Bono(Activo):
         flujo_plazos = np.zeros(len(plazos))
 
         # La estructura de cada cupon: (nroDelCupon, fechaCupon, fechaEmision, cupon, amortizacion, inversion, flujo)
-
-        print("entro en la funcion")
+ 
 
         # Para cada cupon
         for i in range(n_cupones):
-
-            print("Entro en el for")
+ 
             flujo = cupones[i][6]
             fecha_flujo = cupones[i][1].date()
             plazo_flujo = diferencia_dias_convencion(convencion, fecha_valorizacion, fecha_flujo)/360
@@ -234,11 +232,19 @@ class Bono(Activo):
             # Casos borde.
             if (plazos_index[1] == -1 or (plazos_index[0] == plazos_index[1])): 
                 flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
-                nivel[nivel_nombre, "Bono"][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
+
+                for a in range(1,3):
+                    nivel_nombre = self.get_niveln(a)
+                    nivel[a][nivel_nombre, "Bono"][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
+
                 continue
+
             elif (plazos_index[0] == -1): 
                 flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
-                nivel[nivel_nombre, "Bono"][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
+
+                for a in range(1,3):
+                    nivel_nombre = self.get_niveln(a)
+                    nivel[a][nivel_nombre, "Bono"][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
 
                 continue
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
@@ -257,7 +263,6 @@ class Bono(Activo):
             
             solucion = self.discriminador_sol(alfa)
 
-            print("owo")
             flujo_plazos = self.actualizar(solucion, vp_flujo, plazos_index, flujo_plazos, diccionario)
 
         self.distribucionPlazos = pd.DataFrame(flujo_plazos)
@@ -510,13 +515,11 @@ class Bono(Activo):
 
         flujo[piv[0]] += vp*alfa
         flujo[piv[1]] += vp*(1-alfa)
-        nivel[nivel_nombre, "Bono"][piv[0]] += vp * alfa
-        nivel[nivel_nombre, "Bono"][piv[1]] += vp * (1 - alfa)
+        for a in range(1,3):
+            nivel_nombre = self.get_niveln(a)
+            nivel[a][nivel_nombre, "Bono"][piv[0]] += vp * alfa
+            nivel[a][nivel_nombre, "Bono"][piv[1]] += vp * (1 - alfa)
 
-        print("feñaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        print(nivel)
-
-        
 
 
         return flujo
