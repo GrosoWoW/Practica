@@ -5,6 +5,8 @@ from Matematica import interpolacion_escalar
 
 from Activo import Activo
 
+import numpy as np
+
 from math import exp, log
 class Bono(Activo):
 
@@ -184,7 +186,7 @@ class Bono(Activo):
 
         self.historicos = historico
 
-    def set_distribucion_pivotes(self):
+    def set_distribucion_pivotes(self, diccionario):
 
         """
         Distribuye la valorización de los cupones de un bono en los plazos correspondientes.
@@ -209,8 +211,12 @@ class Bono(Activo):
 
         # La estructura de cada cupon: (nroDelCupon, fechaCupon, fechaEmision, cupon, amortizacion, inversion, flujo)
 
+        print("entro en la funcion")
+
         # Para cada cupon
         for i in range(n_cupones):
+
+            print("Entro en el for")
             flujo = cupones[i][6]
             fecha_flujo = cupones[i][1].date()
             plazo_flujo = diferencia_dias_convencion(convencion, fecha_valorizacion, fecha_flujo)/360
@@ -244,7 +250,8 @@ class Bono(Activo):
             
             solucion = self.discriminador_sol(alfa)
 
-            flujo_plazos = self.actualizar(solucion, vp_flujo, plazos_index, flujo_plazos)
+            print("owo")
+            flujo_plazos = self.actualizar(solucion, vp_flujo, plazos_index, flujo_plazos, diccionario)
 
         self.distribucionPlazos = pd.DataFrame(flujo_plazos)
         
@@ -475,7 +482,7 @@ class Bono(Activo):
                 tir[i] = self.interpolacion_log_escalarBonos(plazos[p[i]], c)
         return tir
 
-    def actualizar(self, alfa, vp, piv, flujo):
+    def actualizar(self, alfa, vp, piv, flujo, diccionario):
 
         """
         Se integra el nuevo vp al arreglo flujo, en virtud de la interpolación lineal en base a alfa
@@ -487,17 +494,32 @@ class Bono(Activo):
         :return: Arreglo flujo actualizado.
 
         """
-         
+        
+        nivel = diccionario
+        nivel_nombre = self.get_niveln(1)
+
         p = self.get_plazos()
 
         if(piv[0] == -1 or p[piv[1]] == p[piv[0]]):
             flujo[0] += vp
+            nivel[nivel_nombre][0] += vp
+
 
         elif (piv[1] == -1):
             flujo[len(flujo)-1] += vp*alfa
+            nivel[nivel_nombre][len(flujo)-1] += vp*alfa
+
 
         else:
             flujo[piv[0]] += vp*alfa
             flujo[piv[1]] += vp*(1-alfa)
+            nivel[nivel_nombre][piv[0]] += vp * alfa
+            nivel[nivel_nombre][piv[1]] += vp * (1 - alfa)
+
+        print("feñaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        print(nivel)
+
+        
+
 
         return flujo

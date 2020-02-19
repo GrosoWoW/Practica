@@ -291,7 +291,7 @@ class Derivado(Activo):
 
         return numerador/denominador 
 
-    def set_distribucion_pivotes(self):
+    def set_distribucion_pivotes(self, diccionario):
 
         """
         Funcion de calculo principal de la distribucion
@@ -312,6 +312,9 @@ class Derivado(Activo):
         monedas_pagos = flujos["Moneda"]
         volatilidades = self.get_volatilidad()
         distruciones = np.zeros(len(pivotes))
+
+        nivel = diccionario
+        nivel_nombre = self.get_niveln(1)
 
         for i in range(fechas_largo):
 
@@ -337,6 +340,8 @@ class Derivado(Activo):
 
                 VP = factor_descuento*flujo_pago
                 distruciones[indice_pivote1] += VP
+                nivel[nivel_nombre][indice_pivote1] += VP
+
 
 
             else:
@@ -353,7 +358,9 @@ class Derivado(Activo):
         
                 distruciones[indice_pivote1] += solucion*VP
                 distruciones[indice_pivote2] += (1 - solucion)*VP
-
+                nivel[nivel_nombre][indice_pivote1] += VP
+                nivel[nivel_nombre][indice_pivote2] += VP
+            
         self.distribucion_pivotes = (distruciones)
 
     def set_volatilidad_general(self):

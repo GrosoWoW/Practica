@@ -51,6 +51,7 @@ class Cartera:
         # Plazos para la creacion de los pivotes
         self.plazos = []
 
+
         # Por cada Accion en el dataFrame, se crea con la clase accion
         for i in range(np.size(acciones,0)):
 
@@ -79,6 +80,10 @@ class Cartera:
         if len(bonos) != 0 or len(derivados) != 0:
             self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
+        self.diccionario_niveles = dict()
+
+        self.lista_nivel1 = self.set_lista_niveln(1)
+
         arreglo_bonos = self.bonos
         arreglo_bonos_nuevo = []
 
@@ -106,6 +111,11 @@ class Cartera:
 
         self.derivados = arreglo_derivados_nuevo # Reemplazamos los derivos, listos con sus calculos
 
+        print(self.get_diccionario_niveles())
+
+
+
+
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
 
@@ -128,7 +138,7 @@ class Cartera:
         self.covarianza = pd.DataFrame()
 
         # Distribuciones de los flujos de los activos
-        self.distribuciones_activos()
+        #self.distribuciones_activos()
 
         # Vector con valor presente de las acciones
         self.vector_acciones = []
@@ -160,13 +170,13 @@ class Cartera:
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
 
+        print(self.diccionario_niveles)
+
         # -------------------- TRABAJO POR NIVELES ---------------------
 
-        self.lista_nivel1 = self.set_lista_niveln(1)
+    def get_diccionario_niveles(self):
 
-        self.lista_nivel2 = self.set_lista_niveln(2)
-
-        print(self.lista_nivel1, self.lista_nivel2)
+        return self.diccionario_niveles
         
     def get_n(self):
 
@@ -498,7 +508,7 @@ class Cartera:
             covarianza_calculada = activo.calcular_covarianza()
             self.covarianza_dict[nombre] = covarianza_calculada
 
-        activo.set_distribucion_pivotes()
+        activo.set_distribucion_pivotes(self.get_diccionario_niveles())
         activo.set_volatilidad_general()
         return activo
 
@@ -528,11 +538,16 @@ class Cartera:
             else:
                 lista_nivel_n[derivados[k].get_niveln(n)].append(derivados[k])
 
+        cantidad_datos = len(self.get_plazos())*2 + len(self.acciones)
+        lista = dict()
+        for key in lista_nivel_n:
+            
+            if key not in lista:
+
+                lista[key] = np.zeros(cantidad_datos)
+
+        self.diccionario_niveles = lista
         return lista_nivel_n
-
-
-
-
 
     def set_hist_ret_vol_totales(self):
 
@@ -598,11 +613,11 @@ class Cartera:
 
         for i in range(len(bonos)):
             
-            bonos[i].set_distribucion_pivotes()
+            bonos[i].set_distribucion_pivotes(self.get_diccionario_niveles())
 
         for i in range(len(derivados)):
 
-            derivados[i].set_distribucion_pivotes()
+            derivados[i].set_distribucion_pivotes(self.get_diccionario_niveles())
 
     def set_volatilidad_cartera(self):
 

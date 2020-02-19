@@ -67,7 +67,13 @@ class Activo(ABC):
 
         self.set_niveles()
 
+        self.distribucion_niveles = dict()
+
         
+    def get_distribucion_niveles(self):
+
+        return self.distribucion_niveles
+
     def get_niveln(self, n):
 
         if n == 1:
@@ -219,8 +225,6 @@ class Activo(ABC):
         cn = self.get_cn()
         niveles = "SELECT TOP (1) [Nivel1] , [Nivel2] FROM [dbPortFolio].[dbo].[TdPlanvitalAtributos] WHERE Nemotecnico = '" + nemo + "'"
         niveles = pd.read_sql(niveles, cn)
-        print(niveles, nemo)
-        print(niveles['Nivel1'][0], niveles['Nivel2'][0])
         self.nivel1 = niveles['Nivel1'][0]
         self.nivel2 = niveles['Nivel2'][0]
 
