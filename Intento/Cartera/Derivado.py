@@ -259,14 +259,17 @@ class Derivado(Activo):
             
             fecha_pivote = add_days(fecha_valorizacion, int(pos_pivote*360))
 
+            # Se encuentra en el primer pivote (caso borde)
             if i == 0 and fecha_pago < fecha_pivote:
 
                 return [pivotes[i], pivotes[i]]
 
+            # Se encuentra entre dos pivotes
             elif fecha_pivote > fecha_pago:
 
                 return [pivotes[i - 1], pivotes[i]]
 
+            # Se encuentra en el ultimo pivote (caso borde)
             else:
 
                 return [pivotes[i], pivotes[i]]
@@ -322,7 +325,6 @@ class Derivado(Activo):
             moneda_pago_actual = monedas_pagos[i]
             flujo_pago = flujos["Flujo"][i]
 
-
             pivote_entremedio = self.buscar_pivote(fecha_pago_actual)
 
             nombre_pivote1 = moneda_pago_actual + "#" + str(int(pivote_entremedio[0]*360))
@@ -344,8 +346,6 @@ class Derivado(Activo):
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
                     nivel[a][nivel_nombre, "Derivado"][indice_pivote1] += VP
-
-
 
             else:
 

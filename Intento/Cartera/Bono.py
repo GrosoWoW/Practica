@@ -244,7 +244,7 @@ class Bono(Activo):
 
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
-                    nivel[a][nivel_nombre, "Bono"][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
+                    nivel[a][nivel_nombre, "Bono", riesgo][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
 
                 continue
             # Caso borde, pivote al final
@@ -253,7 +253,7 @@ class Bono(Activo):
 
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
-                    nivel[a][nivel_nombre, "Bono"][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
+                    nivel[a][nivel_nombre, "Bono", riesgo][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
 
                 continue
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
@@ -519,12 +519,13 @@ class Bono(Activo):
         nivel = diccionario
         nivel_nombre = self.get_niveln(1)
         p = self.get_plazos()
+        riesgo = self.get_riesgo()
 
         flujo[piv[0]] += vp*alfa
         flujo[piv[1]] += vp*(1-alfa)
         for a in range(1,3):
             nivel_nombre = self.get_niveln(a)
-            nivel[a][nivel_nombre, "Bono"][piv[0]] += vp * alfa
-            nivel[a][nivel_nombre, "Bono"][piv[1]] += vp * (1 - alfa)
+            nivel[a][nivel_nombre, "Bono", riesgo][piv[0]] += vp * alfa
+            nivel[a][nivel_nombre, "Bono", riesgo][piv[1]] += vp * (1 - alfa)
 
         return flujo

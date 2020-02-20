@@ -9,6 +9,7 @@ from Bono import *
 from Derivado import *
 from DerivadosTipos.DerivadosSCC import *
 from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion
+from Correlaciones import ewma_matriz
 
 import numpy as np
 import pandas as pd
@@ -56,7 +57,7 @@ class Cartera:
         for i in range(np.size(acciones,0)):
 
             accion = acciones.iloc[i]
-            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][i]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
+            obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -112,9 +113,6 @@ class Cartera:
         self.derivados = arreglo_derivados_nuevo # Reemplazamos los derivos, listos con sus calculos
 
         print(self.get_diccionario_niveles())
-
-
-
 
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
@@ -526,42 +524,46 @@ class Cartera:
         bonos = self.get_bonos()
         derivados = self.get_derivados()
 
-        lista_nivel_n = dict()
-        acciones_nombre = []
-        cantidad_datos = len(self.get_plazos())*2 + len(self.acciones)
-        lista = {1:dict(), 2: dict()}
+        cantidad_acciones = len(acciones)
+        cantidad_bonos = len(bonos)
+        cantidad_derivados = len(derivados)
 
-        for i in range(len(acciones)):
+        lista_nivel_n = dict()
+        cantidad_datos = len(self.get_plazos())*2 + len(self.acciones)
+        diccionario_niveles = {1:dict(), 2: dict()}
+
+        for i in range(cantidad_acciones):
             if acciones[i].get_niveln(n) not in lista_nivel_n.keys():
                 lista_nivel_n[acciones[i].get_niveln(n)] = [acciones[i]]
                 
-
             else:
                 lista_nivel_n[acciones[i].get_niveln(n)].append(acciones[i])
-                acciones_nombre.append(acciones[i].get_niveln(n))
             
             for a in range(1,3):
-                lista[a][acciones[i].get_niveln(a), "Accion"] = acciones[i].get_inversion()
+                diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"] = np.zeros(cantidad_acciones)
+                diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"][i] += acciones[i].get_inversion()
 
-        for j in range(len(bonos)):
-            if bonos[i].get_niveln(n) not in lista_nivel_n.keys():
+        for j in range(cantidad_bonos):
+
+            if bonos[j].get_niveln(n) not in lista_nivel_n.keys():
                 lista_nivel_n[bonos[j].get_niveln(n)] = [bonos[j]]
             else:
                 lista_nivel_n[bonos[j].get_niveln(n)].append(bonos[j])
 
             for a in range(1,3):
-                lista[a][bonos[j].get_niveln(a), "Bono", bonos[j].get_riesgo()] = np.zeros(cantidad_datos)
+                diccionario_niveles[a][bonos[j].get_niveln(a), "Bono", bonos[j].get_riesgo()] = np.zeros(len(self.get_plazos()))
 
-        for k in range(len(derivados)):
-            if derivados[i].get_niveln(n) not in lista_nivel_n.keys():
+        for k in range(cantidad_derivados):
+
+            if derivados[k].get_niveln(n) not in lista_nivel_n.keys():
                 lista_nivel_n[derivados[k].get_niveln(n)] = [derivados[k]]
             else:
                 lista_nivel_n[derivados[k].get_niveln(n)].append(derivados[k])
 
             for a in range(1,3):
-                lista[a][derivados[j].get_niveln(a), "Derivado"] = np.zeros(cantidad_datos)
+                diccionario_niveles[a][derivados[k].get_niveln(a), "Derivado"] = np.zeros(len(self.get_plazos()))
 
-        self.diccionario_niveles = lista
+        self.diccionario_niveles = diccionario_niveles
         return lista_nivel_n
 
     def set_hist_ret_vol_totales(self):

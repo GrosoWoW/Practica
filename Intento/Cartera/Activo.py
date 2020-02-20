@@ -198,6 +198,10 @@ class Activo(ABC):
 
         self.plazos = plazos
 
+    def set_moneda(self, moneda):
+
+        self.mone
+
     
     @abstractmethod
     def set_historico(self):
@@ -291,6 +295,8 @@ class Activo(ABC):
                 for j in range(0,np.size(data, 0)):
 
                     data.iloc[j][i] = data.iloc[j][i] + retorno_moneda[j]
+
+            self.mon
 
         self.retornos = data
         return self.retornos

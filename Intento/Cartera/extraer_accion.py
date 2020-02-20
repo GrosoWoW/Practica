@@ -22,38 +22,57 @@ def historico_IPSA(n, fecha):
 
     return ipsa
 
-def historico(nemotecnico, fondo,n = 60):
+def historico(arreglo_nemotecnicos, arreglo_fondo,n = 60):
 
-    accion_actual = seleccionar_accion(nemotecnico, fondo)
+    cantidad_acciones = len(arreglo_nemotecnicos)
 
-    accion_modificada = accion_actual.groupby(["Fecha", "Fondo", "Nemotecnico"], as_index=False).sum()
+    monedas = []
+    nombres = []
+    nemotecnicos = []
+    inversiones = []
+    historicos = []
 
-    valorizacion = accion_modificada["ValorizacionCLP"]
-    nominales = accion_modificada["Nominales"]
-    largo = len(nominales)
+    for i in range(cantidad_acciones):
 
-    
-    arreglo_valores = []
-    arreglo_valores.append(0)
+        nemotecnico = arreglo_nemotecnicos[i]
+        fondo = arreglo_fondo[i]
 
-    if (largo >= n):
+        accion_actual = seleccionar_accion(nemotecnico, fondo)
+        accion_modificada = accion_actual.groupby(["Fecha", "Fondo", "Nemotecnico"], as_index=False).sum()
 
-        for i in range(1, n):
+        valorizacion = accion_modificada["ValorizacionCLP"]
+        nominales = accion_modificada["Nominales"]
+        largo = len(nominales)
 
-            calculo = np.log(abs(valorizacion[i]*nominales[i - 1]/(valorizacion[i - 1]*nominales[i])))
-            arreglo_valores.append(calculo)
-    
-    else:
+        arreglo_valores = []
+        arreglo_valores.append(0)
 
-        arreglo_valores = historico_IPSA(str(n), '20200214')['IPSA'].apply(lambda x: 0 if x == -1000 else x)
-        arreglo_valores = arreglo_valores.values.tolist()
+        if (largo >= n):
+
+            for i in range(1, n):
+
+                calculo = np.log(abs(valorizacion[i]*nominales[i - 1]/(valorizacion[i - 1]*nominales[i])))
+                arreglo_valores.append(calculo)
+        
+        else:
+
+            arreglo_valores = historico_IPSA(str(n), '20200214')['IPSA'].apply(lambda x: 0 if x == -1000 else x)
+            arreglo_valores = arreglo_valores.values.tolist()
+
+        monedas.append("CLP")
+        nombres.append(nemotecnico)
+        nemotecnicos.append(nemotecnico)
+        inversiones.append(accion_actual["ValorizacionCLP"][0])
+        historicos.append([arreglo_valores])
+
 
     df1 = pd.DataFrame()
-    df1["Moneda"] = ["CLP"]
-    df1["Nombre"] = [nemotecnico]
-    df1["Nemotecnico"] = [nemotecnico]
-    df1["Inversion"] = [accion_actual["ValorizacionCLP"][0]]
-    df1["Historico"] = [[arreglo_valores]]
+    df1["Moneda"] = monedas
+    df1["Nombre"] = nombres
+    df1["Nemotecnico"] = nemotecnicos
+    df1["Inversion"] = inversiones
+    df1["Historico"] = historicos
+
 
     return df1
 
