@@ -168,9 +168,17 @@ class Cartera:
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
 
+        self.diccionario_vol_niveles = dict()
+
+        self.set_volatilidad_niveles()
+
         
 
         # -------------------- TRABAJO POR NIVELES ---------------------
+
+    def get_volatilidad_niveles(self):
+
+        return self.diccionario_vol_niveles
 
     def get_diccionario_niveles(self):
 
@@ -754,17 +762,42 @@ class Cartera:
         niveles = self.get_diccionario_niveles()
 
         covarianza = self.get_covarianza()
+
         size = np.size(covarianza,1)
+        n_acciones = len(self.get_acciones())
+        n_derivados = len(self.get_plazos())
+
         vector = np.zeros(size)
+
+        # Recordemos que la estructura del vector es bajo el siguiente orden
+        # [Bonos/plazos/riesgo][Derivados/plazos][Acciones]
+        # Bonos: np.size(covarianza,1) - Derivados - Acciones
+        # Derivados : len(self.get_plazos())
+        # Acciones : len(self.get_acciones())
         
-        """
+        
         # Por cada nivel
         for a in range(1,3):
             # Para cada tipo de activo
             for keys in niveles[a]:
+
                 if keys[1] == 'Accion':
+
+                    vector[(size - n_acciones):] = niveles[a][keys[0], keys[1]]
                     
                 elif keys[1] == 'Bono':
+                    
+                    vector[:(size - n_derivados - n_acciones)] = niveles[a][keys[0], keys[1]]
 
                 elif keys[1] == 'Derivado':
-        """
+                    
+                    vector[(size - n_derivados - n_acciones):(size - n_acciones)] = niveles[a][keys[0], keys[1]]
+
+                
+                vector = vector / sum(vector)
+                
+                vol_niveles[a][keys] = np.sqrt(np.dot(np.dot(vector,covarianza),vector))
+       
+
+        self.diccionario_vol_niveles = vol_niveles
+        
