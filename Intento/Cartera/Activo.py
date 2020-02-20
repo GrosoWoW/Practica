@@ -296,7 +296,6 @@ class Activo(ABC):
 
                     data.iloc[j][i] = data.iloc[j][i] + retorno_moneda[j]
 
-            self.mon
 
         self.retornos = data
         return self.retornos

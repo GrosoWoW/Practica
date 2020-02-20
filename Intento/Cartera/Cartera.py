@@ -395,6 +395,7 @@ class Cartera:
         n = np.size(df,0)
         plazos = []
         for i in range(n):
+            if df[0][i] == 0 : df[0][i] = 10
             fecha = (df[0][i] + 1)/365
             plazos.extend([fecha])
         return plazos
@@ -787,7 +788,7 @@ class Cartera:
                     
                 elif keys[1] == 'Bono':
                     
-                    vector[:(size - n_derivados - n_acciones)] = niveles[a][keys[0], keys[1]]
+                    vector[:(size - n_derivados - n_acciones)] = niveles[a][keys[0], keys[1], keys[2]]
 
                 elif keys[1] == 'Derivado':
                     
