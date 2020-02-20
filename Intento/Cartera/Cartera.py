@@ -82,7 +82,6 @@ class Cartera:
             self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
         self.diccionario_niveles = dict()
-
         self.lista_nivel1 = self.set_lista_niveln(1)
 
         arreglo_bonos = self.bonos
@@ -112,8 +111,6 @@ class Cartera:
 
         self.derivados = arreglo_derivados_nuevo # Reemplazamos los derivos, listos con sus calculos
 
-        print(self.get_diccionario_niveles())
-
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
 
@@ -134,9 +131,6 @@ class Cartera:
 
         # Covarianza de la cartera
         self.covarianza = pd.DataFrame()
-
-        # Distribuciones de los flujos de los activos
-        #self.distribuciones_activos()
 
         # Vector con valor presente de las acciones
         self.vector_acciones = []
@@ -168,28 +162,32 @@ class Cartera:
         # Volatilidad de la cartera
         self.volatilidad_cartera = 0
 
+        # Diccionario de volatilidades por niveles
         self.diccionario_vol_niveles = dict()
 
+        # Setea las volatilidades por niveles
         self.set_volatilidad_niveles()
-
-        
 
         # -------------------- TRABAJO POR NIVELES ---------------------
 
     def get_volatilidad_niveles(self):
 
+        """
+        Retorna un diccionario con las volatilidades por volumen y tipo de activo
+
+        """
+
         return self.diccionario_vol_niveles
 
     def get_diccionario_niveles(self):
 
+        """
+        Retorna el diccionario con el calculo de valor presente de los niveles
+        de los activos
+
+        """
+
         return self.diccionario_niveles
-
-    def get_lista_n(self, n):
-
-        if  n == 1:
-            return self.lista_nivel1
-        # elif n == 2:
-        #     return self.lista_nivel2
         
     def get_n(self):
 
@@ -529,6 +527,15 @@ class Cartera:
 
     def set_lista_niveln(self, n):
 
+        """
+        Funcion encargada de crear y organizar los niveles de los activos
+        Para esto existe diccionario_tipos_nivel, diccionario que clasifica los tipos 
+        de niveles segun sus activos y diccionario_niveles que sera un diccionario 
+        que contiene los arreglos con los calculos de valor presente que se
+        utilizaran luego en el calculo de volatilidades por nivel
+
+        """
+
         acciones = self.get_acciones()
         bonos = self.get_bonos()
         derivados = self.get_derivados()
@@ -537,43 +544,56 @@ class Cartera:
         cantidad_bonos = len(bonos)
         cantidad_derivados = len(derivados)
 
-        lista_nivel_n = dict()
-        cantidad_datos = len(self.get_plazos())*2 + len(self.acciones)
+        diccionario_tipos_nivel = dict()
         diccionario_niveles = {1:dict(), 2: dict()}
 
+        # Por cada accion en la cartera
         for i in range(cantidad_acciones):
-            if acciones[i].get_niveln(n) not in lista_nivel_n.keys():
-                lista_nivel_n[acciones[i].get_niveln(n)] = [acciones[i]]
+
+            # Se clasifica en diccionario_tipos_nivel, para organizarlo
+            if acciones[i].get_niveln(n) not in diccionario_tipos_nivel.keys():
+                diccionario_tipos_nivel[acciones[i].get_niveln(n)] = [acciones[i]]
                 
             else:
-                lista_nivel_n[acciones[i].get_niveln(n)].append(acciones[i])
+                diccionario_tipos_nivel[acciones[i].get_niveln(n)].append(acciones[i])
             
+            # Se crea la llave de la accion en el diccionario que contendra las inversiones de cada nivel
+            # Las llaves son [nombre_nivel, "Accion"] donde "Accion corresponde al tipo de activo"
             for a in range(1,3):
                 diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"] = np.zeros(cantidad_acciones)
                 diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"][i] += acciones[i].get_inversion()
 
+        # Por cada bono en la cartera
         for j in range(cantidad_bonos):
 
-            if bonos[j].get_niveln(n) not in lista_nivel_n.keys():
-                lista_nivel_n[bonos[j].get_niveln(n)] = [bonos[j]]
-            else:
-                lista_nivel_n[bonos[j].get_niveln(n)].append(bonos[j])
+            # Si su nivel no se encuentra en el diccionario, se crea y se introduce el activo
+            if bonos[j].get_niveln(n) not in diccionario_tipos_nivel.keys():
+                diccionario_tipos_nivel[bonos[j].get_niveln(n)] = [bonos[j]]
 
+            # Si el nivel esta en el diccionario, solo se introduce el activo
+            else:
+                diccionario_tipos_nivel[bonos[j].get_niveln(n)].append(bonos[j])
+
+            # Para cada nivel del activo, se crea una llave con los datos del nivel y en el se pone un arreglo de distribuciones
+            # La llave para el bono sera [nombre_nivel, "Bono", nombre_riesgo] donde "Bono" corresponde al tipo de activo
             for a in range(1,3):
                 diccionario_niveles[a][bonos[j].get_niveln(a), "Bono", bonos[j].get_riesgo()] = np.zeros(len(self.get_plazos()))
 
+            
+        # Se realiza el mismo proceso para el derivado pero en este caso, las llaves de diccionario_niveles sera
+        # [nombre_nivel, "Derivado"], donde "Derivado" corresponde al nombre del activo
         for k in range(cantidad_derivados):
 
-            if derivados[k].get_niveln(n) not in lista_nivel_n.keys():
-                lista_nivel_n[derivados[k].get_niveln(n)] = [derivados[k]]
+            if derivados[k].get_niveln(n) not in diccionario_tipos_nivel.keys():
+                diccionario_tipos_nivel[derivados[k].get_niveln(n)] = [derivados[k]]
             else:
-                lista_nivel_n[derivados[k].get_niveln(n)].append(derivados[k])
+                diccionario_tipos_nivel[derivados[k].get_niveln(n)].append(derivados[k])
 
             for a in range(1,3):
                 diccionario_niveles[a][derivados[k].get_niveln(a), "Derivado"] = np.zeros(len(self.get_plazos()))
 
         self.diccionario_niveles = diccionario_niveles
-        return lista_nivel_n
+        return diccionario_tipos_nivel
 
     def set_hist_ret_vol_totales(self):
 
@@ -625,25 +645,6 @@ class Cartera:
         vol = self.get_volatilidades_totales().iloc[:, 0]
         D = np.diag(vol)
         self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D))
-
-    def distribuciones_activos(self):
-        
-        """
-        Calcula la distribucion de todos
-        los activos que se encuentran en la cartera
-        
-        """
-
-        bonos = self.get_bonos()
-        derivados = self.get_derivados()
-
-        for i in range(len(bonos)):
-            
-            bonos[i].set_distribucion_pivotes(self.get_diccionario_niveles())
-
-        for i in range(len(derivados)):
-
-            derivados[i].set_distribucion_pivotes(self.get_diccionario_niveles())
 
     def set_volatilidad_cartera(self):
 
@@ -801,4 +802,3 @@ class Cartera:
        
 
         self.diccionario_vol_niveles = vol_niveles
-        

@@ -24,6 +24,15 @@ def historico_IPSA(n, fecha):
 
 def historico(arreglo_nemotecnicos, arreglo_fondo,n = 60):
 
+    """
+    Calcula el historico para un arreglo de nemotecnicos
+    :param arreglo_nemotecnicos: Lista con los nemotecnicos de las acciones en string
+    :param arreglo_fondo: Lista con los fondos de las acciones anterior mencionadas
+    :return: DataFrame con las monedas, nemotecnicos, inversiones y historicos de las 
+    acciones
+
+    """
+
     cantidad_acciones = len(arreglo_nemotecnicos)
 
     monedas = []

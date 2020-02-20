@@ -217,6 +217,7 @@ class Bono(Activo):
         
         n_cupones = np.size(cupones,0)
 
+        # Arreglo donde se introduciran los calculos de valor presente
         flujo_plazos = np.zeros(len(plazos))
 
         # La estructura de cada cupon: (nroDelCupon, fechaCupon, fechaEmision, cupon, amortizacion, inversion, flujo)
@@ -228,8 +229,10 @@ class Bono(Activo):
             fecha_flujo = cupones[i][1].date()
             plazo_flujo = diferencia_dias_convencion(convencion, fecha_valorizacion, fecha_flujo)/360
 
+            # Si la fecha del cupon es mas antigua que la fecha de valorizacion no se considera
             if(plazo_flujo < 0): continue
 
+            # Se calculan los pivotes entre los cuales se encuentra el pago del cupon
             plazos_index = self.piv_near(plazo_flujo)
 
             tir_plazos = self.tir_plazos(plazos_index)
@@ -238,40 +241,52 @@ class Bono(Activo):
             nivel_nombre = self.get_niveln(1)
 
 
-            # Casos borde, pivote al inicio
+            # Casos borde, pivote al inicio, se introduce todo el calculo al primer pivote
             if (plazos_index[1] == -1 or (plazos_index[0] == plazos_index[1])): 
                 flujo_plazos[plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
 
+                # Para cada nivel del activo, se introduce el calculo en el diccionario de niveles
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
                     nivel[a][nivel_nombre, "Bono", riesgo][plazos_index[0]] += flujo / (1 + tir_plazos[0])**plazo_flujo
 
                 continue
-            # Caso borde, pivote al final
+            # Caso borde, pivote al final, se introduce todo el calculo al ultimo pivote
             elif (plazos_index[0] == -1): 
                 flujo_plazos[plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
 
+                # Para cada nivel del activo, se introduce el calculo en el diccionario de niveles
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
                     nivel[a][nivel_nombre, "Bono", riesgo][plazos_index[1]] += flujo / (1 + tir_plazos[1])**plazo_flujo
 
                 continue
+
+            # Caso donde el pago esta entre dos pivotes, los cuales son diferentes entre si
+            # Se calcula el alfa_0, es decir el coeficiente de peso
             a_0 = (plazo_flujo - plazos[plazos_index[0]]) / (plazos[plazos_index[1]] - plazos[plazos_index[0]])
 
+            # Se interpola el valor de la TIR del flujo
             tir_flujo = a_0 * tir_plazos[0] + (1 - a_0) * tir_plazos[1]
 
+            # Se interpola el valor de la volatilidad del flujo
             volatilidad_flujo = a_0 * volatilidad.iloc[plazos_index[0]] + (1 - a_0) * volatilidad.iloc[plazos_index[1]]
 
+            # Se calcula el valor presente del flujo
             vp_flujo = flujo / ( 1 + tir_flujo ) ** plazo_flujo
             
+            # Se obtienen los nombres de las llaves(pivotes), de esta manera obtener la correlacion
             llave1 = moneda + '#' + str(int(plazos[plazos_index[0]]*360)) + '#' + riesgo
             llave2 = moneda + '#' + str(int(plazos[plazos_index[1]]*360)) + '#' + riesgo
     
+            # Se obtiene el valor de alfa resolviendo la ecuacion cuadratica, este se utilizara para distribuir el vp
             alfa = self.solucion_ecuacion(volatilidad_flujo[0], volatilidad.iloc[plazos_index[0]][0], volatilidad.iloc[plazos_index[1]][0], \
                         correlacion[llave1][llave2])
             
+            # Se discrimina la solucion, es decir se saca un alfa entre 0 y 1
             solucion = self.discriminador_sol(alfa)
 
+            # Se actualizan los flujos (funcion que calculo vp y los introduce en los pivotes)
             flujo_plazos = self.actualizar(solucion, vp_flujo, plazos_index, flujo_plazos, diccionario)
 
         self.distribucionPlazos = pd.DataFrame(flujo_plazos)
@@ -521,9 +536,15 @@ class Bono(Activo):
         p = self.get_plazos()
         riesgo = self.get_riesgo()
 
+        # Teniendo el valor presente, se calcula cuanto le corresponde a cada pivote con el valor de alfa
         flujo[piv[0]] += vp*alfa
         flujo[piv[1]] += vp*(1-alfa)
+
+        # Para cada nivel del activo
         for a in range(1,3):
+
+            # Se introduce el la cantidad de valor presente correspondiente dependiendo del valor de alfa en
+            # El diccionario de niveles
             nivel_nombre = self.get_niveln(a)
             nivel[a][nivel_nombre, "Bono", riesgo][piv[0]] += vp * alfa
             nivel[a][nivel_nombre, "Bono", riesgo][piv[1]] += vp * (1 - alfa)

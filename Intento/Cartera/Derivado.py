@@ -318,15 +318,18 @@ class Derivado(Activo):
 
         nivel = diccionario
         
-
+        # Por cada fecha de pago del derivado
         for i in range(fechas_largo):
 
             fecha_pago_actual = fechas_pago[i]
             moneda_pago_actual = monedas_pagos[i]
             flujo_pago = flujos["Flujo"][i]
 
+            # Calculamos los pivotes entre los cuales se encuentra la fecha de pago [pivote1, pivote2] si estos son iguales
+            # Corresponde a un caso borde el cual esta cubierto
             pivote_entremedio = self.buscar_pivote(fecha_pago_actual)
 
+            # Se obtiene el nombre del pivote que corresponde a Moneda#NumPivote (EJ: CLP#30), es para luego buscar en la matriz de correlacion
             nombre_pivote1 = moneda_pago_actual + "#" + str(int(pivote_entremedio[0]*360))
             nombre_pivote2 = moneda_pago_actual + "#" + str(int(pivote_entremedio[1]*360))
 
@@ -337,31 +340,41 @@ class Derivado(Activo):
             diferencia_dias = diferencia_dias_convencion("ACT360", fecha_valorizacion_date, fecha_pago_actual)
             factor_descuento = interpolacion_log_escalar(diferencia_dias, curva_parseada)
 
-
+            # Caso borde, los dos pivotes son iguales, todo el calculo de valor presente va a ese pivote
             if indice_pivote1 == indice_pivote2:
 
                 VP = factor_descuento*flujo_pago
                 distruciones[indice_pivote1] += VP
 
+                # Tambien se introduce este calculo a el diccionario de niveles, de esta manera se aprovecha el calculo
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
                     nivel[a][nivel_nombre, "Derivado"][indice_pivote1] += VP
 
+            # Caso donde existen dos pivotes distintos, en este caso se necesita alfa para distribuir
             else:
 
+                # Valor de alfa_0, coeficiente de peso
                 alfa = self.coeficiente_peso(pivote_entremedio[0], pivote_entremedio[1], fecha_pago_actual)
+
+                # Interpolacion de la volatilidad con el valor de alfa
                 volatilidad_inter = alfa*volatilidades[0][nombre_pivote1] + (1 - alfa)*volatilidades[0][indice_pivote2]
 
+                # Alfa solucion de la ecuacion cuadratica, se utilizara para la distribucion de valor presente 
                 valor_alfa = self.solucion_ecuacion(volatilidad_inter, volatilidades[0][nombre_pivote1], volatilidades[0][indice_pivote2],\
                         corr[nombre_pivote1][indice_pivote2] )
 
+                # Se discrimina la solucion, es decir se toma la que se encuentre entre 0 y 1
                 solucion = self.discriminador_sol(valor_alfa)
 
+                # Valor presente
                 VP = factor_descuento*flujo_pago
         
+                # Se agregan las distribuciones a los pivotes con el valor de alfa
                 distruciones[indice_pivote1] += solucion*VP
                 distruciones[indice_pivote2] += (1 - solucion)*VP
 
+                # Por cada nivel solicitado se introduce el calculo en el diccionario de niveles
                 for a in range(1,3):
                     nivel_nombre = self.get_niveln(a)
                     nivel[a][nivel_nombre, "Derivado"][indice_pivote1] += VP

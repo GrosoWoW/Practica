@@ -81,8 +81,6 @@ class Activo(ABC):
         elif n == 2:
             return self.nivel2
 
-
-
     def get_volatilidad_general(self):
 
         """
@@ -196,12 +194,13 @@ class Activo(ABC):
     
     def set_plazos(self, plazos):
 
+        """
+        Funcion set para los plazos
+        :param plazos: arreglo con los pivotes de plazos que se desean setear
+
+        """
+
         self.plazos = plazos
-
-    def set_moneda(self, moneda):
-
-        self.mone
-
     
     @abstractmethod
     def set_historico(self):
@@ -280,6 +279,7 @@ class Activo(ABC):
         monedaCartera = self.get_monedaCartera()
         monedaBase = moneda
 
+        # Si la moneda del activo no es la misma de la cartera, se debe realizar un ajuste
         if monedaBase != monedaCartera: 
 
             historico_moneda = self.getConversionCLP(monedaCartera, monedaBase)
