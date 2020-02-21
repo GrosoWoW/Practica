@@ -22,6 +22,7 @@ class Accion(Activo):
         self.moneda = moneda
 
         # DataFrame con los historicos
+        if (len(retornos) < n): raise Exception('La cantidad de datos en historico de retornos es insuficiente, deben ser ' + str(n) + ' datos.')
         self.historico = retornos
 
         self.retornos_accion = retornos

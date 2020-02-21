@@ -228,6 +228,7 @@ class Activo(ABC):
         cn = self.get_cn()
         niveles = "SELECT TOP (1) [Nivel1] , [Nivel2] FROM [dbPortFolio].[dbo].[TdPlanvitalAtributos] WHERE Nemotecnico = '" + nemo + "'"
         niveles = pd.read_sql(niveles, cn)
+        if (niveles.empty): raise Exception('Para el instrumento de nemotécnico ' + nemo + ' no existe información de sus niveles en base de datos.')
         self.nivel1 = niveles['Nivel1'][0]
         self.nivel2 = niveles['Nivel2'][0]
 
@@ -437,4 +438,5 @@ class Activo(ABC):
         conversion = pd.read_sql(conversion, self.get_cn())
         conversion = conversion.values[::-1]
         conversion = pd.DataFrame(conversion, columns=['Cambio'])
+        if (conversion.empty): raise Exception('No existe información de conversión de ' + monedaBase + ' a ' + monedaCartera + ' en base de datos.')
         return conversion

@@ -23,6 +23,7 @@ class Bono(Activo):
         self.n = n
 
         # String con el riesgo del bono ('AAA', 'AA', etc)
+        if(isinstance(riesgo, str)): raise Exception('El formato del riesgo no coincide con la convención S&P.')
         self.riesgo = riesgo
 
         # String con la moneda que se encuentran los pagos del bono
@@ -404,6 +405,7 @@ class Bono(Activo):
             cb = "SELECT TOP(" + str(n) + ") * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' ORDER BY Fecha DESC "
         
         cb = pd.read_sql(cb, cn)
+        if (cb.empty): raise Exception('Para la moneda ' + moneda + ' con riesgo ' + riesgo + ' no se encontró historico de curva.')
         curva = cb[::-1]
 
         return pd.DataFrame(curva)
@@ -475,6 +477,7 @@ class Bono(Activo):
             cb = "SELECT * FROM [dbAlgebra].[dbo].[TdCurvasSector] WHERE TipoCurva LIKE '%" + moneda + "#" + riesgo + "#Corporativos#No Prepagables' AND Fecha = '" + fecha + "' ORDER BY Fecha ASC"
         
         cb = pd.read_sql(cb, cn)
+        if (cb.empty): raise Exception('Para la moneda ' + moneda + ' con riesgo ' + riesgo + ' no se encontró curva.')
         return cb
 
     def TIR_p(self, param, p):

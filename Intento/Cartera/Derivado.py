@@ -111,6 +111,7 @@ class Derivado(Activo):
 
         curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1500' AND Fecha > '" + str(fecha) + "'")
         curva = pd.read_sql(curva, cnn)
+        if (curva.empty): raise Exception('Para la moneda ' + moneda + ' en la fecha ' + str(fecha) + ' no se encontró curva en TdCurvasDerivados.')
         return curva
 
     def obtener_monedas(self):
@@ -236,6 +237,7 @@ class Derivado(Activo):
         fecha_valorizacion = self.get_fecha_valorizacion_date()
         curva = ("SELECT * FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+moneda+"' AND Fecha = '"+str(fecha_valorizacion)+"'")
         curva = pd.read_sql(curva, cn)
+        if (curva.empty): raise Exception('Para la moneda ' + moneda + ' no se encontró curva efectiva para la fecha ' + str(fecha_valorizacion) + '.')
         curva = parsear_curva(curva["Curva"][0], fecha_valorizacion)
         return curva
 
