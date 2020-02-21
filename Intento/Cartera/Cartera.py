@@ -16,14 +16,22 @@ import pandas as pd
 import datetime
 
 import time
-# (..., monedaCartera, fecha_valorizacion, cn)
-
 
 class Cartera:
     def __init__(self, acciones, bonos, derivados, moneda, fecha, cn, n = 60):
-        # Acciones: DataFrame con historico de precios (debe contener 200 datos) ['Moneda', 'Historico']
-        # Bono: DataFrame con ['Moneda', 'Riesgo', 'TablaDesarrollo', 'Convencion', 'Nemotecnico', 'FechaEmision]
-        # Derivados: Objeto Derivado
+
+        # Acciones: DataFrame con todas las acciones de la cartera (debe contener 60 datos) 
+        # Las columnas del dataframe necesarias son ["Moneda", "Nombre", "Nemotecnico", "Inversion", "Historico"]
+        # Es importante señalar que este historico corresponde al de retornos
+
+        # Bono: DataFrame con los bonos de la cartera 
+        # Las columnas del dataframe necesarias son ["Moneda", "TablaDesarrollo", "FechaEmision", "Nemotecnico", "Convencion", "Riesgo"]
+
+       
+        # Derivados: DataFrame con todos los derivados de la cartera
+        # Las columnas necesarias del dataframe son ["ObjetoDerivado", "Nemotecnico"], las clases de derivados
+        # Se encuentran en la carpeta DerivadosTipos y fueron creadas por Matias Villega
+        
 
         moneda_cartera = moneda
 
@@ -56,8 +64,13 @@ class Cartera:
         # Por cada Accion en el dataFrame, se crea con la clase accion
         for i in range(np.size(acciones,0)):
 
+            # Se obtiene la fila i del dataframe de las acciones
             accion = acciones.iloc[i]
+
+            # Se crea objeto accion con la clase Accion 
             obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
+            
+            # Se agrega al arreglo de acciones en la cartera
             self.acciones.append(obj_accion)
 
         self.bonos = []
@@ -65,8 +78,13 @@ class Cartera:
         # Por cada bono en el dataframe se crea un objeto bono
         for j in range(np.size(bonos,0)):
 
+            # Se obtiene la fila i del dataframe de bonos
             bono = bonos.iloc[j]
+
+            # Se crea el objeto bono con la clase Bono
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n, bono['Nemotecnico'])
+            
+            # Se agrega al arreglo de bonos en la cartera
             self.bonos.append(obj_bono)
 
         self.derivados = []
@@ -74,8 +92,13 @@ class Cartera:
         # Por cada derivado en el dataframe, se crea un objeto derivado
         for k in range(np.size(derivados,0)):
 
+            # Se obtiene la fila i del dataframe de derivados
             derivado = derivados.iloc[k]
+
+            # Se crea el objeto derivado con la clase Derivado
             obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
+            
+            # Se agrega al arreglo de derivados de la cartera
             self.derivados.append(obj_derivado)
 
         if len(bonos) != 0 or len(derivados) != 0:
@@ -495,6 +518,7 @@ class Cartera:
 
         nombre = moneda+riesgo
 
+        # Si el calculo de datos ya se hizo para esa moneda+riesgo, se extrae del diccionario
         if nombre in self.historico_dict:
 
             activo.set_historico(self.historico_dict[nombre])
@@ -503,6 +527,7 @@ class Cartera:
             activo.set_correlacion(self.correlacion_dict[nombre])
             activo.set_covarianza(self.covarianza_dict[nombre])
 
+        # Si el calculo de datos no se ha realizado, se calcula y se introduce en el activo y diccionario
         else:
 
             historico_calculado = activo.calcular_historico()
@@ -520,7 +545,10 @@ class Cartera:
             covarianza_calculada = activo.calcular_covarianza()
             self.covarianza_dict[nombre] = covarianza_calculada
 
+        # Se realiza el calculo de distribuciones para los activos
         activo.set_distribucion_pivotes(self.get_diccionario_niveles())
+
+        # Se calcula la volatilidad del activo
         activo.set_volatilidad_general()
         return activo
 
