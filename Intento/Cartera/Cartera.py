@@ -55,6 +55,7 @@ class Cartera:
         self.cn = cn
 
         # Fecha a la que se desea valorizar
+        if (not isinstance(fecha, datetime.date)): raise Exception('El formato de la fecha debe ser del tipo datetime.date')
         self.fecha = fecha
 
         # Plazos para la creacion de los pivotes
@@ -68,6 +69,7 @@ class Cartera:
             accion = acciones.iloc[i]
 
             # Se crea objeto accion con la clase Accion 
+            if(not set(['Nombre','Moneda', 'Historico', 'Inversion', 'Nemotecnico']).issubset(accion.columns)): raise Exception('Falta información sobre las acciones en el DataFrame.')
             obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
             
             # Se agrega al arreglo de acciones en la cartera
@@ -82,6 +84,7 @@ class Cartera:
             bono = bonos.iloc[j]
 
             # Se crea el objeto bono con la clase Bono
+            if(not set(['Riesgo','Moneda', 'TablaDesarrollo', 'Convencion', 'FechaEmision', 'Nemotecnico']).issubset(bono.columns)): raise Exception('Falta información sobre los bonos en el DataFrame.')
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n, bono['Nemotecnico'])
             
             # Se agrega al arreglo de bonos en la cartera
@@ -96,6 +99,7 @@ class Cartera:
             derivado = derivados.iloc[k]
 
             # Se crea el objeto derivado con la clase Derivado
+            if(not set(['Derivado' , 'Nemotecnico']).issubset(accion.columns)): raise Exception('Falta información sobre los derivados en el DataFrame.')
             obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
             
             # Se agrega al arreglo de derivados de la cartera

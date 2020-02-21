@@ -23,7 +23,7 @@ class Bono(Activo):
         self.n = n
 
         # String con el riesgo del bono ('AAA', 'AA', etc)
-        if(isinstance(riesgo, str)): raise Exception('El formato del riesgo no coincide con la convención S&P.')
+        if(not isinstance(riesgo, str)): raise Exception('El formato del riesgo no coincide con la convención S&P.')
         self.riesgo = riesgo
 
         # String con la moneda que se encuentran los pagos del bono
