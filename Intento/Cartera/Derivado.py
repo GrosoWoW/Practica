@@ -396,4 +396,6 @@ class Derivado(Activo):
         suma = sum(vector)
         vector = vector/suma
         covarianza = self.get_covarianza()
-        self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))      
+        self.volatilidad_general = np.sqrt(np.dot(np.dot(vector, covarianza), np.transpose(vector)))    
+
+

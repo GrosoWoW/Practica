@@ -69,7 +69,7 @@ class Cartera:
             accion = acciones.iloc[i]
 
             # Se crea objeto accion con la clase Accion 
-            if(not set(['Nombre','Moneda', 'Historico', 'Inversion', 'Nemotecnico']).issubset(accion.columns)): raise Exception('Falta información sobre las acciones en el DataFrame.')
+            if(not set(['Nombre','Moneda', 'Historico', 'Inversion', 'Nemotecnico']).issubset(acciones.columns)): raise Exception('Falta información sobre las acciones en el DataFrame.')
             obj_accion = Accion(accion["Nombre"], accion['Moneda'], pd.DataFrame(accion['Historico'][0]), accion['Inversion'], moneda, fecha, cn, n, "A", accion['Nemotecnico'])
             
             # Se agrega al arreglo de acciones en la cartera
@@ -84,7 +84,7 @@ class Cartera:
             bono = bonos.iloc[j]
 
             # Se crea el objeto bono con la clase Bono
-            if(not set(['Riesgo','Moneda', 'TablaDesarrollo', 'Convencion', 'FechaEmision', 'Nemotecnico']).issubset(bono.columns)): raise Exception('Falta información sobre los bonos en el DataFrame.')
+            if(not set(['Riesgo','Moneda', 'TablaDesarrollo', 'Convencion', 'FechaEmision', 'Nemotecnico']).issubset(bonos.columns)): raise Exception('Falta información sobre los bonos en el DataFrame.')
             obj_bono = Bono(bono['Riesgo'], bono['Moneda'], bono['TablaDesarrollo'], bono['Convencion'], bono['FechaEmision'], moneda, fecha, cn, n, bono['Nemotecnico'])
             
             # Se agrega al arreglo de bonos en la cartera
@@ -99,7 +99,7 @@ class Cartera:
             derivado = derivados.iloc[k]
 
             # Se crea el objeto derivado con la clase Derivado
-            if(not set(['Derivado' , 'Nemotecnico']).issubset(accion.columns)): raise Exception('Falta información sobre los derivados en el DataFrame.')
+            if(not set(['Derivado' , 'Nemotecnico']).issubset(derivados.columns)): raise Exception('Falta información sobre los derivados en el DataFrame.')
             obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
             
             # Se agrega al arreglo de derivados de la cartera
@@ -194,6 +194,12 @@ class Cartera:
 
         # Setea las volatilidades por niveles
         self.set_volatilidad_niveles()
+
+        self.monto = 0
+        self.set_monto()
+
+        self.calculo_pesos()
+
 
         # -------------------- TRABAJO POR NIVELES ---------------------
 
@@ -390,6 +396,10 @@ class Cartera:
         """
 
         return self.volatilidad_cartera
+
+    def get_monto(self):
+
+        return self.monto
 
     def dict_fechas(self, tabla):
 
@@ -834,3 +844,110 @@ class Cartera:
        
 
         self.diccionario_vol_niveles = vol_niveles
+
+    def set_monto(self):
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        suma = 0
+
+        for i in range(cantidad_bonos):
+
+            suma_vector = sum(bonos[i].get_distribucionPlazos())
+            suma += suma_vector
+
+        for j in range(cantidad_derivados):
+
+            suma_vector = sum(derivados[j].get_distribucion_pivotes())
+            suma += suma_vector
+
+        for k in range(cantidad_acciones):
+            
+            suma_vector = acciones[k].get_inversion()
+            suma += suma_vector
+
+        self.monto = suma
+
+    def calculo_pesos(self):
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        monto = self.get_monto()
+
+        for i in range(cantidad_bonos):
+
+            bonos[i].set_peso((np.array(bonos[i].get_distribucionPlazos())/monto).tolist())
+            bonos[i].set_monto(monto)
+
+        for j in range(cantidad_derivados):
+
+            derivados[j].set_peso((np.array(derivados[j].get_distribucion_pivotes())/monto).tolist())
+            derivados[j].set_monto(monto)
+
+
+        for k in range(cantidad_acciones):
+
+            valor_accion = acciones[k].get_inversion()
+            acciones[k].set_peso(valor_accion / monto)
+            acciones[k].set_monto(monto)
+
+    def var_i_porcentual_dinero(self, M = 1):
+
+        N = 1
+        raiz = np.sqrt(252) 
+        cov = self.get_covarianza()
+        size = np.size(cov, 1)
+        vector = np.zeros(size)
+        df = pd.DataFrame()
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+        n_derivados = len(self.get_plazos())
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        for i in range(cantidad_acciones):
+
+            var_accion = raiz * N * M * acciones[i].get_peso() * acciones[i].get_volatilidad_general().values.tolist()[0][0] 
+            df[acciones[i].get_nombre()] = [var_accion]
+            acciones[i].set_var_porcentual(var_accion)
+
+        for j in range(cantidad_bonos):
+
+            vector[:(size - n_derivados - cantidad_acciones)] += np.transpose(bonos[j].get_peso())[0].tolist()
+            producto = np.sqrt(np.dot(np.dot(vector,cov),vector))
+            var_bono = raiz * N * producto * M
+            df[bonos[j].get_nemotecnico()] = [var_bono]
+            bonos[j].set_var_porcentual(var_bono) 
+            vector = np.zeros(size)
+
+        for k in range(cantidad_derivados):
+            
+            vector[(size - n_derivados - cantidad_acciones):(size - cantidad_acciones)] += np.transpose(derivados[k].get_peso())
+            producto = np.sqrt(np.dot(np.dot(vector,cov),vector))
+            var_derivado = raiz * N * producto * M
+            df[derivados[k].get_nemotecnico()] = [var_derivado]
+            derivados[k].set_var_porcentual(var_derivado)
+            vector = np.zeros(size)
+
+        return df
+
+

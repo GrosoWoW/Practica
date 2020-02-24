@@ -69,6 +69,15 @@ class Activo(ABC):
 
         self.distribucion_niveles = dict()
 
+        self.peso = 0
+
+        self.monto = 0
+
+        self.var_porcentual = 0
+
+    def get_var_porcentual(self):
+
+        return self.var_porcentual
         
     def get_distribucion_niveles(self):
 
@@ -191,6 +200,14 @@ class Activo(ABC):
     def get_nemotecnico(self):
 
         return self.nemotecnico
+
+    def get_peso(self):
+
+        return self.peso
+
+    def get_monto(self):
+
+        return self.monto
     
     def set_plazos(self, plazos):
 
@@ -217,6 +234,10 @@ class Activo(ABC):
         """
         pass
 
+    def set_var_porcentual(self, var):
+
+        self.var_porcentual = var
+
     def set_niveles(self):
 
         """
@@ -231,6 +252,14 @@ class Activo(ABC):
         if (niveles.empty): raise Exception('Para el instrumento de nemotécnico ' + nemo + ' no existe información de sus niveles en base de datos.')
         self.nivel1 = niveles['Nivel1'][0]
         self.nivel2 = niveles['Nivel2'][0]
+
+    def set_peso(self, peso):
+
+        self.peso = peso
+
+    def set_monto(self, monto):
+
+        self.monto = monto
 
 
     def discriminador_sol(self, soluciones):
@@ -440,3 +469,16 @@ class Activo(ABC):
         conversion = pd.DataFrame(conversion, columns=['Cambio'])
         if (conversion.empty): raise Exception('No existe información de conversión de ' + monedaBase + ' a ' + monedaCartera + ' en base de datos.')
         return conversion
+
+    
+    def var_porcentual_instrumento(self):
+
+        N = 1
+        calculo = np.sqrt(252)* N * self.get_peso() * self.get_volatilidad_general()
+        return calculo
+
+    def var_dinero_instrumentro(self):
+
+        N = 1
+        calculo = np.sqrt(252)* N * self.get_monto()* self.get_peso() * self.get_volatilidad_general()
+        return calculo
