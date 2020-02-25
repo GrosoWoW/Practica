@@ -289,9 +289,6 @@ class Activo(ABC):
 
         historicos = self.get_historicos()
         columna_nombre = list(historicos)
-        print("monea activo :" + monedaActivo)
-        print("monea cartera :" + monedaCartera)
-        print(columna_nombre)
         numero_filas = np.size(historicos, 0)
         numero_columnas = np.size(historicos, 1)
         vector = np.zeros([numero_filas, numero_columnas])
@@ -300,7 +297,6 @@ class Activo(ABC):
 
             columna_nombre[nombre] = columna_nombre[nombre].replace(monedaActivo, monedaCartera)
 
-        print(columna_nombre)
 
 
         for i in range(numero_columnas):

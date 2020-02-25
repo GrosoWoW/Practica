@@ -531,7 +531,6 @@ class Cartera:
         """
 
         monedaAntigua = activo.get_moneda() 
-        activo.set_moneda(self.get_moneda())
         moneda = activo.get_moneda()
         nombre = moneda+riesgo
 
@@ -539,6 +538,7 @@ class Cartera:
         if nombre in self.historico_dict:
 
             activo.set_historico(self.historico_dict[nombre])
+            activo.set_moneda(self.get_moneda())
             activo.set_retorno(self.retorno_dict[nombre])
             activo.set_volatilidad(self.volatilidad_dict[nombre])
             activo.set_correlacion(self.correlacion_dict[nombre])
@@ -549,6 +549,7 @@ class Cartera:
 
             historico_calculado = activo.calcular_historico()
             self.historico_dict[nombre] = historico_calculado
+            activo.set_moneda(self.get_moneda())
 
             retorno_calculado = activo.calcular_retorno(monedaAntigua, self.get_moneda())
             self.retorno_dict[nombre] = retorno_calculado
