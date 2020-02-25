@@ -992,3 +992,27 @@ class Cartera:
 
         vector = self.construir_w_i()
 
+    def manito_de_dioh(self):
+
+        bonos = self.get_bonos()
+
+        arreglo = []
+
+        for i in range(len(bonos)):
+
+            riesgo_bonos = bonos[i].get_riesgo()
+            moneda_bonos = bonos[i].get_moneda()
+
+            string = moneda_bonos + riesgo_bonos
+            if string in arreglo: continue
+
+            arreglo.append(string)
+
+        return arreglo
+
+
+
+
+
+
+
