@@ -193,7 +193,7 @@ class Cartera:
         self.diccionario_vol_niveles = dict()
 
         # Setea las volatilidades por niveles
-        self.set_volatilidad_niveles()
+        #self.set_volatilidad_niveles()
 
         self.monto = 0
         self.set_monto()
@@ -686,7 +686,8 @@ class Cartera:
         cor = corr.values
         vol = self.get_volatilidades_totales().iloc[:, 0]
         D = np.diag(vol)
-        self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D))
+        nombre = corr.columns.tolist()
+        self.covarianza = pd.DataFrame(np.dot(np.dot(D,cor),D), columns = nombre, index = nombre)
 
     def set_volatilidad_cartera(self):
 
@@ -890,7 +891,7 @@ class Cartera:
 
         for i in range(cantidad_bonos):
 
-            bonos[i].set_peso((np.array(bonos[i].get_distribucionPlazos())/monto).tolist())
+            bonos[i].set_peso((np.transpose((bonos[i].get_distribucionPlazos()/monto).values))[0].tolist())
             bonos[i].set_monto(monto)
 
         for j in range(cantidad_derivados):
@@ -932,7 +933,7 @@ class Cartera:
 
         for j in range(cantidad_bonos):
 
-            vector[:(size - n_derivados - cantidad_acciones)] += np.transpose(bonos[j].get_peso())[0].tolist()
+            vector[:(size - n_derivados - cantidad_acciones)] += np.transpose(bonos[j].get_peso())
             producto = np.sqrt(np.dot(np.dot(vector,cov),vector))
             var_bono = raiz * N * producto * M
             df[bonos[j].get_nemotecnico()] = [var_bono]
@@ -950,4 +951,44 @@ class Cartera:
 
         return df
 
+    def construir_w_i(self):
+
+        cantidad_plazos = len(self.get_plazos())
+        
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        cov = self.get_covarianza()
+        size = np.size(cov,1)
+        nombres = cov.columns.tolist()
+        w = dict()
+
+        for i in range(cantidad_acciones):
+            w[acciones[i].get_nombre()] = acciones[i].get_peso()
+
+        for j in range(cantidad_bonos):
+            a = 2
+        
+        nombres_derivados = nombres[(size - cantidad_plazos - cantidad_acciones):(size - cantidad_acciones)]
+
+        for k in range(cantidad_derivados):
+            for b in range(len(nombres_derivados)):
+                w[nombres_derivados[b], derivados[k].get_nemotecnico()] = derivados[k].get_peso()[b]
+
+
+
+    def var_porcentual_dinero(self, M = 1):
+
+        N = 1
+        raiz = np.sqrt(252) 
+        cov = self.get_covarianza()
+        size = np.size(cov, 1)
+
+        vector = self.construir_w_i()
 
