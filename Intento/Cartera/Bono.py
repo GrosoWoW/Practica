@@ -149,6 +149,10 @@ class Bono(Activo):
 
         return nombres
 
+    def set_moneda(self, moneda):
+
+        self.moneda = moneda
+
     def calcular_historico(self):
 
         """
@@ -210,6 +214,7 @@ class Bono(Activo):
         fecha_emision = self.get_fecha_emision()
         volatilidad = self.get_volatilidad()
         correlacion = self.get_correlacion()
+        print(correlacion)
         moneda = self.get_moneda()
         riesgo = self.get_riesgo()
 

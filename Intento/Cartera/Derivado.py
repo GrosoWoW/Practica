@@ -94,6 +94,12 @@ class Derivado(Activo):
 
         return self.get_flujos()["MonedaBase"][0]
 
+    def set_moneda(self, moneda):
+
+        self.moneda = moneda
+
+    
+
     def seleccionar_curva_derivados(self, moneda, n, fecha=datetime.date(2018, 1, 22)):
 
         """

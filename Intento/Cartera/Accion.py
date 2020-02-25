@@ -117,3 +117,7 @@ class Accion(Activo):
         """
 
         self.volatilidad_general = self.get_volatilidad()
+
+    def set_moneda(self, moneda):
+
+        self.moneda = moneda

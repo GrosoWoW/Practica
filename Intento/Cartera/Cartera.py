@@ -193,7 +193,7 @@ class Cartera:
         self.diccionario_vol_niveles = dict()
 
         # Setea las volatilidades por niveles
-        #self.set_volatilidad_niveles()
+        self.set_volatilidad_niveles()
 
         self.monto = 0
         self.set_monto()
@@ -530,6 +530,9 @@ class Cartera:
 
         """
 
+        monedaAntigua = activo.get_moneda() 
+        activo.set_moneda(self.get_moneda())
+        moneda = activo.get_moneda()
         nombre = moneda+riesgo
 
         # Si el calculo de datos ya se hizo para esa moneda+riesgo, se extrae del diccionario
@@ -547,7 +550,7 @@ class Cartera:
             historico_calculado = activo.calcular_historico()
             self.historico_dict[nombre] = historico_calculado
 
-            retorno_calculado = activo.calcular_retorno(moneda)
+            retorno_calculado = activo.calcular_retorno(monedaAntigua, self.get_moneda())
             self.retorno_dict[nombre] = retorno_calculado
 
             volatilidad_calculada = activo.calcular_volatilidad()
@@ -812,6 +815,8 @@ class Cartera:
         n_acciones = len(self.get_acciones())
         n_derivados = len(self.get_plazos())
 
+        vector_nombres = self.manito_de_dioh()
+
         vector = np.zeros(size)
 
         # Recordemos que la estructura del vector es bajo el siguiente orden
@@ -831,8 +836,11 @@ class Cartera:
                     vector[(size - n_acciones):] = niveles[a][keys[0], keys[1]]
                     
                 elif keys[1] == 'Bono':
-                    
-                    vector[:(size - n_derivados - n_acciones)] = niveles[a][keys[0], keys[1], keys[2]]
+
+                    riesgo = keys[2]
+                    string = self.get_moneda() + riesgo
+                    indice_nombre = vector_nombres.index(string)
+                    vector[indice_nombre:indice_nombre + n_derivados] = niveles[a][keys[0], keys[1], keys[2]]
 
                 elif keys[1] == 'Derivado':
                     
@@ -989,7 +997,6 @@ class Cartera:
         raiz = np.sqrt(252) 
         cov = self.get_covarianza()
         size = np.size(cov, 1)
-
         vector = self.construir_w_i()
 
     def manito_de_dioh(self):
@@ -1001,7 +1008,7 @@ class Cartera:
         for i in range(len(bonos)):
 
             riesgo_bonos = bonos[i].get_riesgo()
-            moneda_bonos = bonos[i].get_moneda()
+            moneda_bonos = self.get_moneda()
 
             string = moneda_bonos + riesgo_bonos
             if string in arreglo: continue

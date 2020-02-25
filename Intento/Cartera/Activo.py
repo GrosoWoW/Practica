@@ -261,7 +261,6 @@ class Activo(ABC):
 
         self.monto = monto
 
-
     def discriminador_sol(self, soluciones):
 
         """
@@ -278,7 +277,7 @@ class Activo(ABC):
         return sys.exit(1) 
 
 
-    def calcular_retorno(self, moneda):
+    def calcular_retorno(self, monedaActivo, monedaCartera):
 
         """
         Funcion de calculo de retorno, ajustando la moneda
@@ -290,9 +289,19 @@ class Activo(ABC):
 
         historicos = self.get_historicos()
         columna_nombre = list(historicos)
+        print("monea activo :" + monedaActivo)
+        print("monea cartera :" + monedaCartera)
+        print(columna_nombre)
         numero_filas = np.size(historicos, 0)
         numero_columnas = np.size(historicos, 1)
         vector = np.zeros([numero_filas, numero_columnas])
+
+        for nombre in range(len(columna_nombre)):
+
+            columna_nombre[nombre] = columna_nombre[nombre].replace(monedaActivo, monedaCartera)
+
+        print(columna_nombre)
+
 
         for i in range(numero_columnas):
 
@@ -307,7 +316,7 @@ class Activo(ABC):
         data = pd.DataFrame(data = vector, columns=columna_nombre, index=[i for i in range(numero_filas)])
 
         monedaCartera = self.get_monedaCartera()
-        monedaBase = moneda
+        monedaBase = monedaActivo
 
         # Si la moneda del activo no es la misma de la cartera, se debe realizar un ajuste
         if monedaBase != monedaCartera: 
