@@ -966,39 +966,61 @@ class Cartera:
         derivados = self.get_derivados()
         acciones = self.get_acciones()
 
-        vector = np.zeros()
+        size = np.size(self.get_covarianza(), 1)
+        col = self.get_covarianza().columns.tolist()
+        mano = self.manito_de_dioh()
+        n_mano = len(mano)
+        n_plazos = len(self.get_plazos())
+
+        vector = np.zeros(size)
 
         for bono in range(len(bonos)):
 
             bono_actual = bonos[bono]
             riesgo = bono_actual.get_riesgo()
             moneda = bono_actual.get_moneda()
+            nombre = moneda + riesgo
+            indice = mano.index(nombre)
 
             peso = bono_actual.get_peso()
+            print('Los indices de bono son ', (n_plazos * indice), (n_plazos * indice) + n_plazos, ' para ' , nombre)
+            if indice != 0 :
+                vector[(n_plazos * indice): (n_plazos * indice) + n_plazos] += peso
+            else:
+                vector[:(n_plazos)] += peso
+
 
         for derivado in range(len(derivados)):
 
+            print('Los indices de derivado son ', n_plazos * n_mano - 1, n_plazos * n_mano + n_plazos )
             derivado_actual = derivados[derivado]
             peso = derivado_actual.get_peso()
+            vector[n_plazos * n_mano : n_plazos * n_mano + n_plazos] += peso
 
         for accion in range(len(acciones)):
 
             accion_actual = acciones[accion]
             peso = accion_actual.get_peso()
+            indice = col.index(accion_actual.get_nombre())
+            vector[indice] += peso
 
-
-
-
-
-        
+        return vector
 
     def var_porcentual_dinero(self, M = 1):
 
         N = 1
         raiz = np.sqrt(252) 
-        cov = self.get_covarianza()
+        cov = self.get_covarianza().values
         size = np.size(cov, 1)
         vector = self.construir_w_i()
+
+        suma = 0
+
+        for i in range(size):
+            for j in range(size):
+                suma += vector[i] * vector[j] * cov[i][j]
+
+        return raiz * N * np.sqrt(suma) * M
 
     def manito_de_dioh(self):
 
