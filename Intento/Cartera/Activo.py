@@ -72,6 +72,8 @@ class Activo(ABC):
         # Peso del activo en la cartera (Su valor presente dividido en el monto total de la cartera)
         self.peso = 0
 
+        self.peso_condensado = 0
+
         # Monto total de la cartera a la que pertenece el activo
         self.monto = 0
 
@@ -79,6 +81,17 @@ class Activo(ABC):
 
         # Valor de la distribucionn Normal inversa al 95% de conﬁanza
         self.N = 1.0
+
+        # FALTA HACER ARBITRARIO EL 60 PARA n
+        self.r_d = np.zeros(60)
+
+    def get_rd(self):
+
+        return self.r_d
+
+    def get_peso_condensado(self):
+
+        return self.peso_condensado
 
     def get_N(self):
 
@@ -393,6 +406,14 @@ class Activo(ABC):
         self.retornos = data
         return self.retornos
 
+    def set_peso_condensado(self, peso):
+
+        self.peso_condensado = peso
+
+    def set_r_di(self, valor, indice):
+
+        self.r_d[indice] = valor
+
     def set_retorno(self, retorno):
 
         """
@@ -555,3 +576,4 @@ class Activo(ABC):
         N = self.get_N()
         calculo = np.sqrt(252)* N * self.get_monto()* self.get_peso() * self.get_volatilidad_general()
         return calculo
+

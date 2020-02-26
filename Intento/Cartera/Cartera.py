@@ -901,11 +901,13 @@ class Cartera:
         for i in range(cantidad_bonos):
 
             bonos[i].set_peso((np.transpose((bonos[i].get_distribucionPlazos()/monto).values))[0].tolist())
+            bonos[i].set_peso_condensado(sum(bonos[i].get_peso()))
             bonos[i].set_monto(monto)
 
         for j in range(cantidad_derivados):
 
             derivados[j].set_peso((np.array(derivados[j].get_distribucion_pivotes())/monto).tolist())
+            derivados[j].set_peso_condensado(sum(derivados[j].get_peso()))
             derivados[j].set_monto(monto)
 
 
@@ -913,6 +915,7 @@ class Cartera:
 
             valor_accion = acciones[k].get_inversion()
             acciones[k].set_peso(valor_accion / monto)
+            acciones[k].set_peso_condensado(acciones[k].get_peso())
             acciones[k].set_monto(monto)
 
     def var_i_porcentual_dinero(self, M = 1):
@@ -983,7 +986,6 @@ class Cartera:
             indice = mano.index(nombre)
 
             peso = bono_actual.get_peso()
-            print('Los indices de bono son ', (n_plazos * indice), (n_plazos * indice) + n_plazos, ' para ' , nombre)
             if indice != 0 :
                 vector[(n_plazos * indice): (n_plazos * indice) + n_plazos] += peso
             else:
@@ -992,7 +994,6 @@ class Cartera:
 
         for derivado in range(len(derivados)):
 
-            print('Los indices de derivado son ', n_plazos * n_mano - 1, n_plazos * n_mano + n_plazos )
             derivado_actual = derivados[derivado]
             peso = derivado_actual.get_peso()
             vector[n_plazos * n_mano : n_plazos * n_mano + n_plazos] += peso
@@ -1039,3 +1040,124 @@ class Cartera:
             arreglo.append(string)
 
         return arreglo
+
+    def calcular_rd(self):
+
+        rd = np.zeros(self.get_n())
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        for a in range(self.get_n()):
+
+            for i in range(cantidad_acciones):
+                retorno = acciones[i].get_retornos().iloc[a].values.tolist()[0]
+                rd[a] += acciones[i].get_peso_condensado() * retorno
+                acciones[i].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
+
+            for j in range(cantidad_bonos):
+                retorno = bonos[j].get_retornos().iloc[a].values.tolist()[0]
+                rd[a] += bonos[j].get_peso_condensado() * retorno
+                bonos[j].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
+
+            for k in range(cantidad_derivados):
+                retorno = derivados[k].get_retornos().iloc[a].values.tolist()[0]
+                rd[a] += derivados[k].get_peso_condensado() * retorno
+                derivados[k].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
+
+        return rd
+                
+
+    def calcular_var_RI(self, lamda = 0.94):
+
+        r_d = self.calcular_rd()
+        N = 1
+        suma = 0
+        raiz = np.sqrt(252)
+        
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
+        columna = []
+            
+
+        for a in range(self.get_n()):
+
+            for i in range(cantidad_acciones):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
+                info[a,i] = raiz * N * np.sqrt(suma)
+                if acciones[i].get_nombre() not in columna:
+                    columna.append(acciones[i].get_nombre())
+
+            for j in range(cantidad_bonos):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
+                info[a, i + j + 1] = raiz * N * np.sqrt(suma) 
+                if bonos[j].get_nemotecnico() not in columna:
+                    columna.append(bonos[j].get_nemotecnico())
+
+            for k in range(cantidad_derivados):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
+                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma)
+                if derivados[k].get_nemotecnico() not in columna:
+                    columna.append(derivados[k].get_nemotecnico())
+
+        return pd.DataFrame(info, columns = columna)
+
+    def calcular_var_RI_M(self, lamda = 0.94, M = 0.01):
+
+        r_d = self.calcular_rd()
+        N = 1
+        suma = 0
+        raiz = np.sqrt(252)
+        
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
+        columna = []
+            
+
+        for a in range(self.get_n()):
+
+            for i in range(cantidad_acciones):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
+                info[a,i] = raiz * N * np.sqrt(suma) * (1/M)
+                if acciones[i].get_nombre() not in columna:
+                    columna.append(acciones[i].get_nombre())
+
+            for j in range(cantidad_bonos):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
+                info[a, i + j + 1] = raiz * N * np.sqrt(suma) * (1/M)
+                if bonos[j].get_nemotecnico() not in columna:
+                    columna.append(bonos[j].get_nemotecnico())
+
+
+            for k in range(cantidad_derivados):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
+                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma) * (1/M)
+                if derivados[k].get_nemotecnico() not in columna:
+                    columna.append(derivados[k].get_nemotecnico())
+
+        return pd.DataFrame(info, columns = columna)
+
