@@ -1161,3 +1161,45 @@ class Cartera:
 
         return pd.DataFrame(info, columns = columna)
 
+    def var_CI(self, lamda = 0.94):
+
+        r_d = self.calcular_rd()
+        N = 1
+        suma = 0
+        raiz = np.sqrt(252)
+        
+
+        bonos = self.get_bonos()
+        cantidad_bonos = len(bonos)
+        
+        derivados = self.get_derivados()
+        cantidad_derivados = len(derivados)
+
+        acciones = self.get_acciones()
+        cantidad_acciones = len(acciones)
+
+        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
+        columna = []
+            
+
+        for a in range(self.get_n()):
+
+            for i in range(cantidad_acciones):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
+                info[a,i] = raiz * N * np.sqrt(suma) * acciones[i].get_peso_condensado()
+                if acciones[i].get_nombre() not in columna:
+                    columna.append(acciones[i].get_nombre())
+
+            for j in range(cantidad_bonos):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
+                info[a, i + j + 1] = raiz * N * np.sqrt(suma) * bonos[j].get_peso_condensado()
+                if bonos[j].get_nemotecnico() not in columna:
+                    columna.append(bonos[j].get_nemotecnico())
+
+            for k in range(cantidad_derivados):
+                suma = (1 - lamda) * (lamda**a) * (r_d[a] - derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
+                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma) * derivados[k].get_peso_condensado()
+                if derivados[k].get_nemotecnico() not in columna:
+                    columna.append(derivados[k].get_nemotecnico())
+
+        return pd.DataFrame(info, columns = columna)
