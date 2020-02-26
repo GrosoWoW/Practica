@@ -69,17 +69,45 @@ class Activo(ABC):
 
         self.distribucion_niveles = dict()
 
+        # Peso del activo en la cartera (Su valor presente dividido en el monto total de la cartera)
         self.peso = 0
 
+        # Monto total de la cartera a la que pertenece el activo
         self.monto = 0
 
         self.var_porcentual = 0
 
+        # Valor de la distribucionn Normal inversa al 95% de conﬁanza
+        self.N = 1.0
+
+    def get_N(self):
+
+        """
+        Retorna el parametro de valor de la distribucionn Normal inversa al 95% de conﬁanza
+        es del tipo float
+
+        """
+
+        return self.N
+
     def get_var_porcentual(self):
+
+        """
+        Retorna la variacion porcentual del activo
+
+        """
 
         return self.var_porcentual
         
     def get_distribucion_niveles(self):
+
+        """
+        Retorna la distribucion de valor presente del activo por niveles
+        es del tipo diccionario. Hay una llave correspondiente al valor del 
+        nivel (1, 2, 3, etc), luego otra llave con el nombre del nivel y finalmente
+        el valor es un float
+
+        """
 
         return self.distribucion_niveles
 
@@ -199,13 +227,32 @@ class Activo(ABC):
 
     def get_nemotecnico(self):
 
+        """
+        Retorna el nemotecnico del activo
+        Este nemotecnico tiene el formato de string
+
+        """
+
         return self.nemotecnico
 
     def get_peso(self):
 
+        """
+        Retorna el peso del activo, este es calculado con el vp del activo
+        dividido en el monto total de la cartera
+        es del tipo float
+
+        """
+
         return self.peso
 
     def get_monto(self):
+
+        """
+        Retorna el monto de la cartera a la que pertenece
+        el activo, es del formato float
+
+        """
 
         return self.monto
     
@@ -255,9 +302,20 @@ class Activo(ABC):
 
     def set_peso(self, peso):
 
+        """
+        Setea el peso del activo, este peso es del tipo float
+
+        """
+
         self.peso = peso
 
     def set_monto(self, monto):
+
+        """
+        Setea el monto de la cartera a la que pertenece el activo
+        Es del formato float
+
+        """
 
         self.monto = monto
 
@@ -478,12 +536,22 @@ class Activo(ABC):
     
     def var_porcentual_instrumento(self):
 
-        N = 1
+        """
+        Funcion que calcula la variacion porcentual del activo
+
+        """
+
+        N = self.get_N()
         calculo = np.sqrt(252)* N * self.get_peso() * self.get_volatilidad_general()
         return calculo
 
     def var_dinero_instrumentro(self):
 
-        N = 1
+        """
+        Funcion que calculo la variacion de dinero del activo
+
+        """
+
+        N = self.get_N()
         calculo = np.sqrt(252)* N * self.get_monto()* self.get_peso() * self.get_volatilidad_general()
         return calculo

@@ -96,6 +96,12 @@ class Derivado(Activo):
 
     def set_moneda(self, moneda):
 
+        """
+        Setea la moneda del derivado
+        La moneda debe ser del tipo string
+
+        """
+
         self.moneda = moneda
 
     

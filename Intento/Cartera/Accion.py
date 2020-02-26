@@ -47,6 +47,12 @@ class Accion(Activo):
 
     def get_fondo(self):
 
+        """
+        Retorna el parametro de tipo de fondo de la accion
+        String con el fondo
+
+        """
+
         return self.fondo
 
     def get_n(self):
@@ -119,5 +125,11 @@ class Accion(Activo):
         self.volatilidad_general = self.get_volatilidad()
 
     def set_moneda(self, moneda):
+
+        """
+        Setea la moneda de la accion
+        La moneda debe ser del tipo string
+
+        """
 
         self.moneda = moneda
