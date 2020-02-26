@@ -966,14 +966,14 @@ class Cartera:
         derivados = self.get_derivados()
         acciones = self.get_acciones()
 
-        vec
+        vector = np.zeros()
 
         for bono in range(len(bonos)):
 
             bono_actual = bonos[bono]
             riesgo = bono_actual.get_riesgo()
             moneda = bono_actual.get_moneda()
-            
+
             peso = bono_actual.get_peso()
 
         for derivado in range(len(derivados)):
