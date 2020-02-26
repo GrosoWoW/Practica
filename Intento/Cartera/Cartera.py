@@ -962,35 +962,35 @@ class Cartera:
 
     def construir_w_i(self):
 
-        cantidad_plazos = len(self.get_plazos())
-        
         bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
-        cov = self.get_covarianza()
-        size = np.size(cov,1)
-        nombres = cov.columns.tolist()
-        w = dict()
+        vec
 
-        for i in range(cantidad_acciones):
-            w[acciones[i].get_nombre()] = acciones[i].get_peso()
+        for bono in range(len(bonos)):
 
-        for j in range(cantidad_bonos):
-            a = 2
+            bono_actual = bonos[bono]
+            riesgo = bono_actual.get_riesgo()
+            moneda = bono_actual.get_moneda()
+            
+            peso = bono_actual.get_peso()
+
+        for derivado in range(len(derivados)):
+
+            derivado_actual = derivados[derivado]
+            peso = derivado_actual.get_peso()
+
+        for accion in range(len(acciones)):
+
+            accion_actual = acciones[accion]
+            peso = accion_actual.get_peso()
+
+
+
+
+
         
-        nombres_derivados = nombres[(size - cantidad_plazos - cantidad_acciones):(size - cantidad_acciones)]
-
-        for k in range(cantidad_derivados):
-            for b in range(len(nombres_derivados)):
-                w[nombres_derivados[b], derivados[k].get_nemotecnico()] = derivados[k].get_peso()[b]
-
-
 
     def var_porcentual_dinero(self, M = 1):
 
@@ -1017,10 +1017,3 @@ class Cartera:
             arreglo.append(string)
 
         return arreglo
-
-
-
-
-
-
-
