@@ -5,11 +5,11 @@ import numpy as np
 
 
 from DerivadosTipos.DerivadosAbstracto import *
-from Util import fecha_str, add_days
+from UtilIndicadores import fecha_str, add_days
 from UtilesDerivados import ultimo_habil_paises, siguiente_habil_paises, ultimo_habil_pais, genera_flujos, proyectar_flujos_tabla
 from UtilesDerivados import cast_frecuencia, delta_frecuencia
 from UtilesDerivados import ultimo_habil_paises, siguiente_habil_paises
-from Util import add_days, send_msg
+from UtilIndicadores import add_days, send_msg
 import datetime
 
 

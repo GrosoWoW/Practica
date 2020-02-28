@@ -2,7 +2,7 @@
 from Derivados.DerivadosAbstracto import *
 from UtilesDerivados import get_tabla_desarrollo_fecha_emision_EX, get_tabla_desarrollo_fecha_emision, \
     siguiente_habil_paises
-from UtilesValorizacion import base_convencion
+from UtilesValorizacionIndicadores import base_convencion
 from Calculadora import meta_calculadora_CO, meta_calculadora_CL
 
 class DerivadosFRF(DerivadosAbstracto):

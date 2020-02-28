@@ -13,6 +13,8 @@ class Accion(Activo):
     def __init__(self, nombre, moneda, retornos, montoInvertido, monedaCartera, fecha_valorizacion, cn, n, fondo, nemo):
         
         super(Accion, self).__init__(monedaCartera, fecha_valorizacion, cn, nemo)
+
+        # Cantidad de datos que se necesitaran
         self.n = n
 
         # Nombre de la accion (empresa, etc)

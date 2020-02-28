@@ -1,21 +1,15 @@
 import pyodbc
-import matplotlib.pyplot as plt
-import seaborn as sb
 from sklearn.cluster import KMeans
 
 from Activo import *
 from Accion import *
 from Bono import *
 from Derivado import *
-from DerivadosTipos.DerivadosSCC import *
-from UtilesValorizacion import StrTabla2ArrTabla, diferencia_dias_convencion
+from UtilesValorizacionIndicadores import StrTabla2ArrTabla, diferencia_dias_convencion
 from Correlaciones import ewma_matriz
-
 import numpy as np
 import pandas as pd
 import datetime
-
-import time
 
 class Cartera:
     def __init__(self, acciones, bonos, derivados, moneda, fecha, cn, n = 60):
@@ -32,9 +26,6 @@ class Cartera:
         # Las columnas necesarias del dataframe son ["ObjetoDerivado", "Nemotecnico"], las clases de derivados
         # Se encuentran en la carpeta DerivadosTipos y fueron creadas por Matias Villega
         
-
-        moneda_cartera = moneda
-
         # Esta variable define la cantidad de datos que se toma para historicos
         self.n = n
 
@@ -61,6 +52,11 @@ class Cartera:
         # Plazos para la creacion de los pivotes
         self.plazos = []
 
+        # Cantidad de niveles para la cartera
+        self.cantidad_niveles = 2
+
+        # Valor de la distribucion normal
+        self.valor_distribucion = 1
 
         # Por cada Accion en el dataFrame, se crea con la clase accion
         for i in range(np.size(acciones,0)):
@@ -100,11 +96,12 @@ class Cartera:
 
             # Se crea el objeto derivado con la clase Derivado
             if(not set(['Derivado' , 'Nemotecnico']).issubset(derivados.columns)): raise Exception('Falta información sobre los derivados en el DataFrame.')
-            obj_derivado = Derivado(derivado['Derivado'], moneda_cartera, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
+            obj_derivado = Derivado(derivado['Derivado'], moneda, fecha, cn, n, derivado['Derivado'].get_fecha_efectiva(), derivado['Nemotecnico'])
             
             # Se agrega al arreglo de derivados de la cartera
             self.derivados.append(obj_derivado)
 
+        # Si existen bonos o derivados en la cartera se definen los plazos
         if len(bonos) != 0 or len(derivados) != 0:
             self.plazos = self.definir_plazos(self.bonos, self.derivados)
 
@@ -137,6 +134,15 @@ class Cartera:
             arreglo_derivados_nuevo.append(derivado_act)
 
         self.derivados = arreglo_derivados_nuevo # Reemplazamos los derivos, listos con sus calculos
+
+        # Valor con la cantidad de bonos en la cartera
+        self.cantidad_bonos = len(self.get_bonos())
+
+        # Valor con la cantidad de derivados en la cartera
+        self.cantidad_derivados = len(self.get_derivados())
+
+        # Valor con la cantidad de acciones en la cartera
+        self.cantidad_acciones = len(self.get_acciones())
 
         # Historico de todos los activos
         self.historicos_totales = pd.DataFrame()
@@ -195,13 +201,68 @@ class Cartera:
         # Setea las volatilidades por niveles
         self.set_volatilidad_niveles()
 
+        # Monto total de la cartera
         self.monto = 0
+
+        # Se llama la funcion set_monto para calcular y setear el monto de la cartera
         self.set_monto()
 
+        # Se calculan los pesos de cada activo
         self.calculo_pesos()
+
+        # Se calcula la volatilidad de la cartera
+        self.set_volatilidad_cartera()
+
 
 
         # -------------------- TRABAJO POR NIVELES ---------------------
+
+    def get_valor_distribucion(self):
+
+        """
+        Retorna el valor de la distribucion
+        util para calculo de indicadores
+
+        """
+
+        return self.valor_distribucion
+
+    def get_cantidad_bonos(self):
+
+        """
+        Retorna un int con la cantidad de bonos que existen en la cartera
+
+        """
+
+        return self.cantidad_bonos
+
+    def get_cantidad_derivados(self):
+
+        """
+        Retorna un int con la cantidad de derivados que existen en la cartera
+
+        """
+
+        return self.cantidad_derivados
+
+    def get_cantidad_acciones(self):
+
+        """
+        Retorna un int con la cantidad de acciones que existen en la cartera
+
+        """
+
+        return self.cantidad_acciones
+
+    def get_cantidad_niveles(self):
+
+        """
+        Retorna la cantidad de niveles que se quieren analizar en la cartera
+        Corresponde a un parametro del tipo int
+
+        """
+
+        return self.cantidad_niveles
 
     def get_volatilidad_niveles(self):
 
@@ -399,6 +460,12 @@ class Cartera:
 
     def get_monto(self):
 
+        """
+        Retorna el monto total de la cartera
+        es un float con el valor de monto dela cartera
+
+        """
+
         return self.monto
 
     def dict_fechas(self, tabla):
@@ -469,7 +536,6 @@ class Cartera:
             kmeans = KMeans(n_clusters=n).fit(df)
 
             centroids = pd.DataFrame(kmeans.cluster_centers_).sort_values(0,ascending=True).reset_index(drop=True)
-            centroids.plot.scatter(x=0, y=1)
             plazos = self.limpieza_datos(centroids)
             
             return plazos
@@ -492,11 +558,13 @@ class Cartera:
         largo_activos = len(activos)
         arreglo_nombres = []
 
+        # Por cada tipo activo en la cartera (bono, derivado, accion)
         for j in range(largo_activos):
 
             tipo_activo = activos[j]
             largo_activo = len(tipo_activo)
 
+            # Por cada activo de un tipo de la cartera (todos los bonos, etc)
             for i in range(largo_activo):
 
                 activo_actual = tipo_activo[i]
@@ -506,10 +574,12 @@ class Cartera:
 
                 nombre_columnas = list(historico_activo)
 
+                # Si los datos de un activo se repiten, no se consideran en el df final
                 if nombre_columnas in arreglo_nombres: continue
 
                 arreglo_nombres.append(nombre_columnas)
         
+                # Se concatenan los dataframes con los nuevos datos de los activos
                 dfHistorico = pd.concat([dfHistorico, historico_activo], 1)
                 dfRetornos = pd.concat([dfRetornos, retorno_activo], 1)
                 dfVolatilidades = pd.concat([dfVolatilidades, volatilidad_activo], 0)
@@ -591,7 +661,11 @@ class Cartera:
         cantidad_derivados = len(derivados)
 
         diccionario_tipos_nivel = dict()
-        diccionario_niveles = {1:dict(), 2: dict()}
+        diccionario_niveles = dict()
+
+        for j in range(1, self.get_cantidad_niveles() + 1):
+
+            diccionario_niveles[j] = dict()
 
         # Por cada accion en la cartera
         for i in range(cantidad_acciones):
@@ -605,7 +679,7 @@ class Cartera:
             
             # Se crea la llave de la accion en el diccionario que contendra las inversiones de cada nivel
             # Las llaves son [nombre_nivel, "Accion"] donde "Accion corresponde al tipo de activo"
-            for a in range(1,3):
+            for a in range(1, self.get_cantidad_niveles() + 1):
                 diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"] = np.zeros(cantidad_acciones)
                 diccionario_niveles[a][acciones[i].get_niveln(a), "Accion"][i] += acciones[i].get_inversion()
 
@@ -622,7 +696,7 @@ class Cartera:
 
             # Para cada nivel del activo, se crea una llave con los datos del nivel y en el se pone un arreglo de distribuciones
             # La llave para el bono sera [nombre_nivel, "Bono", nombre_riesgo] donde "Bono" corresponde al tipo de activo
-            for a in range(1,3):
+            for a in range(1, self.get_cantidad_niveles() + 1):
                 diccionario_niveles[a][bonos[j].get_niveln(a), "Bono", bonos[j].get_riesgo()] = np.zeros(len(self.get_plazos()))
 
             
@@ -635,7 +709,7 @@ class Cartera:
             else:
                 diccionario_tipos_nivel[derivados[k].get_niveln(n)].append(derivados[k])
 
-            for a in range(1,3):
+            for a in range(1, self.get_cantidad_niveles() + 1):
                 diccionario_niveles[a][derivados[k].get_niveln(a), "Derivado"] = np.zeros(len(self.get_plazos()))
 
         self.diccionario_niveles = diccionario_niveles
@@ -805,8 +879,17 @@ class Cartera:
         self.vector_supremo = np.array(vector_supremo)
 
     def set_volatilidad_niveles(self):
-        
-        vol_niveles = {1:dict(), 2:dict()}
+
+        """
+        Calcula y setea los valores de volatilidad por niveles
+
+        """
+        cantidad_niveles = self.get_cantidad_niveles()
+        vol_niveles = dict()
+
+        for i in range(1, cantidad_niveles + 1):
+
+            vol_niveles[i] = dict()
 
         niveles = self.get_diccionario_niveles()
 
@@ -828,7 +911,7 @@ class Cartera:
         
         
         # Por cada nivel
-        for a in range(1,3):
+        for a in range(1, cantidad_niveles + 1):
             # Para cada tipo de activo
             for keys in niveles[a]:
 
@@ -857,29 +940,37 @@ class Cartera:
 
     def set_monto(self):
 
-        bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
-        derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
+        """
+        Funcion que se encarga de calcular el monto de la cartera
+        Para esto debe ir por cada activo de la cartera y obtener sus 
+        valores presentes previamente calculados
 
+        """
+
+        bonos = self.get_bonos()
+        derivados = self.get_derivados()
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
         suma = 0
 
-        for i in range(cantidad_bonos):
+        # Por cada bono en la cartera
+        for i in range(self.get_cantidad_bonos()):
 
+            # Se suma la distribucion de los pivotes para sumarla al monto total de la cartera
             suma_vector = sum(bonos[i].get_distribucionPlazos())
             suma += suma_vector
 
-        for j in range(cantidad_derivados):
+        # Por cada derivado de la cartera
+        for j in range(self.get_cantidad_derivados()):
 
+            # Mismo caso de los bonos, se suma el vector distribucion
             suma_vector = sum(derivados[j].get_distribucion_pivotes())
             suma += suma_vector
 
-        for k in range(cantidad_acciones):
+        # Por cada accion de la cartera
+        for k in range(self.get_cantidad_acciones()):
             
+            # En el caso de las acciones solo se suma la inversion
             suma_vector = acciones[k].get_inversion()
             suma += suma_vector
 
@@ -887,31 +978,32 @@ class Cartera:
 
     def calculo_pesos(self):
 
-        bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
+        """
+        Funcion que se encarga de calcular los pesos de cada activo que se
+        encuentre en la cartera, para esto se requiere un calculo previo de
+        monto de la cartera
         
-        derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
+        """
 
+        bonos = self.get_bonos()        
+        derivados = self.get_derivados()
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
         monto = self.get_monto()
 
-        for i in range(cantidad_bonos):
+        for i in range(self.get_cantidad_bonos()):
 
             bonos[i].set_peso((np.transpose((bonos[i].get_distribucionPlazos()/monto).values))[0].tolist())
             bonos[i].set_peso_condensado(sum(bonos[i].get_peso()))
             bonos[i].set_monto(monto)
 
-        for j in range(cantidad_derivados):
+        for j in range(self.get_cantidad_derivados()):
 
             derivados[j].set_peso((np.array(derivados[j].get_distribucion_pivotes())/monto).tolist())
             derivados[j].set_peso_condensado(sum(derivados[j].get_peso()))
             derivados[j].set_monto(monto)
 
-
-        for k in range(cantidad_acciones):
+        for k in range(self.get_cantidad_acciones()):
 
             valor_accion = acciones[k].get_inversion()
             acciones[k].set_peso(valor_accion / monto)
@@ -920,7 +1012,13 @@ class Cartera:
 
     def var_i_porcentual_dinero(self, M = 1):
 
-        N = 1
+        """
+        Funcion encargada de calcular el reporte de indicadores
+        porcentual dinero para cada activo
+
+        """
+
+        N = self.get_valor_distribucion()
         raiz = np.sqrt(252) 
         cov = self.get_covarianza()
         size = np.size(cov, 1)
@@ -928,33 +1026,38 @@ class Cartera:
         df = pd.DataFrame()
 
         bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
         n_derivados = len(self.get_plazos())
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
-        for i in range(cantidad_acciones):
+        mano = self.manito_de_dioh()
+
+        for i in range(self.get_cantidad_acciones()):
 
             var_accion = raiz * N * M * acciones[i].get_peso() * acciones[i].get_volatilidad_general().values.tolist()[0][0] 
             df[acciones[i].get_nombre()] = [var_accion]
             acciones[i].set_var_porcentual(var_accion)
 
-        for j in range(cantidad_bonos):
+        for j in range(self.get_cantidad_bonos()):
 
-            vector[:(size - n_derivados - cantidad_acciones)] += np.transpose(bonos[j].get_peso())
+            bono = bonos[j]
+            nombre = bono.get_moneda() + bono.get_riesgo()
+            indice = mano.index(nombre)
+
+            if indice != 0:
+                vector[n_derivados * indice : n_derivados * indice + n_derivados] += np.transpose(bonos[j].get_peso())
+            else:
+                vector[: n_derivados] += np.transpose(bonos[j].get_peso())
+
             producto = np.sqrt(np.dot(np.dot(vector,cov),vector))
             var_bono = raiz * N * producto * M
             df[bonos[j].get_nemotecnico()] = [var_bono]
             bonos[j].set_var_porcentual(var_bono) 
             vector = np.zeros(size)
 
-        for k in range(cantidad_derivados):
+        for k in range(self.get_cantidad_derivados()):
             
-            vector[(size - n_derivados - cantidad_acciones):(size - cantidad_acciones)] += np.transpose(derivados[k].get_peso())
+            vector[(size - n_derivados - self.get_cantidad_acciones()):(size - self.get_cantidad_acciones())] += np.transpose(derivados[k].get_peso())
             producto = np.sqrt(np.dot(np.dot(vector,cov),vector))
             var_derivado = raiz * N * producto * M
             df[derivados[k].get_nemotecnico()] = [var_derivado]
@@ -964,6 +1067,12 @@ class Cartera:
         return df
 
     def construir_w_i(self):
+
+        """
+        Construye el vector de pesos para cada activo
+        util para un calculo futuro
+
+        """
 
         bonos = self.get_bonos()
         derivados = self.get_derivados()
@@ -1009,7 +1118,13 @@ class Cartera:
 
     def var_porcentual_dinero(self, M = 1):
 
-        N = 1
+        """
+        Funcion que calcula el indicador de VaR Porcentual de Dinero
+        para la cartera
+
+        """
+
+        N = self.get_valor_distribucion()
         raiz = np.sqrt(252) 
         cov = self.get_covarianza().values
         size = np.size(cov, 1)
@@ -1025,8 +1140,12 @@ class Cartera:
 
     def manito_de_dioh(self):
 
-        bonos = self.get_bonos()
+        """
+        Funcion que ayuda en el calculo
 
+        """
+
+        bonos = self.get_bonos()
         arreglo = []
 
         for i in range(len(bonos)):
@@ -1043,30 +1162,29 @@ class Cartera:
 
     def calcular_rd(self):
 
+        """
+        Calcula el vector r_d que se utilizara en calculos futuros
+
+        """
+
         rd = np.zeros(self.get_n())
-
-        bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
+        bonos = self.get_bonos()        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
         for a in range(self.get_n()):
 
-            for i in range(cantidad_acciones):
+            for i in range(self.get_cantidad_acciones()):
                 retorno = acciones[i].get_retornos().iloc[a].values.tolist()[0]
                 rd[a] += acciones[i].get_peso_condensado() * retorno
                 acciones[i].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
 
-            for j in range(cantidad_bonos):
+            for j in range(self.get_cantidad_bonos()):
                 retorno = bonos[j].get_retornos().iloc[a].values.tolist()[0]
                 rd[a] += bonos[j].get_peso_condensado() * retorno
                 bonos[j].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
 
-            for k in range(cantidad_derivados):
+            for k in range(self.get_cantidad_derivados()):
                 retorno = derivados[k].get_retornos().iloc[a].values.tolist()[0]
                 rd[a] += derivados[k].get_peso_condensado() * retorno
                 derivados[k].set_r_di(acciones[i].get_peso_condensado() * retorno, a)
@@ -1074,132 +1192,104 @@ class Cartera:
         return rd
                 
 
-    def calcular_var_RI(self, lamda = 0.94):
+    def var_RI(self, lamda = 0.94):
+
+        """
+        Funcion que calcula el indicador RI para la cartera
+
+        """
 
         r_d = self.calcular_rd()
-        N = 1
+        N = self.get_valor_distribucion()
         suma = 0
         raiz = np.sqrt(252)
-        
-
+    
         bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
-        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
+        info = np.zeros([self.get_n(), self.get_cantidad_derivados() + self.get_cantidad_bonos() + self.get_cantidad_acciones()])
         columna = []
             
-
         for a in range(self.get_n()):
 
-            for i in range(cantidad_acciones):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
-                info[a,i] = raiz * N * np.sqrt(suma)
+            for i in range(self.get_cantidad_acciones()):
+                info[a,i] = (1 - lamda) * (lamda**a) * (r_d[a] - acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
                 if acciones[i].get_nombre() not in columna:
                     columna.append(acciones[i].get_nombre())
 
-            for j in range(cantidad_bonos):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
-                info[a, i + j + 1] = raiz * N * np.sqrt(suma) 
+            for j in range(self.get_cantidad_bonos()):
+                info[a, i + j + 1] =  (1 - lamda) * (lamda**a) * (r_d[a] - bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
                 if bonos[j].get_nemotecnico() not in columna:
                     columna.append(bonos[j].get_nemotecnico())
 
-            for k in range(cantidad_derivados):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
-                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma)
+            for k in range(self.get_cantidad_derivados()):
+                info[a, i + j + k + 2] = (1 - lamda) * (lamda**a) * (r_d[a] - derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
                 if derivados[k].get_nemotecnico() not in columna:
                     columna.append(derivados[k].get_nemotecnico())
 
-        return pd.DataFrame(info, columns = columna)
+        info = np.sqrt(pd.DataFrame(info, columns = columna).sum())*raiz*N
+        return pd.DataFrame(info)
 
-    def calcular_var_RI_M(self, lamda = 0.94, M = 0.01):
+    def var_RI_M(self, lamda = 0.94, M = 0.01):
+
+        """
+        Funcion que calcula el indicador VaRM_i
+
+        """
 
         r_d = self.calcular_rd()
-        N = 1
+        N = self.get_valor_distribucion()
         suma = 0
         raiz = np.sqrt(252)
-        
 
         bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
-        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
+        info = np.zeros([self.get_n(), self.get_cantidad_derivados() + self.get_cantidad_bonos() + self.get_cantidad_acciones()])
         columna = []
             
-
         for a in range(self.get_n()):
 
-            for i in range(cantidad_acciones):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
-                info[a,i] = raiz * N * np.sqrt(suma) * (1/M)
+            for i in range(self.get_cantidad_acciones()):
+                info[a,i] = (1 - lamda) * (lamda**a) * (r_d[a] + M * acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
                 if acciones[i].get_nombre() not in columna:
                     columna.append(acciones[i].get_nombre())
 
-            for j in range(cantidad_bonos):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
-                info[a, i + j + 1] = raiz * N * np.sqrt(suma) * (1/M)
+            for j in range(self.get_cantidad_bonos()):
+                info[a, i + j + 1] = (1 - lamda) * (lamda**a) * (r_d[a] + M * bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
                 if bonos[j].get_nemotecnico() not in columna:
                     columna.append(bonos[j].get_nemotecnico())
 
-
-            for k in range(cantidad_derivados):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] + M * derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
-                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma) * (1/M)
+            for k in range(self.get_cantidad_derivados()):
+                info[a, i + j + k + 2] = (1 - lamda) * (lamda**a) * (r_d[a] + M * derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
                 if derivados[k].get_nemotecnico() not in columna:
                     columna.append(derivados[k].get_nemotecnico())
 
-        return pd.DataFrame(info, columns = columna)
+        info = np.sqrt(pd.DataFrame(info, columns = columna).sum())* N * raiz * (1/M)
+        return pd.DataFrame(info)
 
     def var_CI(self, lamda = 0.94):
 
-        r_d = self.calcular_rd()
-        N = 1
-        suma = 0
-        raiz = np.sqrt(252)
-        
+        """
+        Funcion que calcula el indicador VaRC_i
+
+        """
+
+        var = self.var_RI().transpose()
 
         bonos = self.get_bonos()
-        cantidad_bonos = len(bonos)
-        
         derivados = self.get_derivados()
-        cantidad_derivados = len(derivados)
-
         acciones = self.get_acciones()
-        cantidad_acciones = len(acciones)
 
-        info = np.zeros([self.get_n(), cantidad_derivados + cantidad_bonos + cantidad_acciones])
-        columna = []
-            
+        for i in range(self.get_cantidad_acciones()):
+            var[acciones[i].get_nombre()].apply(lambda x: acciones[i].get_peso_condensado() * x)
 
-        for a in range(self.get_n()):
+        for j in range(self.get_cantidad_bonos()):
+            var[bonos[j].get_nemotecnico()].apply(lambda x: bonos[j].get_peso_condensado() * x)
 
-            for i in range(cantidad_acciones):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - acciones[i].get_peso_condensado() * acciones[i].get_rd()[a])**2
-                info[a,i] = raiz * N * np.sqrt(suma) * acciones[i].get_peso_condensado()
-                if acciones[i].get_nombre() not in columna:
-                    columna.append(acciones[i].get_nombre())
+        for k in range(self.get_cantidad_derivados()):
+            var[derivados[k].get_nemotecnico()].apply(lambda x: derivados[k].get_peso_condensado() * x)
 
-            for j in range(cantidad_bonos):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - bonos[j].get_peso_condensado() * bonos[j].get_rd()[a])**2
-                info[a, i + j + 1] = raiz * N * np.sqrt(suma) * bonos[j].get_peso_condensado()
-                if bonos[j].get_nemotecnico() not in columna:
-                    columna.append(bonos[j].get_nemotecnico())
-
-            for k in range(cantidad_derivados):
-                suma = (1 - lamda) * (lamda**a) * (r_d[a] - derivados[k].get_peso_condensado() * derivados[k].get_rd()[a])**2
-                info[a, i + j + k + 2] = raiz * N * np.sqrt(suma) * derivados[k].get_peso_condensado()
-                if derivados[k].get_nemotecnico() not in columna:
-                    columna.append(derivados[k].get_nemotecnico())
-
-        return pd.DataFrame(info, columns = columna)
+        return var

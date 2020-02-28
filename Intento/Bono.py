@@ -7,8 +7,8 @@ import pandas as pd
 from Activo import Activo
 from BonoUtil import *
 from Matematica import interpolacion_escalar
-from Util import add_days
-from UtilesValorizacion import (StrTabla2ArrTabla, factor_descuento,
+from UtilIndicadores import add_days
+from UtilesValorizacionIndicadores import (StrTabla2ArrTabla, factor_descuento,
                                 parsear_curva, diferencia_dias_convencion)
 
 

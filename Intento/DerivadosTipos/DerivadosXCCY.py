@@ -2,7 +2,7 @@
 from Derivados.DerivadosAbstracto import *
 from UtilesDerivados import ultimo_habil_paises, siguiente_habil_paises, cast_frecuencia, cast_convencion, \
     delta_frecuencia, ultimo_habil_pais
-from Util import add_days
+from UtilIndicadores import add_days
 import datetime
 from Curvas import curva_cero_swapUSD
 from Curves.CurvaCero import curva_cero_CLP_TAB, curva_cero_CLP_libre_riesgo

@@ -3,7 +3,7 @@ Queda pendiente la amortización para genera_flujos y proyectar_flujos_Tabla
 Además, en el contrato la fecha de pago corresponde a un día después de la fecha del flujo
 """
 from Derivados.DerivadosAbstracto import *
-from Util import fecha_str, add_days
+from UtilIndicadores import fecha_str, add_days
 from UtilesDerivados import siguiente_habil_paises, ultimo_habil_pais, genera_flujos, proyectar_flujos_tabla
 from UtilesDerivados import delta_frecuencia, cast_frecuencia, factor_descuento
 

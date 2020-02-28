@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Derivados.DerivadosAbstracto import *
 from UtilesDerivados import genera_flujos, proyectar_flujos_tabla, ultimo_habil_pais, delta_frecuencia, siguiente_habil_paises
-from Util import fecha_str, add_days, add_months
+from UtilIndicadores import fecha_str, add_days, add_months
 import pandas as pd
 
 

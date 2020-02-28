@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from Derivados.DerivadosAbstracto import *
 from UtilesDerivados import cast_frecuencia, ultimo_habil_pais, delta_frecuencia, siguiente_habil_pais, siguiente_habil_paises
-from Util import add_days
+from UtilIndicadores import add_days
 from Matematica import interpolacion_log_escalar
 from Curves.CurvaCero import curva_cero_swapUSD
 

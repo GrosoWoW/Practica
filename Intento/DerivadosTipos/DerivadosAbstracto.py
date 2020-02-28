@@ -11,11 +11,11 @@ import numpy as np
 import pandas as pd
 
 from Matematica import interpolacion_log_escalar
-from Util import (add_days, add_months, fecha_str,
+from UtilIndicadores import (add_days, add_months, fecha_str,
                                             send_msg)
 from UtilesDerivados import (genera_flujos,
                                                        ultimo_habil_pais)
-from UtilesValorizacion import (parsear_curva,
+from UtilesValorizacionIndicadores import (parsear_curva,
                                                           valor_moneda)
 
 sys.path.append("..")

@@ -6,8 +6,8 @@ import pandas as pd
 
 from Activo import Activo
 from Matematica import interpolacion_log_escalar
-from Util import add_days
-from UtilesValorizacion import diferencia_dias_convencion, parsear_curva
+from UtilIndicadores import add_days
+from UtilesValorizacionIndicadores import diferencia_dias_convencion, parsear_curva
 
 
 """
@@ -121,8 +121,8 @@ class Derivado(Activo):
         if moneda == "UF": #Funciona para el error de CLF
             monedas = "CLF"
 
-        curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1500' AND Fecha > '" + str(fecha) + "'")
-        curva = pd.read_sql(curva, cnn)
+        curva = ("SELECT TOP(" + str(n) + ")* FROM [dbDerivados].[dbo].[TdCurvasDerivados] WHERE Tipo = 'CurvaEfectiva_"+ str(monedas) +"' AND Hora = '1500' AND Fecha < '" + str(fecha) + "' ORDER BY Fecha")
+        curva = pd.read_sql(curva, cnn)[::-1]
         if (curva.empty): raise Exception('Para la moneda ' + moneda + ' en la fecha ' + str(fecha) + ' no se encontró curva en TdCurvasDerivados.')
         return curva
 
@@ -179,7 +179,6 @@ class Derivado(Activo):
 
         self.historicos = pd.DataFrame(matriz, columns=self.nombre_df(moneda))
         monedas_derivado = self.obtener_monedas()
-
         
         return self.historicos
 

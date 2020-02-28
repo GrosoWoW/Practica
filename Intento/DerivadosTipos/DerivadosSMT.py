@@ -2,8 +2,8 @@
 from Derivados.DerivadosAbstracto import *
 from UtilesDerivados import cast_frecuencia, delta_frecuencia, ultimo_habil_pais, proyectar_flujos_tabla, \
     siguiente_habil_paises
-from UtilesValorizacion import factor_descuento
-from Util import add_days
+from UtilesValorizacionIndicadores import factor_descuento
+from UtilIndicadores import add_days
 
 class DerivadosSMT(DerivadosAbstracto):
 

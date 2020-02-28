@@ -3,7 +3,7 @@
 Archivo principal para el cálculo de derivados
 """
 from Derivados.Empresa import *
-from Util import send_msg, fecha_str
+from UtilIndicadores import send_msg, fecha_str
 from UtilesDerivados import ultimo_habil_pais
 
 import pandas as pd
